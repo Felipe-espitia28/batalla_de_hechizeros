@@ -1,32 +1,38 @@
 # Dueños por área (sección 2 de CLAUDE.md). GitHub pide revisión al dueño en cada PR que toque su carpeta.
 # Regla: la última coincidencia gana, por eso lo general va primero y lo específico después.
-# TODO(Felipe): reemplazar cada @usuario por el login real de GitHub de cada integrante.
+#
+# Felipe Espitia  -> @Felipe-espitia28
+# Juan Arias      -> @JuanArias-cpu
+# Johan Soriano   -> @johansoriano63-ux
+# Angel Arenales  -> @angelarenalesdev
+# Daniel Tapiero  -> @DaniTap02
 
 # Raíz, CI y configuración común — Felipe
-*                               @felipe-espitia
+*                                  @Felipe-espitia28
 
 # Plataforma — Felipe
-/apps/shell/                    @felipe-espitia
-/.github/                       @felipe-espitia
-/services/api/                  @felipe-espitia
-/services/api/prisma/           @felipe-espitia @angel-arenales @daniel-tapiero
+/apps/shell/                       @Felipe-espitia28
+/.github/                          @Felipe-espitia28
+/services/api/                     @Felipe-espitia28
+# El esquema lo tocan las tres áreas del api: tienda y ranking también revisan.
+/services/api/prisma/              @Felipe-espitia28 @angelarenalesdev @DaniTap02
 
 # Módulo local + Arena — Juan
-/packages/spell-engine/         @juan-arias
-/apps/arena/                    @juan-arias
+/packages/spell-engine/            @JuanArias-cpu
+/apps/arena/                       @JuanArias-cpu
 
 # Tiempo real — Johan
-/services/game-server/          @johan-soriano
+/services/game-server/             @johansoriano63-ux
 
 # Tienda — Angel
-/apps/tienda/                   @angel-arenales
-/packages/ui/                   @angel-arenales
-/services/api/src/modules/shop/ @angel-arenales
+/apps/tienda/                      @angelarenalesdev
+/packages/ui/                      @angelarenalesdev
+/services/api/src/modules/shop/    @angelarenalesdev
 
 # Ranking — Daniel
-/apps/ranking/                     @daniel-tapiero
-/services/api/src/modules/ranking/ @daniel-tapiero
+/apps/ranking/                     @DaniTap02
+/services/api/src/modules/ranking/ @DaniTap02
 
-# Compartidos: un cambio rompe a todos, así que revisa todo el equipo.
-/packages/contracts/            @felipe-espitia @juan-arias @johan-soriano @angel-arenales @daniel-tapiero
-/packages/game-rules/           @felipe-espitia @juan-arias @johan-soriano @angel-arenales @daniel-tapiero
+# Compartidos: un cambio rompe a todos, así que cualquiera del equipo puede revisar.
+/packages/contracts/               @Felipe-espitia28 @JuanArias-cpu @johansoriano63-ux @angelarenalesdev @DaniTap02
+/packages/game-rules/              @Felipe-espitia28 @JuanArias-cpu @johansoriano63-ux @angelarenalesdev @DaniTap02
