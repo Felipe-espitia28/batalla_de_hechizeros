@@ -1,50 +1,31 @@
 /**
- * Seed mínimo: solo los 3 hechizos iniciales que el registro entrega (Rayo, Escudo y Meteoro).
- * Sin ellos falla la FK de user_spells y no se puede crear ninguna cuenta (login es P0).
+ * Seed del catálogo — dueño: Angel Arenales.
  *
- * TODO(Angel): reemplazar por el seed completo del catálogo generado desde @duelo/game-rules.
- * Es idempotente (upsert), así que se puede correr cuantas veces haga falta.
+ * Llena la tabla `spells` con SPELL_CATALOG de @duelo/game-rules (8 hechizos y 4 definitivos).
+ * El catálogo vive en el código y no en la base (sección 4 de CLAUDE.md): así un cambio de precio
+ * se hace con un PR revisado y la base nunca queda con números distintos a los del game-server.
+ *
+ * Es idempotente (upsert): se puede correr en cada despliegue. Si cambia un precio en game-rules,
+ * volver a correrlo actualiza la fila; lo ya comprado conserva su `price_paid` original.
+ * No borra filas: un hechizo con compradores no se puede eliminar sin romper las FK de inventario.
+ *
+ * Uso: pnpm --filter @duelo/api db:seed
  */
 import "dotenv/config";
+import { SPELL_CATALOG } from "@duelo/game-rules";
 import { createPrismaClient } from "../src/lib/prisma.js";
-
-const STARTER_SPELLS = [
-  {
-    id: "lightning",
-    name: "Rayo",
-    kind: "spell",
-    gestureDescription: "Zigzag de izquierda a derecha",
-    price: 0,
-    isStarter: true,
-    sortOrder: 1,
-  },
-  {
-    id: "shield",
-    name: "Escudo",
-    kind: "spell",
-    gestureDescription: "Círculo",
-    price: 0,
-    isStarter: true,
-    sortOrder: 2,
-  },
-  {
-    id: "meteor",
-    name: "Meteoro",
-    kind: "ultimate",
-    gestureDescription: "Gritar «meteoro» con el maná lleno",
-    price: 0,
-    isStarter: true,
-    sortOrder: 100,
-  },
-] as const;
 
 async function main(): Promise<void> {
   const prisma = createPrismaClient();
   try {
-    for (const spell of STARTER_SPELLS) {
-      await prisma.spell.upsert({ where: { id: spell.id }, create: spell, update: spell });
-    }
-    console.log(`Seed listo: ${STARTER_SPELLS.length} hechizos iniciales.`);
+    // Una sola transacción: o queda el catálogo completo o no cambia nada.
+    await prisma.$transaction(
+      SPELL_CATALOG.map((spell) =>
+        prisma.spell.upsert({ where: { id: spell.id }, create: { ...spell }, update: { ...spell } }),
+      ),
+    );
+    const starters = SPELL_CATALOG.filter((spell) => spell.isStarter).length;
+    console.log(`Seed listo: ${SPELL_CATALOG.length} hechizos en el catálogo (${starters} iniciales).`);
   } finally {
     await prisma.$disconnect();
   }
