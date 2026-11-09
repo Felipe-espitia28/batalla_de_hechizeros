@@ -1,12 +1,13 @@
 {
-  // Para el editor y el typecheck: incluye src, tests, seed y prisma.config.ts.
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
     "module": "nodenext",
     "moduleResolution": "nodenext",
-    "lib": ["ES2023"],
+    "lib": ["ES2022"],
     "types": ["node"],
-    "noEmit": true
+    "rootDir": ".",
+    "outDir": "dist",
+    "declaration": false
   },
-  "include": ["src", "test", "prisma", "prisma.config.ts", "vitest.config.ts"]
+  "include": ["src", "test", "prisma.config.ts", "vitest.config.ts"]
 }

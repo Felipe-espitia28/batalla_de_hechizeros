@@ -4,9 +4,6 @@ packages:
   - "apps/*"
   - "services/*"
   - "packages/*"
-
-# pnpm 12 bloquea los scripts de instalación por seguridad. Solo se aprueban los necesarios:
-# Prisma descarga su motor de migraciones y esbuild (lo usa tsx) instala su binario.
 allowBuilds:
   '@prisma/engines': true
   esbuild: true

@@ -1,113 +1,58 @@
-// Esquema de PostgreSQL (sección 8 de CLAUDE.md).
-// Solo guarda lo comercial y lo histórico: los números de balance viven en @duelo/game-rules.
-// Identificadores en camelCase dentro de TypeScript y snake_case en la base (@map / @@map).
-//
-// Prisma 7: la URL de conexión no va aquí sino en prisma.config.ts, y el cliente se genera
-// como código TypeScript dentro de src/ para compilarse junto al resto del servicio.
+// Esquema de PostgreSQL del api (sección 8 de CLAUDE.md).
+// Cada bloque indica su dueño: los cambios de un área no se hacen sin avisar a su dueño.
 
 generator client {
-  provider            = "prisma-client"
-  output              = "../src/generated/prisma"
-  moduleFormat        = "esm"
-  importFileExtension = "js"
+  provider = "prisma-client"
+  // Dentro de src/ para que tsc lo compile junto al resto; está en .gitignore y se regenera con `prisma generate`.
+  output   = "../src/generated/prisma"
 }
 
 datasource db {
   provider = "postgresql"
+  // Prisma 7: la URL vive en prisma.config.ts, no aquí.
 }
 
-enum SpellKind {
-  spell
-  ultimate
-}
-
-enum EndReason {
-  KO
-  TIMEOUT
-  DRAW
-  ABANDON
-}
-
+// ---------------------------------------------------------------------------
+// Usuarios — Felipe (auth)
+// Provisional: escrito tal cual la sección 8 porque matches/match_players necesitan la FK.
+// Felipe lo reemplaza o lo amplía al integrar auth. Falta la relación
+// equipped_ultimate_id → spells, que depende del modelo Spell de Angel.
+// ---------------------------------------------------------------------------
 model User {
   id                 String   @id @default(uuid()) @db.Uuid
   username           String   @unique
   email              String   @unique
   passwordHash       String   @map("password_hash")
-  // Nunca negativos: lo garantizan las restricciones CHECK de la migración inicial.
+  // Nunca negativos: el ranking lo garantiza al cerrar partidas (no hay CHECK porque Prisma no los modela).
   rating             Int      @default(0)
   gold               Int      @default(0)
   wins               Int      @default(0)
   losses             Int      @default(0)
   draws              Int      @default(0)
   equippedUltimateId String   @default("meteor") @map("equipped_ultimate_id")
-  createdAt          DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  createdAt          DateTime @default(now()) @map("created_at")
 
-  equippedUltimate Spell           @relation("EquippedUltimate", fields: [equippedUltimateId], references: [id])
-  spells           UserSpell[]
-  grimoireSlots    GrimoireSlot[]
-  matchesWon       Match[]         @relation("MatchWinner")
-  matchPlayers     MatchPlayer[]
+  matchesWon   Match[]       @relation("MatchWinner")
+  matchEntries MatchPlayer[]
 
-  // El ranking ordena por rating: el índice evita recorrer toda la tabla.
+  // El top del ranking ordena por rating; sin índice sería un escaneo completo en cada consulta.
   @@index([rating(sort: Desc)])
   @@map("users")
 }
 
-model Spell {
-  // id en inglés y kebab-case, igual que en el socket (lightning, silence-seal…).
-  id                 String    @id
-  name               String
-  kind               SpellKind
-  gestureDescription String    @map("gesture_description")
-  price              Int       @default(0)
-  isStarter          Boolean   @default(false) @map("is_starter")
-  sortOrder          Int       @default(0) @map("sort_order")
-
-  owners        UserSpell[]
-  grimoireSlots GrimoireSlot[]
-  equippedBy    User[]         @relation("EquippedUltimate")
-
-  @@map("spells")
-}
-
-model UserSpell {
-  userId     String   @map("user_id") @db.Uuid
-  spellId    String   @map("spell_id")
-  pricePaid  Int      @default(0) @map("price_paid")
-  acquiredAt DateTime @default(now()) @map("acquired_at") @db.Timestamptz(3)
-
-  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
-  spell Spell @relation(fields: [spellId], references: [id])
-
-  // La PK compuesta impide comprar dos veces el mismo hechizo.
-  @@id([userId, spellId])
-  @@map("user_spells")
-}
-
-model GrimoireSlot {
-  userId  String @map("user_id") @db.Uuid
-  // 1–4 (CHECK en la migración). Slots 1 y 2 = Rayo y Escudo.
-  slot    Int
-  spellId String @map("spell_id")
-
-  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
-  spell Spell @relation(fields: [spellId], references: [id])
-
-  @@id([userId, slot])
-  // Un mismo hechizo no puede ocupar dos espacios.
-  @@unique([userId, spellId])
-  @@map("grimoire_slots")
-}
-
+// ---------------------------------------------------------------------------
+// Partidas — Daniel (ranking)
+// ---------------------------------------------------------------------------
 model Match {
-  // Usa el mismo id que asignó el game-server, para casar Redis, logs y PostgreSQL.
-  id         String    @id @db.Uuid
-  endReason  EndReason @map("end_reason")
+  // Texto y no uuid: el id lo genera el game-server (p. ej. "m_8f2c41", sección 7) y es la clave
+  // de idempotencia de POST /internal/matches. Un uuid obligaría a traducir ids entre servicios.
+  id         String   @id
+  endReason  String   @map("end_reason")
   // null en empate.
-  winnerId   String?   @map("winner_id") @db.Uuid
-  durationMs Int       @map("duration_ms")
-  startedAt  DateTime  @map("started_at") @db.Timestamptz(3)
-  endedAt    DateTime  @map("ended_at") @db.Timestamptz(3)
+  winnerId   String?  @map("winner_id") @db.Uuid
+  durationMs Int      @map("duration_ms")
+  startedAt  DateTime @map("started_at")
+  endedAt    DateTime @map("ended_at")
 
   winner  User?         @relation("MatchWinner", fields: [winnerId], references: [id])
   players MatchPlayer[]
@@ -116,18 +61,19 @@ model Match {
 }
 
 model MatchPlayer {
-  matchId      String @map("match_id") @db.Uuid
+  matchId      String @map("match_id")
   userId       String @map("user_id") @db.Uuid
   ratingBefore Int    @map("rating_before")
+  // Delta realmente aplicado (ya recortado para que el rating no baje de 0).
   ratingDelta  Int    @map("rating_delta")
   goldDelta    Int    @map("gold_delta")
   finalHp      Int    @map("final_hp")
 
   match Match @relation(fields: [matchId], references: [id], onDelete: Cascade)
-  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user  User  @relation(fields: [userId], references: [id])
 
   @@id([matchId, userId])
-  // El historial se consulta por usuario.
+  // El historial (GET /me/matches) busca por usuario; la PK empieza por match_id y no sirve para eso.
   @@index([userId])
   @@map("match_players")
 }

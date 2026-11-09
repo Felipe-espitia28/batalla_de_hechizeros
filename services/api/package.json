@@ -3,46 +3,30 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "description": "API REST (Express + Prisma): auth (Felipe), tienda (Angel), ranking (Daniel) e /internal.",
-  "engines": {
-    "node": ">=22.12"
-  },
+  "description": "API REST (Express + Prisma): auth, tienda, ranking e /internal.",
   "scripts": {
-    "dev": "tsx watch --env-file-if-exists=.env src/index.ts",
-    "build": "prisma generate && tsc -p tsconfig.build.json",
-    "start": "node dist/index.js",
-    "typecheck": "prisma generate && tsc -p tsconfig.json --noEmit",
-    "test": "vitest run",
-    "db:generate": "prisma generate",
-    "db:migrate": "prisma migrate dev",
-    "db:deploy": "prisma migrate deploy",
-    "db:seed": "prisma db seed",
-    "db:studio": "prisma studio"
+    "postinstall": "prisma generate",
+    "prisma:generate": "prisma generate",
+    "db:push": "prisma db push",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
   },
   "dependencies": {
     "@duelo/contracts": "workspace:*",
-    "@duelo/game-rules": "workspace:*",
     "@prisma/adapter-pg": "7.10.1",
     "@prisma/client": "7.10.1",
-    "bcryptjs": "^3.0.3",
-    "cors": "^2.8.6",
-    "dotenv": "18.0.9",
-    "express": "^5.3.0",
-    "jsonwebtoken": "^9.0.3",
-    "pg": "^8.23.1",
-    "zod": "^4.6.7"
+    "express": "5.3.0",
+    "ioredis": "6.0.0",
+    "zod": "4.6.7"
   },
   "devDependencies": {
-    "@types/cors": "^2.8.19",
-    "@types/express": "^5.0.6",
-    "@types/jsonwebtoken": "^9.0.10",
+    "@types/express": "5.0.6",
     "@types/node": "^24.19.2",
-    "@types/pg": "^8.23.1",
-    "@types/supertest": "^7.2.1",
+    "@types/supertest": "7.2.1",
     "prisma": "7.10.1",
-    "supertest": "^7.3.2",
-    "tsx": "^4.23.15",
+    "supertest": "7.3.2",
+    "tsx": "4.23.15",
     "typescript": "6.0.3",
-    "vitest": "^5.1.0"
+    "vitest": "5.1.0"
   }
 }
