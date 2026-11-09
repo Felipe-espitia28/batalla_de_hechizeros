@@ -1,32 +1,11 @@
-# Dueños por área (sección 2 de CLAUDE.md). GitHub pide revisión al dueño en cada PR que toque su carpeta.
-# Regla: la última coincidencia gana, por eso lo general va primero y lo específico después.
-# TODO(Felipe): reemplazar cada @usuario por el login real de GitHub de cada integrante.
+# Revisión obligatoria: Felipe (líder de integración) aprueba todos los PRs hacia main.
+# Junto con "Require review from Code Owners" en el ruleset, ningún PR se fusiona sin su aprobación.
+#
+# Las áreas de cada integrante siguen siendo las de la sección 2 de CLAUDE.md;
+# se recomienda pedir además una revisión (no obligatoria) al dueño del área afectada:
+#   Juan Arias     @JuanArias-cpu      apps/arena, packages/spell-engine
+#   Johan Soriano  @johansoriano63-ux  services/game-server
+#   Angel Arenales @angelarenalesdev   apps/tienda, packages/ui, services/api (tienda)
+#   Daniel Tapiero @DaniTap02          apps/ranking, services/api (ranking)
 
-# Raíz, CI y configuración común — Felipe
-*                               @felipe-espitia
-
-# Plataforma — Felipe
-/apps/shell/                    @felipe-espitia
-/.github/                       @felipe-espitia
-/services/api/                  @felipe-espitia
-/services/api/prisma/           @felipe-espitia @angel-arenales @daniel-tapiero
-
-# Módulo local + Arena — Juan
-/packages/spell-engine/         @juan-arias
-/apps/arena/                    @juan-arias
-
-# Tiempo real — Johan
-/services/game-server/          @johan-soriano
-
-# Tienda — Angel
-/apps/tienda/                   @angel-arenales
-/packages/ui/                   @angel-arenales
-/services/api/src/modules/shop/ @angel-arenales
-
-# Ranking — Daniel
-/apps/ranking/                     @daniel-tapiero
-/services/api/src/modules/ranking/ @daniel-tapiero
-
-# Compartidos: un cambio rompe a todos, así que revisa todo el equipo.
-/packages/contracts/            @felipe-espitia @juan-arias @johan-soriano @angel-arenales @daniel-tapiero
-/packages/game-rules/           @felipe-espitia @juan-arias @johan-soriano @angel-arenales @daniel-tapiero
+*    @Felipe-espitia28

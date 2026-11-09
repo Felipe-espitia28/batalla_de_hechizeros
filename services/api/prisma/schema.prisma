@@ -1,0 +1,79 @@
+// Esquema de PostgreSQL del api (sección 8 de CLAUDE.md).
+// Cada bloque indica su dueño: los cambios de un área no se hacen sin avisar a su dueño.
+
+generator client {
+  provider = "prisma-client"
+  // Dentro de src/ para que tsc lo compile junto al resto; está en .gitignore y se regenera con `prisma generate`.
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  // Prisma 7: la URL vive en prisma.config.ts, no aquí.
+}
+
+// ---------------------------------------------------------------------------
+// Usuarios — Felipe (auth)
+// Provisional: escrito tal cual la sección 8 porque matches/match_players necesitan la FK.
+// Felipe lo reemplaza o lo amplía al integrar auth. Falta la relación
+// equipped_ultimate_id → spells, que depende del modelo Spell de Angel.
+// ---------------------------------------------------------------------------
+model User {
+  id                 String   @id @default(uuid()) @db.Uuid
+  username           String   @unique
+  email              String   @unique
+  passwordHash       String   @map("password_hash")
+  // Nunca negativos: el ranking lo garantiza al cerrar partidas (no hay CHECK porque Prisma no los modela).
+  rating             Int      @default(0)
+  gold               Int      @default(0)
+  wins               Int      @default(0)
+  losses             Int      @default(0)
+  draws              Int      @default(0)
+  equippedUltimateId String   @default("meteor") @map("equipped_ultimate_id")
+  createdAt          DateTime @default(now()) @map("created_at")
+
+  matchesWon   Match[]       @relation("MatchWinner")
+  matchEntries MatchPlayer[]
+
+  // El top del ranking ordena por rating; sin índice sería un escaneo completo en cada consulta.
+  @@index([rating(sort: Desc)])
+  @@map("users")
+}
+
+// ---------------------------------------------------------------------------
+// Partidas — Daniel (ranking)
+// ---------------------------------------------------------------------------
+model Match {
+  // Texto y no uuid: el id lo genera el game-server (p. ej. "m_8f2c41", sección 7) y es la clave
+  // de idempotencia de POST /internal/matches. Un uuid obligaría a traducir ids entre servicios.
+  id         String   @id
+  endReason  String   @map("end_reason")
+  // null en empate.
+  winnerId   String?  @map("winner_id") @db.Uuid
+  durationMs Int      @map("duration_ms")
+  startedAt  DateTime @map("started_at")
+  endedAt    DateTime @map("ended_at")
+
+  winner  User?         @relation("MatchWinner", fields: [winnerId], references: [id])
+  players MatchPlayer[]
+
+  @@map("matches")
+}
+
+model MatchPlayer {
+  matchId      String @map("match_id")
+  userId       String @map("user_id") @db.Uuid
+  ratingBefore Int    @map("rating_before")
+  // Delta realmente aplicado (ya recortado para que el rating no baje de 0).
+  ratingDelta  Int    @map("rating_delta")
+  goldDelta    Int    @map("gold_delta")
+  finalHp      Int    @map("final_hp")
+
+  match Match @relation(fields: [matchId], references: [id], onDelete: Cascade)
+  user  User  @relation(fields: [userId], references: [id])
+
+  @@id([matchId, userId])
+  // El historial (GET /me/matches) busca por usuario; la PK empieza por match_id y no sirve para eso.
+  @@index([userId])
+  @@map("match_players")
+}

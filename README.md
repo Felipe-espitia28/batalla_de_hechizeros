@@ -80,6 +80,38 @@ docs/          Hoja de hechizos, DNS, guion
 
    Cada remote también corre solo, sin el shell, con una sesión de prueba: `pnpm dev:arena`, `pnpm dev:tienda`, `pnpm dev:ranking`.
 
+## API (services/api)
+
+Express 5 + Prisma 7 sobre PostgreSQL, organizada por módulos para que cada uno trabaje en su carpeta:
+
+```text
+services/api/src/
+├── app.ts           monta los routers de cada módulo
+├── config/env.ts    valida las variables de entorno al arrancar
+├── lib/             prisma, jwt, HttpError, parseOrThrow (zod)
+├── middleware/      requireAuth, requireInternalKey, manejo de errores
+└── modules/
+    ├── auth/        Felipe: /auth/register, /auth/login, /me
+    ├── shop/        Angel: /spells, /me/inventory, /shop/purchase, /me/grimoire, loadout interno
+    └── ranking/     Daniel: /ranking, /ranking/me, /me/matches, /internal/matches
+```
+
+La primera vez, con `services/api/.env` ya creado, aplica las migraciones (lo mismo que se usa en Render):
+
+```bash
+pnpm --filter @duelo/api db:deploy
+```
+
+Y carga los hechizos iniciales (sin ellos el registro falla):
+
+```bash
+pnpm --filter @duelo/api db:seed
+```
+
+- Para cambiar el esquema: editar `prisma/schema.prisma` y crear la migración con `pnpm --filter @duelo/api db:migrate --name <cambio>`.
+- Tests: `pnpm --filter @duelo/api test`. Los de integración necesitan `TEST_DATABASE_URL` (una base con migraciones y seed); sin ella se omiten.
+- Todo error responde `{ error: { code, message } }` (`ApiErrorBody` en contracts). Un 401 (`UNAUTHORIZED` o `TOKEN_EXPIRED`) en una ruta que no sea `/auth/*` significa sesión vencida: el frontend emite `duelo:session-expired`.
+
 ## Scripts de la raíz
 
 | Script | Qué hace |
