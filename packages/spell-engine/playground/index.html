@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>spell-engine · playground</title>
+    <style>
+      :root {
+        color-scheme: dark;
+        --bg: #0f0d1a;
+        --panel: #1a1729;
+        --border: #2e2945;
+        --text: #ece9f7;
+        --muted: #9a94b5;
+        --accent: #7c5cff;
+        --ok: #22c55e;
+        --bad: #ef4444;
+        --warn: #f59e0b;
+      }
+      * { box-sizing: border-box; }
+      body { margin: 0; background: var(--bg); color: var(--text); font: 15px/1.4 system-ui, sans-serif; }
+      main { display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: 16px; padding: 16px; max-width: 1200px; margin: 0 auto; }
+      @media (max-width: 860px) { main { grid-template-columns: 1fr; } }
+      h1 { font-size: 18px; margin: 0 0 4px; }
+      .stage { position: relative; background: #000; border-radius: 12px; overflow: hidden; aspect-ratio: 4 / 3; }
+      .stage video, .stage canvas { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+      /* El video se ve en espejo; el canvas no, porque el motor ya devuelve los puntos en espejo. */
+      .stage video { transform: scaleX(-1); }
+      .overlay-msg { position: absolute; inset: 0; display: grid; place-items: center; padding: 24px; text-align: center; color: var(--muted); }
+      .panel { background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 14px; display: flex; flex-direction: column; gap: 14px; }
+      .result { font-size: 28px; font-weight: 700; min-height: 40px; }
+      .result.ok { color: var(--ok); } .result.bad { color: var(--bad); }
+      .muted { color: var(--muted); font-size: 13px; }
+      button, select { font: inherit; color: var(--text); background: #262140; border: 1px solid var(--border); border-radius: 8px; padding: 8px 12px; cursor: pointer; }
+      button.primary { background: var(--accent); border-color: var(--accent); }
+      .row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+      table { width: 100%; border-collapse: collapse; font-size: 13px; }
+      td:first-child { white-space: nowrap; }
+      th, td { text-align: right; padding: 4px 6px; border-bottom: 1px solid var(--border); }
+      th:first-child, td:first-child { text-align: left; }
+      ol { margin: 0; padding-left: 20px; font-size: 13px; max-height: 180px; overflow: auto; }
+      .error { background: #3b1219; border: 1px solid var(--bad); border-radius: 8px; padding: 10px; display: none; }
+    </style>
+  </head>
+  <body>
+    <main>
+      <section>
+        <h1>spell-engine · playground</h1>
+        <p class="muted">Pinza (pulgar + índice) para dibujar, separa los dedos para lanzar. Todo corre en este equipo: mira la pestaña Network.</p>
+        <div class="stage">
+          <video id="video" playsinline muted></video>
+          <canvas id="canvas"></canvas>
+          <div class="overlay-msg" id="overlay">Pulsa «Iniciar cámara».</div>
+        </div>
+      </section>
+
+      <aside class="panel">
+        <div class="row">
+          <button class="primary" id="start">Iniciar cámara</button>
+          <button id="stop" disabled>Detener</button>
+          <label class="row muted"><input type="checkbox" id="debug" checked /> Depuración</label>
+        </div>
+        <div class="error" id="error"></div>
+
+        <div>
+          <div class="muted">Último hechizo</div>
+          <div class="result" id="result">—</div>
+          <div class="muted" id="result-detail">Confianza mínima: 0,80</div>
+        </div>
+
+        <div>
+          <div class="row" style="justify-content: space-between">
+            <label class="muted" for="target">Estoy intentando:</label>
+            <select id="target">
+              <option value="lightning">⚡ Rayo (zigzag)</option>
+              <option value="shield">🛡️ Escudo (círculo)</option>
+            </select>
+          </div>
+          <p class="muted">Elige el gesto que vas a dibujar y repítelo; la tabla mide cuántas veces acierta.</p>
+          <table>
+            <thead><tr><th>Gesto</th><th title="Intentos">Int.</th><th title="Aciertos">OK</th><th title="Reconocido como otro hechizo">Otro</th><th title="Hechizo fallido">Fallo</th><th>%</th></tr></thead>
+            <tbody id="stats"></tbody>
+          </table>
+          <div class="row" style="margin-top: 8px"><button id="reset">Reiniciar conteo</button></div>
+        </div>
+
+        <div>
+          <div class="muted">Historial</div>
+          <ol id="log" reversed></ol>
+        </div>
+      </aside>
+    </main>
+    <script type="module" src="./main.ts"></script>
+  </body>
+</html>

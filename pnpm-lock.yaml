@@ -178,6 +178,43 @@ importers:
       '@duelo/contracts':
         specifier: workspace:*
         version: link:../../packages/contracts
+      '@duelo/spell-engine':
+        specifier: workspace:*
+        version: link:../../packages/spell-engine
+      react:
+        specifier: 19.3.1
+        version: 19.3.1
+      react-dom:
+        specifier: 19.3.1
+        version: 19.3.1(react@19.3.1)
+      socket.io-client:
+        specifier: 4.8.4
+        version: 4.8.4
+    devDependencies:
+      '@module-federation/vite':
+        specifier: 1.22.1
+        version: 1.22.1(typescript@6.0.3)(vite@8.3.6(@types/node@24.19.2)(esbuild@0.28.2)(tsx@4.23.15))
+      '@types/react':
+        specifier: 19.3.0
+        version: 19.3.0
+      '@types/react-dom':
+        specifier: 19.3.0
+        version: 19.3.0(@types/react@19.3.0)
+      '@vitejs/plugin-react':
+        specifier: 6.1.2
+        version: 6.1.2(vite@8.3.6(@types/node@24.19.2)(esbuild@0.28.2)(tsx@4.23.15))
+      socket.io:
+        specifier: 4.8.4
+        version: 4.8.4
+      typescript:
+        specifier: 6.0.3
+        version: 6.0.3
+      vite:
+        specifier: 8.3.6
+        version: 8.3.6(@types/node@24.19.2)(esbuild@0.28.2)(tsx@4.23.15)
+      vitest:
+        specifier: 5.0.5
+        version: 5.0.5(@types/node@24.19.2)(vite@8.3.6(@types/node@24.19.2)(esbuild@0.28.2)(tsx@4.23.15))
 
   apps/ranking:
     dependencies:
@@ -216,7 +253,24 @@ importers:
         specifier: ^5.1.0
         version: 5.1.0(@types/node@24.19.2)(vite@8.3.6(@types/node@24.19.2)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.15))
 
-  packages/spell-engine: {}
+  packages/spell-engine:
+    dependencies:
+      '@duelo/contracts':
+        specifier: workspace:*
+        version: link:../contracts
+      '@mediapipe/tasks-vision':
+        specifier: 1.2.2
+        version: 1.2.2
+    devDependencies:
+      typescript:
+        specifier: 6.0.3
+        version: 6.0.3
+      vite:
+        specifier: 8.3.6
+        version: 8.3.6(@types/node@24.19.2)(esbuild@0.28.2)(tsx@4.23.15)
+      vitest:
+        specifier: 5.0.5
+        version: 5.0.5(@types/node@24.19.2)(vite@8.3.6(@types/node@24.19.2)(esbuild@0.28.2)(tsx@4.23.15))
 
   packages/ui: {}
 
