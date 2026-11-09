@@ -5,7 +5,6 @@
  * TODO(Angel): reemplazar por el seed completo del catálogo generado desde @duelo/game-rules.
  * Es idempotente (upsert), así que se puede correr cuantas veces haga falta.
  */
-import "dotenv/config";
 import { createPrismaClient } from "../src/lib/prisma.js";
 
 const STARTER_SPELLS = [

@@ -12,8 +12,12 @@ export default defineConfig({
   schema: "prisma/schema.prisma",
   migrations: {
     path: "prisma/migrations",
+    // El proceso del seed hereda las variables que ya cargó este archivo.
+    seed: "tsx prisma/seed.ts",
   },
   datasource: {
+    // Sin env() a propósito: `prisma generate` (build de Render, postinstall) no necesita base
+    // de datos y env() fallaría si DATABASE_URL no existe en ese momento.
     url: process.env["DATABASE_URL"],
   },
 });

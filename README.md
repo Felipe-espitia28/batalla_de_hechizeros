@@ -109,7 +109,7 @@ pnpm --filter @duelo/api db:seed
 ```
 
 - Para cambiar el esquema: editar `prisma/schema.prisma` y crear la migración con `pnpm --filter @duelo/api db:migrate --name <cambio>`.
-- Tests: `pnpm --filter @duelo/api test`. Los de integración necesitan `TEST_DATABASE_URL` (una base con migraciones y seed); sin ella se omiten.
+- Tests: `pnpm --filter @duelo/api test`. Antes de correr, aplican las migraciones y el seed sobre `TEST_DATABASE_URL`, que **debe** ser una base cuyo nombre contenga `test` (las pruebas la vacían). Sin Docker se puede usar la base `duelo_test` de la rama `dev` de Neon (misma cadena que `DATABASE_URL`, cambiando `/neondb` por `/duelo_test`). Las pruebas del ranking también necesitan Redis en `TEST_REDIS_URL` (por defecto `redis://localhost:6379/15`); en el CI de GitHub ya están los dos.
 - Todo error responde `{ error: { code, message } }` (`ApiErrorBody` en contracts). Un 401 (`UNAUTHORIZED` o `TOKEN_EXPIRED`) en una ruta que no sea `/auth/*` significa sesión vencida: el frontend emite `duelo:session-expired`.
 
 ## Scripts de la raíz

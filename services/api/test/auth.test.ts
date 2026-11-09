@@ -1,20 +1,17 @@
 /**
- * Pruebas de integración de auth contra un PostgreSQL real.
- * Requieren TEST_DATABASE_URL apuntando a una base con las migraciones y el seed aplicados;
- * sin esa variable se omiten (y lo dicen) en vez de fallar.
+ * Pruebas de integración de auth contra un PostgreSQL real (TEST_DATABASE_URL, ver test-env.ts).
+ * global-setup.ts ya aplicó las migraciones y el seed antes de que corran.
  */
 import request from "supertest";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { createApp } from "../src/app.js";
 import { loadEnv } from "../src/config/env.js";
 import { createPrismaClient, type PrismaClient } from "../src/lib/prisma.js";
+import type { Redis } from "../src/lib/redis.js";
+import { createTestRedis } from "./helpers.js";
+import { TEST_DATABASE_URL } from "./test-env.js";
 
-const databaseUrl = process.env.TEST_DATABASE_URL;
-if (!databaseUrl) {
-  console.warn("[test] TEST_DATABASE_URL no está definida: se omiten las pruebas de integración de auth.");
-}
-
-describe.skipIf(!databaseUrl)("auth (integración)", () => {
+describe("auth (integración)", () => {
   // Sufijo único por ejecución: las pruebas no chocan con datos de corridas anteriores.
   const suffix = Date.now().toString(36);
   const username = `t_${suffix}`;
@@ -22,23 +19,26 @@ describe.skipIf(!databaseUrl)("auth (integración)", () => {
   const password = "contrasena-segura-1";
 
   let prisma: PrismaClient;
+  let redis: Redis;
   let app: ReturnType<typeof createApp>;
 
   beforeAll(() => {
     const env = loadEnv({
       NODE_ENV: "test",
-      DATABASE_URL: databaseUrl,
+      DATABASE_URL: TEST_DATABASE_URL,
       JWT_SECRET: "secreto-de-prueba-con-al-menos-32-caracteres",
       INTERNAL_API_KEY: "clave-interna-de-prueba",
       ALLOWED_ORIGINS: "http://localhost:5173",
     });
     prisma = createPrismaClient(env.DATABASE_URL);
-    app = createApp({ env, prisma });
+    redis = createTestRedis();
+    app = createApp({ env, prisma, redis });
   });
 
   afterAll(async () => {
     await prisma.user.deleteMany({ where: { username: { startsWith: `t_${suffix}` } } });
     await prisma.$disconnect();
+    redis.disconnect();
   });
 
   it("registra con los hechizos y el grimorio iniciales", async () => {
