@@ -8,6 +8,7 @@ import { engineError, type SpellEngineHandlers } from "./events";
 import { GestureProcessor, type GestureSnapshot } from "./gesture-processor";
 import { createHandTracker, type HandTracker, type HandTrackerOptions } from "./hand-tracker";
 import type { PinchOptions } from "./pinch";
+import type { SpellSource } from "./spell-source";
 
 export interface SpellEngineOptions extends HandTrackerOptions {
   /** Elemento <video> donde se muestra la cámara (puede estar oculto). */
@@ -23,7 +24,7 @@ export interface SpellEngineOptions extends HandTrackerOptions {
   onFrame?: (snapshot: GestureSnapshot, size: { width: number; height: number }) => void;
 }
 
-export class SpellEngine {
+export class SpellEngine implements SpellSource {
   private readonly processor: GestureProcessor;
   private stream: MediaStream | null = null;
   private tracker: HandTracker | null = null;

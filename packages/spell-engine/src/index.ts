@@ -1,5 +1,7 @@
 // API pública del módulo local. La Arena solo debería importar desde aquí.
 export { SpellEngine, type SpellEngineOptions } from "./spell-engine";
+export { KeyboardSpellSource } from "./keyboard-source";
+export type { SpellSource } from "./spell-source";
 export type {
   SpellEngineError,
   SpellEngineErrorCode,
