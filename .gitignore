@@ -1,0 +1,35 @@
+# Dependencias
+node_modules/
+.pnpm-store/
+
+# Salidas de compilación
+dist/
+build/
+*.tsbuildinfo
+.vite/
+.__mf__temp/
+
+# Variables de entorno: los valores reales viven en Bitwarden, nunca en el repo.
+# Solo se versionan los .env.example (nombres sin valores).
+.env
+.env.*
+!.env.example
+
+# Despliegues
+.vercel/
+
+# Logs y sistema
+*.log
+npm-debug.log*
+pnpm-debug.log*
+.DS_Store
+Thumbs.db
+
+# Editores y herramientas personales
+.claude/settings.local.json
+.idea/
+.vscode/*
+!.vscode/extensions.json
+
+# Pruebas
+coverage/

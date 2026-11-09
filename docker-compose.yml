@@ -1,0 +1,33 @@
+# Bases de datos locales para desarrollo (R5). En producción se usan Neon (Postgres) y Upstash (Redis).
+# Las credenciales de aquí son solo locales y no protegen nada real; los valores de nube viven en Bitwarden.
+services:
+  postgres:
+    image: postgres:17-alpine
+    container_name: duelo-postgres
+    environment:
+      POSTGRES_USER: duelo
+      POSTGRES_PASSWORD: duelo
+      POSTGRES_DB: duelo
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U duelo -d duelo"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    container_name: duelo-redis
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+volumes:
+  pgdata:

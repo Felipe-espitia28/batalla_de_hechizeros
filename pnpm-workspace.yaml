@@ -1,0 +1,6 @@
+# Workspaces del monorepo (sección 5 de CLAUDE.md).
+# Sin Turborepo ni Nx: pnpm --filter y -r bastan para 4 apps, 2 servicios y 4 paquetes.
+packages:
+  - "apps/*"
+  - "services/*"
+  - "packages/*"

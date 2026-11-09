@@ -1,0 +1,10 @@
+{
+  "name": "@duelo/tienda",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Remote Tienda: catálogo, compra y grimorio. Dueño: Angel.",
+  "dependencies": {
+    "@duelo/contracts": "workspace:*"
+  }
+}

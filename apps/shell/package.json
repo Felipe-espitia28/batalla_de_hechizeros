@@ -1,0 +1,10 @@
+{
+  "name": "@duelo/shell",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Shell (host de Module Federation): login, sesión, navegación. Dueño: Felipe.",
+  "dependencies": {
+    "@duelo/contracts": "workspace:*"
+  }
+}

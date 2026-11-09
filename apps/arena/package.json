@@ -1,0 +1,10 @@
+{
+  "name": "@duelo/arena",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Remote Arena: combate en vivo con cámara y micrófono. Dueño: Juan.",
+  "dependencies": {
+    "@duelo/contracts": "workspace:*"
+  }
+}

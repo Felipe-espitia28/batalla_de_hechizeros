@@ -1,0 +1,5 @@
+# Mismo fin de línea (LF) en los 5 PCs del equipo: evita diffs falsos por CRLF en los PRs.
+* text=auto eol=lf
+*.png binary
+*.jpg binary
+*.ico binary

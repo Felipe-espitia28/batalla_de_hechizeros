@@ -1,0 +1,8 @@
+{
+  "name": "@duelo/game-rules",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Catálogo, balance, rangos y economía. Compartido: avisar al equipo antes de cambiar.",
+  "dependencies": {}
+}

@@ -1,0 +1,15 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    // nodenext: la salida la importan tanto los servicios en Node como las apps con Vite.
+    "module": "nodenext",
+    "moduleResolution": "nodenext",
+    // DOM hace falta solo por los helpers de CustomEvent (sección 9).
+    "lib": ["ES2022", "DOM"],
+    "types": [],
+    "rootDir": "src",
+    "outDir": "dist",
+    "declarationMap": true
+  },
+  "include": ["src"]
+}

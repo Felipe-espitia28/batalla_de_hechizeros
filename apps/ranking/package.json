@@ -1,0 +1,10 @@
+{
+  "name": "@duelo/ranking",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Remote Ranking: top, posición propia e historial. Dueño: Daniel.",
+  "dependencies": {
+    "@duelo/contracts": "workspace:*"
+  }
+}

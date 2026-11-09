@@ -1,0 +1,20 @@
+{
+  // Configuración común. Cada paquete la extiende y fija su propio module/lib/outDir:
+  // los frontends usan Vite (moduleResolution "bundler") y los servicios usan Node ("nodenext").
+  "compilerOptions": {
+    "target": "ES2022",
+    "strict": true,
+    "noUncheckedIndexedAccess": true,
+    "noImplicitOverride": true,
+    "noFallthroughCasesInSwitch": true,
+    "exactOptionalPropertyTypes": false,
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true,
+    "isolatedModules": true,
+    "verbatimModuleSyntax": true,
+    "resolveJsonModule": true,
+    "skipLibCheck": true,
+    "declaration": true,
+    "sourceMap": true
+  }
+}

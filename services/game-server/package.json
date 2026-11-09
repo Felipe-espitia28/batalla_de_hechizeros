@@ -1,0 +1,10 @@
+{
+  "name": "@duelo/game-server",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Servidor de partidas (Socket.IO, autoritativo). Dueño: Johan.",
+  "dependencies": {
+    "@duelo/contracts": "workspace:*"
+  }
+}

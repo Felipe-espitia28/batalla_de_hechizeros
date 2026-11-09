@@ -1,0 +1,10 @@
+{
+  "name": "@duelo/api",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "API REST (Express + Prisma): auth, tienda, ranking e /internal.",
+  "dependencies": {
+    "@duelo/contracts": "workspace:*"
+  }
+}

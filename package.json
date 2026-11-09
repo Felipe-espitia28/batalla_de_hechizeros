@@ -1,0 +1,30 @@
+{
+  "name": "duelo-de-hechiceros",
+  "private": true,
+  "description": "Duelo de hechiceros: juego 1 vs 1 con gestos y voz. Monorepo con micro frontends y backends.",
+  "packageManager": "pnpm@12.18.0",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "postinstall": "tsc -p packages/contracts/tsconfig.json",
+    "build":"pnpm -r --if-present run build",
+    "typecheck": "pnpm -r --if-present run typecheck",
+    "test": "pnpm -r --if-present run test",
+    "lint": "pnpm -r --if-present run lint",
+    "build:contracts": "pnpm --filter @duelo/contracts build",
+    "dev:shell": "pnpm --filter @duelo/shell dev",
+    "dev:arena": "pnpm --filter @duelo/arena dev",
+    "dev:tienda": "pnpm --filter @duelo/tienda dev",
+    "dev:ranking": "pnpm --filter @duelo/ranking dev",
+    "dev:api": "pnpm --filter @duelo/api dev",
+    "dev:game": "pnpm --filter @duelo/game-server dev",
+    "db:up": "docker compose up -d",
+    "db:down": "docker compose down",
+    "db:logs": "docker compose logs -f"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.0",
+    "typescript": "6.0.3"
+  }
+}
