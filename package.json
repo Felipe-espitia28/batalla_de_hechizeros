@@ -7,12 +7,13 @@
     "node": ">=22"
   },
   "scripts": {
-    "postinstall": "tsc -p packages/contracts/tsconfig.json",
-    "build":"pnpm -r --if-present run build",
+    "postinstall": "tsc -p packages/contracts/tsconfig.json && tsc -p packages/game-rules/tsconfig.json",
+    "build": "pnpm -r --if-present run build",
     "typecheck": "pnpm -r --if-present run typecheck",
     "test": "pnpm -r --if-present run test",
     "lint": "pnpm -r --if-present run lint",
     "build:contracts": "pnpm --filter @duelo/contracts build",
+    "build:shared": "pnpm --filter @duelo/contracts --filter @duelo/game-rules build",
     "dev:shell": "pnpm --filter @duelo/shell dev",
     "dev:arena": "pnpm --filter @duelo/arena dev",
     "dev:tienda": "pnpm --filter @duelo/tienda dev",
