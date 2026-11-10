@@ -50,9 +50,78 @@ export function circlePoints(clockwise: boolean, radius = 100, steps = 64): Poin
   return points;
 }
 
+/** Polígono cerrado: vuelve al primer vértice. `clockwise` en la vista del jugador. */
+function closedPolygon(vertices: readonly Point[], clockwise: boolean): Point[] {
+  const ordered = clockwise ? [...vertices] : [vertices[0]!, ...vertices.slice(1).reverse()];
+  return polyline([...ordered, ordered[0]!]);
+}
+
+/** Triángulo (Bola de fuego) que empieza en el vértice de arriba. */
+export function trianglePoints(clockwise: boolean, size = 200): Point[] {
+  const h = (size * Math.sqrt(3)) / 2;
+  return closedPolygon(
+    [
+      { x: 0, y: -h / 2 },
+      { x: size / 2, y: h / 2 },
+      { x: -size / 2, y: h / 2 },
+    ],
+    clockwise,
+  );
+}
+
+/** Cuadrado (Congelar) que empieza en la esquina de arriba a la izquierda. */
+export function squarePoints(clockwise: boolean, size = 200): Point[] {
+  const s = size / 2;
+  return closedPolygon(
+    [
+      { x: -s, y: -s },
+      { x: s, y: -s },
+      { x: s, y: s },
+      { x: -s, y: s },
+    ],
+    clockwise,
+  );
+}
+
+/** V (Curación): baja y sube. `leftToRight` = empieza en la punta izquierda. */
+export function vPoints(leftToRight: boolean, width = 140, height = 200): Point[] {
+  const w = width / 2;
+  const h = height / 2;
+  const vertices = [
+    { x: -w, y: -h },
+    { x: 0, y: h },
+    { x: w, y: -h },
+  ];
+  return polyline(leftToRight ? vertices : vertices.reverse());
+}
+
 /**
- * Plantillas por hechizo. Solo P0 (Rayo y Escudo) por ahora.
+ * S (Veneno) dibujada de arriba hacia abajo (sección 6): arco superior hacia la izquierda
+ * y arco inferior hacia la derecha, como se escribe a mano.
+ */
+export function sPoints(radius = 60, steps = 32): Point[] {
+  const points: Point[] = [];
+  const arc = (cy: number, fromDeg: number, toDeg: number) => {
+    for (let i = 0; i <= steps; i++) {
+      const angle = ((fromDeg + ((toDeg - fromDeg) * i) / steps) * Math.PI) / 180;
+      points.push({ x: radius * Math.cos(angle), y: cy + radius * Math.sin(angle) });
+    }
+  };
+  // Con y hacia abajo: -90° es arriba. Arco de arriba en sentido antihorario hasta el centro,
+  // arco de abajo en sentido horario hasta abajo a la izquierda.
+  arc(-radius, -20, -270);
+  arc(radius, -90, 160);
+  return points;
+}
+
+/**
+ * Plantillas por hechizo (sección 6).
  * Corte (`slash`) no tiene plantilla a propósito: la línea se detecta antes del $1.
+ * El Sello de silencio tampoco: es la X de dos manos, no un trazo.
+ *
+ * Las figuras cerradas no necesitan una plantilla por vértice de inicio: el $1 rota el trazo
+ * a su "ángulo indicativo", y empezar en otra esquina equivale a rotar la figura.
+ * Sí hacen falta los dos sentidos de giro, porque el $1 compara los puntos en orden.
  */
 export const GESTURE_TEMPLATES: Partial<Record<SpellId, GestureTemplate[]>> = {
   lightning: [
@@ -69,6 +138,10 @@ export const GESTURE_TEMPLATES: Partial<Record<SpellId, GestureTemplate[]>> = {
     createTemplate("shield", circlePoints(true)),
     createTemplate("shield", circlePoints(false)),
   ],
+  fireball: [createTemplate("fireball", trianglePoints(true)), createTemplate("fireball", trianglePoints(false))],
+  heal: [createTemplate("heal", vPoints(true)), createTemplate("heal", vPoints(false))],
+  poison: [createTemplate("poison", sPoints())],
+  freeze: [createTemplate("freeze", squarePoints(true)), createTemplate("freeze", squarePoints(false))],
 };
 
 /** Plantillas que el $1 debe usar: solo las de los hechizos del grimorio del jugador. */

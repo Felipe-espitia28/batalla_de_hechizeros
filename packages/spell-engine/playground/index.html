@@ -39,6 +39,7 @@
       th, td { text-align: right; padding: 4px 6px; border-bottom: 1px solid var(--border); }
       th:first-child, td:first-child { text-align: left; }
       ol { margin: 0; padding-left: 20px; font-size: 13px; max-height: 180px; overflow: auto; }
+      .table-wrap { max-height: 260px; overflow: auto; }
       .error { background: #3b1219; border: 1px solid var(--bad); border-radius: 8px; padding: 10px; display: none; }
     </style>
   </head>
@@ -74,13 +75,18 @@
             <select id="target">
               <option value="lightning">⚡ Rayo (zigzag)</option>
               <option value="shield">🛡️ Escudo (círculo)</option>
+              <option value="slash">🗡️ Corte (línea recta)</option>
+              <option value="fireball">🔥 Bola de fuego (triángulo)</option>
+              <option value="heal">💚 Curación (V)</option>
+              <option value="poison">🐍 Veneno (S de arriba a abajo)</option>
+              <option value="freeze">❄️ Congelar (cuadrado)</option>
             </select>
           </div>
           <p class="muted">Elige el gesto que vas a dibujar y repítelo; la tabla mide cuántas veces acierta.</p>
-          <table>
+          <div class="table-wrap"><table>
             <thead><tr><th>Gesto</th><th title="Intentos">Int.</th><th title="Aciertos">OK</th><th title="Reconocido como otro hechizo">Otro</th><th title="Hechizo fallido">Fallo</th><th>%</th></tr></thead>
             <tbody id="stats"></tbody>
-          </table>
+          </table></div>
           <div class="row" style="margin-top: 8px"><button id="reset">Reiniciar conteo</button></div>
         </div>
 
