@@ -1,17 +1,20 @@
-import { PrismaPg } from "@prisma/adapter-pg";
-import express, { type RequestHandler } from "express";
 import { Redis } from "ioredis";
-import { PrismaClient } from "../src/generated/prisma/client.js";
-import { createRankingModule } from "../src/ranking/index.js";
+import { createApp } from "../src/app.js";
+import { loadEnv } from "../src/config/env.js";
+import { signAccessToken } from "../src/lib/jwt.js";
+import { createPrismaClient, type PrismaClient } from "../src/lib/prisma.js";
+import { RankingCache, RankingService } from "../src/modules/ranking/index.js";
 import { TEST_DATABASE_URL, TEST_REDIS_URL } from "./test-env.js";
 
-export const INTERNAL_KEY = "clave-de-prueba";
+// Valores solo de prueba (no son secretos): cumplen los mínimos de longitud de env.ts.
+export const INTERNAL_KEY = "clave-interna-de-prueba";
+const JWT_SECRET = "secreto-de-prueba-con-al-menos-32-caracteres";
 
 export function createTestPrisma(): PrismaClient {
-  return new PrismaClient({ adapter: new PrismaPg({ connectionString: TEST_DATABASE_URL }) });
+  return createPrismaClient(TEST_DATABASE_URL);
 }
 
-/** Mismas opciones que se recomiendan en producción: fallar rápido si Redis no responde. */
+/** Mismas opciones que src/lib/redis.ts en producción: fallar rápido si Redis no responde. */
 export function createTestRedis(url = TEST_REDIS_URL): Redis {
   const redis = new Redis(url, { enableOfflineQueue: false, maxRetriesPerRequest: 1, lazyConnect: true });
   redis.on("error", () => {
@@ -32,24 +35,26 @@ export function createDeadRedis(): Redis {
   return redis;
 }
 
-/** Sustituto del middleware JWT de Felipe: el id llega en una cabecera de prueba. */
-const fakeAuthenticate: RequestHandler = (req, res, next) => {
-  const userId = req.header("x-test-user");
-  if (!userId) {
-    res.status(401).json({ error: { code: "UNAUTHORIZED", message: "Sin sesión" } });
-    return;
-  }
-  res.locals["userId"] = userId;
-  next();
-};
-
+/**
+ * La app real (app.ts), con requireAuth, requireInternalKey y el errorHandler global:
+ * así las pruebas cubren también cómo Felipe monta el módulo.
+ * `service` es una instancia aparte para que la prueba pueda forzar la reconstrucción de dh:ranking.
+ */
 export function createTestApp(prisma: PrismaClient, redis: Redis) {
-  const ranking = createRankingModule({ prisma, redis, authenticate: fakeAuthenticate, internalApiKey: INTERNAL_KEY });
-  const app = express();
-  app.use(express.json());
-  app.use(ranking.router);
-  app.use(ranking.internalRouter);
-  return { app, ranking };
+  const env = loadEnv({
+    NODE_ENV: "test",
+    DATABASE_URL: TEST_DATABASE_URL,
+    JWT_SECRET,
+    INTERNAL_API_KEY: INTERNAL_KEY,
+  });
+  const app = createApp({ env, prisma, redis });
+  const service = new RankingService(prisma, new RankingCache(redis, { warn: () => {} }));
+  return { app, service };
+}
+
+/** Cabecera Authorization con un JWT real para ese usuario. */
+export function authAs(userId: string, username = "jugador") {
+  return { Authorization: `Bearer ${signAccessToken({ id: userId, username }, JWT_SECRET)}` };
 }
 
 export async function resetData(prisma: PrismaClient, redis: Redis | null): Promise<void> {

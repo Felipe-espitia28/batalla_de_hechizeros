@@ -17,46 +17,57 @@ const REBUILD_KEY = "dh:ranking:rebuild";
 const REDIS_TIMEOUT_MS = 500;
 
 export interface RankingCacheLogger {
-  warn: (message: string, error?: unknown) => void;
+  warn: (message: string) => void;
 }
 
 export class RankingCache {
+  /**
+   * Sin Redis, cada petición fallaría aquí: un aviso por operación (y con traza) inundaría el log
+   * de Render. Se avisa una vez por caída y se vuelve a avisar solo si Redis se recupera y cae otra vez.
+   */
+  private unavailableWarned = false;
+
   constructor(
     private readonly redis: Redis,
     private readonly logger: RankingCacheLogger = console,
   ) {}
 
-  private async safe<T>(operation: string, run: () => Promise<T>, timeoutMs = REDIS_TIMEOUT_MS): Promise<T | null> {
+  private async safe<T>(run: () => Promise<T>, timeoutMs = REDIS_TIMEOUT_MS): Promise<T | null> {
     let timer: NodeJS.Timeout | undefined;
     try {
       const timeout = new Promise<never>((_, reject) => {
         timer = setTimeout(() => reject(new Error(`timeout de ${timeoutMs} ms`)), timeoutMs);
       });
-      return await Promise.race([run(), timeout]);
-    } catch (error) {
-      this.logger.warn(`[ranking] Redis no disponible en ${operation}; se usa PostgreSQL`, error);
+      const result = await Promise.race([run(), timeout]);
+      this.unavailableWarned = false;
+      return result;
+    } catch {
+      if (!this.unavailableWarned) {
+        this.unavailableWarned = true;
+        this.logger.warn("[ranking] Redis no disponible; se responde desde PostgreSQL");
+      }
       return null;
     } finally {
       clearTimeout(timer);
     }
   }
 
-  /** Inserta o actualiza ratings. Lo usan el cierre de partida y (a futuro) el registro de usuarios. */
+  /** Inserta o actualiza ratings. Lo usan el cierre de partida y el registro de usuarios. */
   async upsert(entries: ReadonlyArray<{ userId: string; rating: number }>): Promise<boolean> {
     if (entries.length === 0) return true;
     const args = entries.flatMap((e) => [e.rating, e.userId]);
-    const result = await this.safe("upsert", () => this.redis.zadd(RANKING_KEY, ...args));
+    const result = await this.safe(() => this.redis.zadd(RANKING_KEY, ...args));
     return result !== null;
   }
 
   /** Cuántos jugadores tiene la copia; `null` si Redis no responde. */
   size(): Promise<number | null> {
-    return this.safe("size", () => this.redis.zcard(RANKING_KEY));
+    return this.safe(() => this.redis.zcard(RANKING_KEY));
   }
 
   /** Top N: ids con su rating, de mayor a menor. `null` si Redis falla o el set está vacío. */
   async top(limit: number): Promise<Array<{ userId: string; rating: number }> | null> {
-    const raw = await this.safe("top", () => this.redis.zrevrange(RANKING_KEY, 0, limit - 1, "WITHSCORES"));
+    const raw = await this.safe(() => this.redis.zrevrange(RANKING_KEY, 0, limit - 1, "WITHSCORES"));
     // Un set vacío casi siempre significa "no se ha reconstruido": mejor preguntarle a PostgreSQL.
     if (!raw || raw.length === 0) return null;
     const entries: Array<{ userId: string; rating: number }> = [];
@@ -71,7 +82,7 @@ export class RankingCache {
    * estrictamente mayor. Los empatados comparten posición, igual que en la consulta de PostgreSQL.
    */
   async positionOf(userId: string): Promise<{ rating: number; position: number; total: number } | null> {
-    const result = await this.safe("positionOf", async () => {
+    const result = await this.safe(async () => {
       const score = await this.redis.zscore(RANKING_KEY, userId);
       if (score === null) return null;
       const rating = Number(score);
@@ -89,7 +100,7 @@ export class RankingCache {
    * mientras se reconstruye, los lectores nunca vean un ranking a medias.
    */
   async rebuild(entries: ReadonlyArray<{ userId: string; rating: number }>): Promise<boolean> {
-    const result = await this.safe("rebuild", async () => {
+    const result = await this.safe(async () => {
       if (entries.length === 0) {
         await this.redis.del(RANKING_KEY);
         return true;

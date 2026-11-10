@@ -6,7 +6,7 @@ import { createApp } from "./app.js";
 import { loadEnv } from "./config/env.js";
 import { createPrismaClient } from "./lib/prisma.js";
 import { createRedisClient } from "./lib/redis.js";
-import { RankingCache, RankingService } from "./ranking/index.js";
+import { RankingCache, RankingService } from "./modules/ranking/index.js";
 
 const env = loadEnv();
 const prisma = createPrismaClient(env.DATABASE_URL);

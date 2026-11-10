@@ -2,11 +2,12 @@ import type { RecordMatchRequest } from "@duelo/contracts";
 import type { Redis } from "ioredis";
 import request from "supertest";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
-import type { PrismaClient } from "../src/generated/prisma/client.js";
-import { RANKING_KEY } from "../src/ranking/index.js";
-import { rankForRating } from "../src/ranking/rank-rules.js";
-import { resolveOutcomes, withPositions } from "../src/ranking/ranking-service.js";
+import { getRankForRating } from "@duelo/game-rules";
+import type { PrismaClient } from "../src/lib/prisma.js";
+import { RANKING_KEY, RankingCache } from "../src/modules/ranking/index.js";
+import { resolveOutcomes, withPositions } from "../src/modules/ranking/ranking-service.js";
 import {
+  authAs,
   createDeadRedis,
   createTestApp,
   createTestPrisma,
@@ -58,7 +59,7 @@ function postMatch(app: Parameters<typeof request>[0], body: unknown, key: strin
 
 describe("reglas", () => {
   it("calcula los rangos en los bordes de la tabla", () => {
-    expect([0, 99, 100, 249, 250, 499, 500, 899, 900, 5000].map(rankForRating)).toEqual([
+    expect([0, 99, 100, 249, 250, 499, 500, 899, 900, 5000].map(getRankForRating)).toEqual([
       "Grado 4", "Grado 4", "Grado 3", "Grado 3", "Grado 2", "Grado 2", "Grado 1", "Grado 1",
       "Grado Especial", "Grado Especial",
     ]);
@@ -95,7 +96,8 @@ describe("reglas", () => {
 describe("POST /internal/matches", () => {
   it("exige la clave interna", async () => {
     const { app } = createTestApp(prisma, redis);
-    expect((await postMatch(app, {}, null)).status).toBe(401);
+    // requireInternalKey (base del api) responde 403 tanto si falta la cabecera como si es incorrecta.
+    expect((await postMatch(app, {}, null)).status).toBe(403);
     expect((await postMatch(app, {}, "otra-clave")).status).toBe(403);
   });
 
@@ -286,9 +288,9 @@ describe("GET /ranking, /ranking/me y /me/matches", () => {
   }
 
   it("arma el top desde Redis tras reconstruir la copia", async () => {
-    const { app, ranking } = createTestApp(prisma, redis);
+    const { app, service } = createTestApp(prisma, redis);
     const { top, low } = await seed();
-    await ranking.service.rebuildCache();
+    await service.rebuildCache();
     expect(await redis.zcard(RANKING_KEY)).toBe(4);
 
     const res = await request(app).get("/ranking?limit=10");
@@ -303,28 +305,28 @@ describe("GET /ranking, /ranking/me y /me/matches", () => {
     const dead = createDeadRedis();
     const fallback = createTestApp(prisma, dead);
     const { mid2 } = await seed();
-    await live.ranking.service.rebuildCache();
+    await live.service.rebuildCache();
 
     const fromRedis = await request(live.app).get("/ranking");
     const fromPg = await request(fallback.app).get("/ranking");
     expect(fromPg.status).toBe(200);
     expect(fromPg.body).toEqual(fromRedis.body);
 
-    const me = await request(fallback.app).get("/ranking/me").set("x-test-user", mid2.id);
+    const me = await request(fallback.app).get("/ranking/me").set(authAs(mid2.id));
     expect(me.body).toEqual({ position: 2, totalPlayers: 4, rating: 300, rank: "Grado 2" });
     dead.disconnect();
   });
 
   it("detecta una copia incompleta en Redis y la reconstruye", async () => {
-    const { app, ranking } = createTestApp(prisma, redis);
+    const { app, service } = createTestApp(prisma, redis);
     await seed();
-    await ranking.service.rebuildCache();
+    await service.rebuildCache();
     // Un usuario nuevo que nunca llegó a Redis (p. ej. registrado con Upstash caído).
     const late = await createUser(prisma, "late", 1000);
 
     const res = await request(app).get("/ranking");
     expect(res.body.entries[0]).toMatchObject({ userId: late.id, position: 1 });
-    await ranking.service.rebuildCache();
+    await service.rebuildCache();
     expect(await redis.zscore(RANKING_KEY, late.id)).toBe("1000");
   });
 
@@ -335,15 +337,15 @@ describe("GET /ranking, /ranking/me y /me/matches", () => {
   });
 
   it("/ranking/me exige sesión, da la posición y 404 si el usuario no existe", async () => {
-    const { app, ranking } = createTestApp(prisma, redis);
+    const { app, service } = createTestApp(prisma, redis);
     const { top, mid1 } = await seed();
-    await ranking.service.rebuildCache();
+    await service.rebuildCache();
     expect((await request(app).get("/ranking/me")).status).toBe(401);
-    expect((await request(app).get("/ranking/me").set("x-test-user", top.id)).body).toEqual({
+    expect((await request(app).get("/ranking/me").set(authAs(top.id))).body).toEqual({
       position: 1, totalPlayers: 4, rating: 950, rank: "Grado Especial",
     });
-    expect((await request(app).get("/ranking/me").set("x-test-user", mid1.id)).body.position).toBe(2);
-    const ghost = await request(app).get("/ranking/me").set("x-test-user", "33333333-3333-4333-8333-333333333333");
+    expect((await request(app).get("/ranking/me").set(authAs(mid1.id))).body.position).toBe(2);
+    const ghost = await request(app).get("/ranking/me").set(authAs("33333333-3333-4333-8333-333333333333"));
     expect(ghost.status).toBe(404);
   });
 
@@ -360,7 +362,7 @@ describe("GET /ranking, /ranking/me y /me/matches", () => {
     await postMatch(app, matchPayload({ matchId: "m_2", endReason: "DRAW", winnerId: null, players, startedAt: t0 + 60_000, endedAt: t0 + 150_000, durationMs: 90_000 }));
 
     expect((await request(app).get("/me/matches")).status).toBe(401);
-    const res = await request(app).get("/me/matches").set("x-test-user", b.id);
+    const res = await request(app).get("/me/matches").set(authAs(b.id));
     expect(res.status).toBe(200);
     expect(res.body.matches).toHaveLength(2);
     expect(res.body.matches[0]).toMatchObject({ matchId: "m_2", result: "draw", endReason: "DRAW", rival: { id: a.id, username: "ana" } });
@@ -375,5 +377,24 @@ describe("GET /ranking, /ranking/me y /me/matches", () => {
       durationMs: 50_000,
       endedAt: new Date(t0 + 50_000).toISOString(),
     });
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Registro de Redis caído
+// ---------------------------------------------------------------------------
+
+describe("RankingCache sin Redis", () => {
+  it("avisa una sola vez, sin traza, aunque fallen muchas operaciones", async () => {
+    const dead = createDeadRedis();
+    const warnings: unknown[][] = [];
+    const cache = new RankingCache(dead, { warn: (...args: unknown[]) => void warnings.push(args) });
+
+    for (let i = 0; i < 5; i++) {
+      expect(await cache.size()).toBeNull();
+      expect(await cache.top(10)).toBeNull();
+    }
+    expect(warnings).toEqual([["[ranking] Redis no disponible; se responde desde PostgreSQL"]]);
+    dead.disconnect();
   });
 });
