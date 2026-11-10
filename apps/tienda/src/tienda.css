@@ -1,0 +1,107 @@
+/* Estilos de la Tienda. Todo bajo .tienda (y prefijo t-) para no chocar con el shell ni la Arena
+   cuando conviven en la misma página por Module Federation. Paleta igual a la del shell. */
+.tienda {
+  --t-bg: #0f0d1a;
+  --t-surface: #191628;
+  --t-surface-2: #221e36;
+  --t-line: #2f2a49;
+  --t-fg: #ece9fb;
+  --t-muted: #a39fbf;
+  --t-accent: #8f7cff;
+  --t-accent-fg: #0f0d1a;
+  --t-gold: #f2c45a;
+  --t-good: #4ade80;
+  --t-good-bg: #12301f;
+  --t-danger: #ff7a8a;
+  --t-danger-bg: #3a1822;
+
+  min-height: 100%;
+  padding: 20px 16px 32px;
+  background: var(--t-bg);
+  color: var(--t-fg);
+  font: 15px/1.5 "Segoe UI", system-ui, -apple-system, sans-serif;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  max-width: 1080px;
+  margin: 0 auto;
+}
+.tienda *, .tienda *::before, .tienda *::after { box-sizing: border-box; }
+.tienda h2, .tienda h3, .tienda h4 { margin: 0; line-height: 1.2; font-family: "Segoe UI Semibold", "Segoe UI", system-ui, sans-serif; }
+.tienda h2 { font-size: 1.5rem; }
+.tienda h3 { font-size: 1.15rem; }
+.tienda h4 { font-size: 1.02rem; }
+.tienda p { margin: 0; }
+.tienda code { background: var(--t-surface-2); padding: 1px 6px; border-radius: 4px; }
+.tienda .t-muted { color: var(--t-muted); }
+.tienda .t-num { font-variant-numeric: tabular-nums; }
+.tienda .t-eyebrow { font-size: .75rem; text-transform: uppercase; letter-spacing: .1em; color: var(--t-accent); font-weight: 600; }
+.tienda .t-sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+.tienda .t-panel { background: var(--t-surface); border: 1px solid var(--t-line); border-radius: 12px; padding: 18px; display: flex; flex-direction: column; gap: 12px; }
+.tienda .t-center { align-items: center; text-align: center; padding: 40px 18px; }
+.tienda .t-error { border-color: var(--t-danger); background: var(--t-danger-bg); }
+
+.tienda .t-btn { font: inherit; font-weight: 600; color: var(--t-fg); background: var(--t-surface-2); border: 1px solid var(--t-line); border-radius: 8px; padding: 8px 16px; cursor: pointer; white-space: nowrap; }
+.tienda .t-btn:hover:not(:disabled) { border-color: var(--t-accent); }
+.tienda .t-btn:disabled { opacity: .55; cursor: not-allowed; }
+.tienda .t-btn--primary { background: var(--t-accent); border-color: var(--t-accent); color: var(--t-accent-fg); }
+.tienda .t-link { background: none; border: 0; padding: 0; color: var(--t-accent); font: inherit; font-weight: 600; cursor: pointer; text-decoration: underline; }
+.tienda :is(button, select, input):focus-visible { outline: 2px solid var(--t-accent); outline-offset: 2px; }
+
+.tienda .t-spinner { width: 28px; height: 28px; border-radius: 50%; border: 3px solid var(--t-line); border-top-color: var(--t-accent); animation: t-spin .9s linear infinite; }
+@keyframes t-spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .tienda .t-spinner { animation-duration: 3s; } }
+
+/* Encabezado y pestañas */
+.tienda .t-header { display: flex; justify-content: space-between; align-items: flex-end; gap: 12px; flex-wrap: wrap; }
+.tienda .t-gold { font-size: 1.1rem; padding: 6px 14px; border: 1px solid var(--t-line); border-radius: 999px; background: var(--t-surface); }
+.tienda .t-gold strong { color: var(--t-gold); }
+.tienda .t-tabs { display: inline-grid; grid-auto-flow: column; gap: 4px; background: var(--t-surface); border: 1px solid var(--t-line); border-radius: 10px; padding: 4px; justify-self: start; align-self: flex-start; }
+.tienda .t-tabs button { font: inherit; font-weight: 600; border: 0; background: transparent; color: var(--t-muted); padding: 7px 18px; border-radius: 7px; cursor: pointer; }
+.tienda .t-tabs button[aria-selected="true"] { background: var(--t-surface-2); color: var(--t-fg); }
+
+/* Catálogo */
+.tienda .t-catalog { display: flex; flex-direction: column; gap: 26px; }
+.tienda .t-section-head { display: flex; flex-direction: column; gap: 2px; margin-bottom: 10px; }
+.tienda .t-grid { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(min(250px, 100%), 1fr)); gap: 12px; }
+.tienda .t-card { background: var(--t-surface); border: 1px solid var(--t-line); border-radius: 12px; padding: 14px; display: flex; flex-direction: column; gap: 8px; }
+.tienda .t-card--owned, .tienda .t-card--starter { border-color: #3c3466; }
+.tienda .t-card--coming-soon { opacity: .7; }
+.tienda .t-card-top { display: flex; gap: 10px; align-items: center; }
+.tienda .t-emoji { font-size: 1.7rem; width: 44px; height: 44px; display: grid; place-items: center; background: var(--t-surface-2); border-radius: 10px; flex: none; }
+.tienda .t-gesture { color: var(--t-muted); font-size: .88rem; }
+.tienda .t-stats { color: var(--t-muted); font-size: .85rem; }
+.tienda .t-card-foot { margin-top: auto; padding-top: 6px; display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.tienda .t-price { font-weight: 700; color: var(--t-gold); }
+.tienda .t-badge { font-size: .75rem; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; padding: 3px 9px; border-radius: 999px; background: var(--t-surface-2); color: var(--t-muted); }
+.tienda .t-badge--owned { background: var(--t-good-bg); color: var(--t-good); }
+
+.tienda .t-feedback { font-size: .88rem; padding: 7px 10px; border-radius: 8px; }
+.tienda .t-feedback--ok { background: var(--t-good-bg); color: var(--t-good); }
+.tienda .t-feedback--error { background: var(--t-danger-bg); color: var(--t-danger); }
+
+/* Grimorio */
+.tienda .t-grimoire { display: flex; flex-direction: column; gap: 14px; max-width: 640px; }
+.tienda .t-slots { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.tienda .t-slot { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; padding: 10px 12px; border: 1px solid var(--t-line); border-radius: 10px; background: var(--t-bg); }
+.tienda .t-slot--fixed { background: var(--t-surface-2); }
+.tienda .t-slot--fixed .t-badge { margin-left: auto; }
+.tienda .t-slot--invalid { border-color: var(--t-danger); }
+.tienda .t-slot-num { width: 26px; height: 26px; border-radius: 50%; display: grid; place-items: center; background: var(--t-surface-2); color: var(--t-muted); font-weight: 700; font-size: .85rem; flex: none; }
+.tienda .t-slot select { flex: 1; min-width: 180px; font: inherit; padding: 7px 10px; border-radius: 8px; border: 1px solid var(--t-line); background: var(--t-surface); color: var(--t-fg); }
+.tienda .t-field-error { width: 100%; color: var(--t-danger); font-size: .85rem; }
+.tienda .t-hint { font-size: .9rem; color: var(--t-muted); }
+.tienda .t-ultimates { display: flex; flex-wrap: wrap; gap: 8px; }
+.tienda .t-ultimate { display: flex; align-items: center; gap: 8px; padding: 8px 14px; border: 1px solid var(--t-line); border-radius: 999px; cursor: pointer; background: var(--t-bg); }
+.tienda .t-ultimate--active { border-color: var(--t-accent); background: var(--t-surface-2); }
+.tienda .t-ultimate input { accent-color: var(--t-accent); margin: 0; }
+.tienda .t-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+.tienda .t-actions .t-feedback { flex-basis: 100%; }
+
+/* Solo en el arranque independiente (main.tsx) */
+.t-devbar { display: flex; gap: 12px; align-items: center; justify-content: center; flex-wrap: wrap; padding: 6px 12px; font: 13px system-ui, sans-serif; background: #2a2440; color: #ece9fb; }
+.t-devbar .t-link { background: none; border: 0; color: #8f7cff; cursor: pointer; text-decoration: underline; font: inherit; }
+.tienda .t-dev-login { max-width: 420px; width: 100%; margin: 40px auto; }
+.tienda .t-dev-login label { display: flex; flex-direction: column; gap: 5px; font-weight: 600; font-size: .9rem; }
+.tienda .t-dev-login input { font: inherit; padding: 9px 11px; border-radius: 8px; border: 1px solid var(--t-line); background: var(--t-bg); color: var(--t-fg); }
