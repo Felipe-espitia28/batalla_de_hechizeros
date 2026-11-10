@@ -45,13 +45,20 @@ async function main(): Promise<void> {
     logger.info(`escuchando en el puerto ${config.port}`);
   });
 
-  // Render envía SIGTERM al redesplegar: se terminan de registrar los resultados pendientes.
+  // Render envía SIGTERM al redesplegar y, si el proceso sigue vivo, SIGKILL a los 30 s.
+  // Se intenta terminar de registrar los resultados pendientes, pero con tope de 25 s:
+  // un api dormido podría tener reintentos de hasta ~74 s y es mejor salir limpio que morir a medias.
+  const SHUTDOWN_LIMIT_MS = 25_000;
   let closing = false;
   const shutdown = async (signal: string) => {
     if (closing) return;
     closing = true;
     logger.info(`${signal}: cerrando`);
-    await server.close();
+    const timedOut = await Promise.race([
+      server.close().then(() => false),
+      new Promise<boolean>((resolve) => setTimeout(() => resolve(true), SHUTDOWN_LIMIT_MS).unref()),
+    ]);
+    if (timedOut) logger.warn("cierre forzado: quedaron registros de partida sin confirmar");
     await store.close().catch(() => {});
     process.exit(0);
   };

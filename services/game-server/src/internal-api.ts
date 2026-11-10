@@ -20,34 +20,56 @@ export interface InternalApi {
   recordMatch(request: RecordMatchRequest): Promise<RecordMatchResponse>;
 }
 
-/** El usuario del token ya no existe en la base (cuenta borrada o token de otra base). */
-export class UnknownUserError extends Error {}
-
-export class InternalApiError extends Error {}
+/**
+ * Cualquier fallo al hablar con el api: respuesta no 2xx, timeout o red caída.
+ * `status` es el código HTTP, o `null` si no hubo respuesta.
+ *
+ * No hay un error de "usuario desconocido": el JWT ya se validó en el handshake, así que un 404
+ * del loadout significa que el api no tiene la ruta o falló al buscar, no que la sesión expiró.
+ * Responder UNAUTHORIZED en ese caso mandaba al jugador al login sin motivo.
+ */
+export class InternalApiError extends Error {
+  constructor(
+    message: string,
+    readonly status: number | null,
+  ) {
+    super(message);
+  }
+}
 
 interface HttpInternalApiOptions {
   baseUrl: string;
   internalKey: string;
-  /** Render free tarda ~1 min en despertar; 15 s cubre un api lento pero despierto. */
-  timeoutMs?: number;
+  /**
+   * Espera del loadout. El jugador está mirando "buscando rival", así que se corta antes;
+   * el shell ya despertó al api al hacer login.
+   */
+  loadoutTimeoutMs?: number;
+  /** Espera de cada intento de registrar el resultado. */
+  recordTimeoutMs?: number;
   recordAttempts?: number;
+  /** Base del backoff: 2 s, 4 s, 8 s… entre intentos. */
   retryDelayMs?: number;
 }
 
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
 export class HttpInternalApi implements InternalApi {
-  private readonly timeoutMs: number;
+  private readonly loadoutTimeoutMs: number;
+  private readonly recordTimeoutMs: number;
   private readonly recordAttempts: number;
   private readonly retryDelayMs: number;
 
   constructor(private readonly options: HttpInternalApiOptions) {
-    this.timeoutMs = options.timeoutMs ?? 15_000;
-    this.recordAttempts = options.recordAttempts ?? 3;
+    this.loadoutTimeoutMs = options.loadoutTimeoutMs ?? 10_000;
+    this.recordTimeoutMs = options.recordTimeoutMs ?? 15_000;
+    // 4 intentos × 15 s + esperas de 2, 4 y 8 s ≈ 74 s: cubre el minuto que tarda Render free
+    // en despertar el api. Ver services/game-server/README.md, "Si el api no responde".
+    this.recordAttempts = options.recordAttempts ?? 4;
     this.retryDelayMs = options.retryDelayMs ?? 2_000;
   }
 
-  private async request(path: string, init: RequestInit = {}): Promise<Response> {
+  private async request(path: string, timeoutMs: number, init: RequestInit = {}): Promise<Response> {
     try {
       return await fetch(`${this.options.baseUrl}${path}`, {
         ...init,
@@ -56,17 +78,18 @@ export class HttpInternalApi implements InternalApi {
           [INTERNAL_KEY_HEADER]: this.options.internalKey,
           "content-type": "application/json",
         },
-        signal: AbortSignal.timeout(this.timeoutMs),
+        signal: AbortSignal.timeout(timeoutMs),
       });
     } catch (error) {
-      throw new InternalApiError(`api interna inalcanzable (${path}): ${(error as Error).message}`);
+      // TimeoutError (AbortSignal.timeout) o fallo de red (api apagado, DNS).
+      throw new InternalApiError(`api inalcanzable en ${path}: ${(error as Error).message}`, null);
     }
   }
 
   async getLoadout(userId: UserId): Promise<LoadoutResponse> {
-    const res = await this.request(`/internal/users/${encodeURIComponent(userId)}/loadout`);
-    if (res.status === 404) throw new UnknownUserError(`usuario ${userId} no existe`);
-    if (!res.ok) throw new InternalApiError(`loadout respondió ${res.status}`);
+    const path = `/internal/users/${encodeURIComponent(userId)}/loadout`;
+    const res = await this.request(path, this.loadoutTimeoutMs);
+    if (!res.ok) throw new InternalApiError(`GET ${path} respondió ${res.status}`, res.status);
     return (await res.json()) as LoadoutResponse;
   }
 
@@ -74,15 +97,18 @@ export class HttpInternalApi implements InternalApi {
     let lastError: unknown;
     for (let attempt = 1; attempt <= this.recordAttempts; attempt++) {
       try {
-        const res = await this.request("/internal/matches", { method: "POST", body: JSON.stringify(request) });
+        const res = await this.request("/internal/matches", this.recordTimeoutMs, {
+          method: "POST",
+          body: JSON.stringify(request),
+        });
         if (res.ok) return (await res.json()) as RecordMatchResponse;
+        lastError = new InternalApiError(`POST /internal/matches respondió ${res.status}`, res.status);
         // Un 4xx no mejora reintentando (payload inválido o clave mala); un 5xx sí puede.
-        lastError = new InternalApiError(`registrar partida respondió ${res.status}`);
         if (res.status < 500) break;
       } catch (error) {
         lastError = error;
       }
-      if (attempt < this.recordAttempts) await sleep(this.retryDelayMs * attempt);
+      if (attempt < this.recordAttempts) await sleep(this.retryDelayMs * 2 ** (attempt - 1));
     }
     throw lastError;
   }
