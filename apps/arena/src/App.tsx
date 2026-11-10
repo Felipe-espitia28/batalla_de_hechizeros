@@ -5,23 +5,22 @@
 import { emitDueloEvent, type RemoteAppProps, type SpellId } from "@duelo/contracts";
 import type { SpellEvent } from "@duelo/spell-engine";
 import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
+import { MATCH_RULES } from "@duelo/game-rules";
+import { fetchGold, fetchGrimoire } from "./api";
 import { DEFAULT_GRIMOIRE, GAME_SERVER_URL } from "./config";
 import { useSpellSource } from "./engine/use-spell-source";
-import { fetchGrimoire } from "./grimoire";
-import { MatchClient } from "./match/match-client";
+import { MatchClient, type Notice } from "./match/match-client";
 import { EndScreen } from "./ui/end-screen";
 import { PlayerPanel } from "./ui/player-panel";
 import { useNow } from "./ui/use-now";
 import "./arena.css";
 
-/** Penalización local tras un hechizo fallido (sección 6): el reconocedor ignora gestos 0,5 s. */
-const FAIL_PENALTY_MS = 500;
 
 export default function App(props: RemoteAppProps) {
   if (!GAME_SERVER_URL) {
     return (
       <div className="arena">
-        <div className="panel error">Falta configurar VITE_GAME_SERVER_URL en el .env de la Arena.</div>
+        <div className="ar-panel ar-error">Falta configurar VITE_GAME_SERVER_URL en el .env de la Arena.</div>
       </div>
     );
   }
@@ -77,6 +76,7 @@ function ArenaView({ session, navigate, client }: RemoteAppProps & { client: Mat
   const engine = useSpellSource({
     enabled: inMatch,
     grimoire,
+    minConfidence: MATCH_RULES.minConfidence,
     debug,
     video: videoRef,
     canvas: canvasRef,
@@ -88,18 +88,28 @@ function ArenaView({ session, navigate, client }: RemoteAppProps & { client: Mat
       },
       onSpellFailed() {
         if (match.phase !== "active") return;
-        lockedUntil.current = Date.now() + FAIL_PENALTY_MS;
+        // Penalización local (sección 6): el fallo nunca llega al servidor, así que la aplica la Arena.
+        lockedUntil.current = Date.now() + MATCH_RULES.failedCastPenaltyMs;
         client.notify("¡Hechizo fallido!", "bad");
       },
     },
   });
 
   // --- Fin de partida: avisar al shell y al ranking (sección 9) ---------------
+  // Se recuerda la partida ya avisada: StrictMode ejecuta los efectos dos veces en desarrollo
+  // y el shell no debe recibir dos duelo:match-ended por la misma partida.
   const end = match.end;
+  const announcedMatch = useRef<string | null>(null);
   useEffect(() => {
     const reward = end?.rewards[userId];
-    if (end && reward) emitDueloEvent("duelo:match-ended", { matchId: end.matchId, newRating: reward.newRating });
-  }, [end, userId]);
+    if (!end || !reward || announcedMatch.current === end.matchId) return;
+    announcedMatch.current = end.matchId;
+    emitDueloEvent("duelo:match-ended", { matchId: end.matchId, newRating: reward.newRating });
+    // match:end solo trae cuánto oro se ganó; el total lo sabe el api (GET /me).
+    void fetchGold(session.token).then((gold) => {
+      if (gold !== null) emitDueloEvent("duelo:gold-changed", { gold });
+    });
+  }, [end, userId, session.token]);
 
   const you = match.state?.players[userId];
   const rivalId = match.rival?.id;
@@ -110,64 +120,64 @@ function ArenaView({ session, navigate, client }: RemoteAppProps & { client: Mat
     <div className="arena">
       <StatusBar connection={match.connection} keyboard={engine.keyboard} />
 
-      {match.error && <div className="panel error">{match.error}</div>}
+      {match.error && <div className="ar-panel ar-error">{match.error}</div>}
 
       {match.phase === "idle" && (
-        <div className="panel center">
+        <div className="ar-panel ar-center">
           <h2>Arena</h2>
-          <p className="muted">Dibuja con la pinza: ⚡ zigzag = Rayo, 🛡️ círculo = Escudo.</p>
-          <button className="btn btn--primary" onClick={() => client.joinQueue()} disabled={match.connection !== "online"}>
+          <p className="ar-muted">Dibuja con la pinza: ⚡ zigzag = Rayo, 🛡️ círculo = Escudo.</p>
+          <button className="ar-btn ar-btn--primary" onClick={() => client.joinQueue()} disabled={match.connection !== "online"}>
             Buscar rival
           </button>
         </div>
       )}
 
       {match.phase === "queued" && (
-        <div className="panel center">
+        <div className="ar-panel ar-center">
           <h2>Buscando rival…</h2>
-          <p className="muted">
+          <p className="ar-muted">
             {match.ratingRange === null ? "Aceptando cualquier rival" : `Rivales a ±${match.ratingRange} puntos`}
           </p>
-          <button className="btn" onClick={() => client.leaveQueue()}>
+          <button className="ar-btn" onClick={() => client.leaveQueue()}>
             Cancelar
           </button>
         </div>
       )}
 
       {inMatch && (
-        <div className={`stage stage--${match.phase === "active" || match.phase === "countdown" ? "combat" : "calibration"}`}>
+        <div className={`ar-stage ar-stage--${match.phase === "active" || match.phase === "countdown" ? "combat" : "calibration"}`}>
           {!engine.keyboard && (
-            <div className="camera">
+            <div className="ar-camera">
               <video ref={videoRef} playsInline muted />
               <canvas ref={canvasRef} />
-              {engine.status === "loading" && <div className="camera__msg">Cargando cámara y detector de manos…</div>}
+              {engine.status === "loading" && <div className="ar-camera__msg">Cargando cámara y detector de manos…</div>}
             </div>
           )}
 
           {engine.status === "error" && engine.error && (
-            <div className="panel error">
+            <div className="ar-panel ar-error">
               <p>{engine.error.message}</p>
-              <button className="btn" onClick={() => setEngineAttempt((n) => n + 1)}>
+              <button className="ar-btn" onClick={() => setEngineAttempt((n) => n + 1)}>
                 Reintentar
               </button>
             </div>
           )}
 
           {(match.phase === "found" || match.phase === "ready") && (
-            <div className="panel center">
+            <div className="ar-panel ar-center">
               <h2>Calibración</h2>
-              <p className="muted">
+              <p className="ar-muted">
                 Rival: <strong>{match.rival?.username}</strong> ({match.rival?.rank})
               </p>
               <p>{engine.handVisible ? "✅ Mano detectada. Prueba hacer la pinza." : "✋ Pon la mano frente a la cámara."}</p>
               {match.phase === "found" ? (
-                <button className="btn btn--primary" onClick={() => client.ready()} disabled={engine.status !== "running" || !engine.handVisible}>
+                <button className="ar-btn ar-btn--primary" onClick={() => client.ready()} disabled={engine.status !== "running" || !engine.handVisible}>
                   ¡Estoy listo!
                 </button>
               ) : (
-                <p className="muted">Esperando a que el rival esté listo…</p>
+                <p className="ar-muted">Esperando a que el rival esté listo…</p>
               )}
-              <label className="muted row">
+              <label className="ar-muted ar-row">
                 <input type="checkbox" checked={debug} onChange={(e) => setDebug(e.target.checked)} /> Ver puntos de la mano
               </label>
             </div>
@@ -175,23 +185,27 @@ function ArenaView({ session, navigate, client }: RemoteAppProps & { client: Mat
 
           {(match.phase === "countdown" || match.phase === "active") && (
             <>
-              <div className="duel">
+              <div className="ar-duel">
                 <PlayerPanel side="you" summary={match.you} state={you} now={now} grimoire={grimoire} />
-                <div className="duel__center">
+                <div className="ar-duel__center">
                   {match.phase === "countdown" && match.startsAt && (
-                    <div className="countdown">{Math.max(1, Math.ceil((match.startsAt - now) / 1000))}</div>
+                    <div className="ar-countdown">{Math.max(1, Math.ceil((match.startsAt - now) / 1000))}</div>
                   )}
                   {match.phase === "active" && match.endsAt && (
-                    <div className="timer">{Math.max(0, Math.ceil((match.endsAt - now) / 1000))} s</div>
+                    <div className="ar-timer">{Math.max(0, Math.ceil((match.endsAt - now) / 1000))} s</div>
                   )}
+                  {/* En combate los avisos van bajo el reloj: así no tapan nombres ni barras. */}
+                  <Notices notices={visibleNotices} />
                 </div>
                 <PlayerPanel side="rival" summary={match.rival} state={rival} now={now} />
               </div>
 
-              {match.sealWarning && <div className="banner banner--bad">¡Te están sellando!</div>}
+              {match.sealWarning && <div className="ar-banner ar-banner--bad">¡Te están sellando!</div>}
               {match.opponentGraceUntil !== null && (
-                <div className="banner">
-                  El rival se desconectó. Esperando {Math.max(0, Math.ceil((match.opponentGraceUntil - now) / 1000))} s…
+                <div className="ar-banner">
+                  El rival se desconectó. Esperando{" "}
+                  {/* El reloj de pantalla se refresca cada 100 ms: se limita al graceMs real. */}
+                  {Math.min(match.opponentGraceMs / 1000, Math.max(0, Math.ceil((match.opponentGraceUntil - now) / 1000)))} s…
                 </div>
               )}
             </>
@@ -203,24 +217,30 @@ function ArenaView({ session, navigate, client }: RemoteAppProps & { client: Mat
         <EndScreen end={match.end} userId={userId} onPlayAgain={() => client.backToLobby()} onExit={() => navigate("/ranking")} />
       )}
 
-      <ul className="notices" aria-live="polite">
-        {visibleNotices.map((n) => (
-          <li key={n.id} className={`notice notice--${n.tone}`}>
-            {n.text}
-          </li>
-        ))}
-      </ul>
+      {!(match.phase === "countdown" || match.phase === "active") && <Notices notices={visibleNotices} />}
     </div>
+  );
+}
+
+function Notices({ notices }: { notices: Notice[] }) {
+  return (
+    <ul className="ar-notices" aria-live="polite">
+      {notices.map((n) => (
+        <li key={n.id} className={`ar-notice ar-notice--${n.tone}`}>
+          {n.text}
+        </li>
+      ))}
+    </ul>
   );
 }
 
 function StatusBar({ connection, keyboard }: { connection: string; keyboard: boolean }) {
   if (connection === "online" && !keyboard) return null;
   return (
-    <div className="statusbar">
+    <div className="ar-statusbar">
       {connection === "connecting" && <span>Conectando con el servidor…</span>}
-      {connection === "reconnecting" && <span className="warn">Conexión perdida. Reconectando…</span>}
-      {connection === "unauthorized" && <span className="warn">Tu sesión expiró. Vuelve a iniciar sesión.</span>}
+      {connection === "reconnecting" && <span className="ar-warn">Conexión perdida. Reconectando…</span>}
+      {connection === "unauthorized" && <span className="ar-warn">Tu sesión expiró. Vuelve a iniciar sesión.</span>}
       {keyboard && <span>Modo teclado (pruebas): 1 = Rayo, 2 = Escudo, 0 = fallido</span>}
     </div>
   );

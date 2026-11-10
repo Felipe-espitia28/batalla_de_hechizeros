@@ -178,6 +178,9 @@ importers:
       '@duelo/contracts':
         specifier: workspace:*
         version: link:../../packages/contracts
+      '@duelo/game-rules':
+        specifier: workspace:*
+        version: link:../../packages/game-rules
       '@duelo/spell-engine':
         specifier: workspace:*
         version: link:../../packages/spell-engine
@@ -203,9 +206,6 @@ importers:
       '@vitejs/plugin-react':
         specifier: 6.1.2
         version: 6.1.2(vite@8.3.6(@types/node@24.19.2)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.15))
-      socket.io:
-        specifier: 4.8.4
-        version: 4.8.4
       typescript:
         specifier: 6.0.3
         version: 6.0.3

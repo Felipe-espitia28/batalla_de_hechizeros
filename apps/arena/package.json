@@ -5,16 +5,17 @@
   "type": "module",
   "description": "Remote Arena: combate en vivo con cámara y micrófono. Dueño: Juan.",
   "scripts": {
+    "build:deps": "pnpm --filter @duelo/game-rules build",
     "assets": "node ../../packages/spell-engine/scripts/copy-assets.mjs public/mediapipe",
-    "dev": "pnpm run assets && vite",
-    "build": "pnpm run assets && tsc -p tsconfig.json && vite build",
+    "dev": "pnpm run build:deps && pnpm run assets && vite",
+    "build": "pnpm run build:deps && pnpm run assets && tsc -p tsconfig.json && vite build",
     "preview": "vite preview",
-    "typecheck": "tsc -p tsconfig.json",
-    "test": "vitest run",
-    "mock": "node dev/mock-game-server.ts"
+    "typecheck": "pnpm run build:deps && tsc -p tsconfig.json",
+    "test": "pnpm run build:deps && vitest run"
   },
   "dependencies": {
     "@duelo/contracts": "workspace:*",
+    "@duelo/game-rules": "workspace:*",
     "@duelo/spell-engine": "workspace:*",
     "react": "19.3.1",
     "react-dom": "19.3.1",
@@ -25,7 +26,6 @@
     "@types/react": "19.3.0",
     "@types/react-dom": "19.3.0",
     "@vitejs/plugin-react": "6.1.2",
-    "socket.io": "4.8.4",
     "typescript": "6.0.3",
     "vite": "8.3.6",
     "vitest": "5.0.5"

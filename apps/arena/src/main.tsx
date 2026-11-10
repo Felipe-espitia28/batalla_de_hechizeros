@@ -62,7 +62,7 @@ function DevLogin({ onLogin }: { onLogin: (s: Session) => void }) {
   return (
     <form className="arena" onSubmit={submit} style={{ maxWidth: 420, margin: "40px auto" }}>
       <h2>Arena · sesión de prueba</h2>
-      <p className="muted">Solo para desarrollo. En producción la sesión la entrega el shell.</p>
+      <p className="ar-muted">Solo para desarrollo. En producción la sesión la entrega el shell.</p>
       <label>
         Usuario
         <input value={username} onChange={(e) => setUsername(e.target.value)} placeholder="mago123" style={{ display: "block", width: "100%" }} />
@@ -71,7 +71,7 @@ function DevLogin({ onLogin }: { onLogin: (s: Session) => void }) {
         Token JWT (opcional: vacío = servidor simulado)
         <input value={token} onChange={(e) => setToken(e.target.value)} style={{ display: "block", width: "100%" }} />
       </label>
-      <button className="btn btn--primary" type="submit">
+      <button className="ar-btn ar-btn--primary" type="submit">
         Entrar
       </button>
     </form>

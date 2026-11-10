@@ -28,6 +28,8 @@ export interface SpellSourceState {
 interface Options {
   enabled: boolean;
   grimoire: readonly SpellId[];
+  /** Confianza mínima del $1 (MATCH_RULES.minConfidence de game-rules). */
+  minConfidence: number;
   /** Mostrar esqueleto de la mano (modo depuración). */
   debug: boolean;
   handlers: SpellEngineHandlers;
@@ -37,7 +39,7 @@ interface Options {
   attempt?: number;
 }
 
-export function useSpellSource({ enabled, grimoire, debug, handlers, video, canvas, attempt = 0 }: Options): SpellSourceState {
+export function useSpellSource({ enabled, grimoire, minConfidence, debug, handlers, video, canvas, attempt = 0 }: Options): SpellSourceState {
   const keyboard = keyboardModeEnabled();
   const [status, setStatus] = useState<EngineStatus>("off");
   const [error, setError] = useState<SpellEngineError | null>(null);
@@ -75,6 +77,7 @@ export function useSpellSource({ enabled, grimoire, debug, handlers, video, canv
           wasmBasePath: MEDIAPIPE_WASM_PATH,
           modelAssetPath: MEDIAPIPE_MODEL_PATH,
           grimoire,
+          minConfidence,
           onFrame(snapshot, size) {
             const visible = snapshot.hands.length > 0;
             // Solo re-renderiza React cuando cambia, no 30 veces por segundo.
