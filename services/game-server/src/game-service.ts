@@ -38,7 +38,7 @@ import {
   type MatchResult,
   type PlayerLoadout,
 } from "./combat/engine.js";
-import { UnknownUserError, computeRewardsLocally, type InternalApi } from "./internal-api.js";
+import { InternalApiError, computeRewardsLocally, type InternalApi } from "./internal-api.js";
 import type { Logger } from "./logger.js";
 import { findPairs, type QueueEntry } from "./matchmaking/pairing.js";
 import type { LiveStore } from "./store/live-store.js";
@@ -208,9 +208,14 @@ export class GameService {
       };
     } catch (error) {
       this.joining.delete(userId);
-      if (error instanceof UnknownUserError) return fail("UNAUTHORIZED");
       // Sin grimorio validado no se juega: nunca se usa uno enviado por el cliente.
-      this.logger.error("no se pudo obtener el loadout", { userId, error: (error as Error).message });
+      // Siempre INTERNAL_ERROR, también ante un 404: el JWT ya se validó en el handshake, así que
+      // UNAUTHORIZED haría que la Arena muestre "Tu sesión expiró" por un fallo del api.
+      this.logger.error("no se pudo obtener el loadout", {
+        userId,
+        status: error instanceof InternalApiError ? error.status : null,
+        error: (error as Error).message,
+      });
       return fail("INTERNAL_ERROR");
     }
     // Si mientras esperaba al api salió de la cola o se desconectó, no se le encola.

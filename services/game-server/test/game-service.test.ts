@@ -3,7 +3,7 @@ import { MATCH_RULES } from "@duelo/game-rules";
 import { beforeEach, describe, expect, it } from "vitest";
 import { GameService, type Emitter } from "../src/game-service.js";
 import { DevInternalApi, InternalApiError, type InternalApi } from "../src/internal-api.js";
-import { silentLogger } from "../src/logger.js";
+import { silentLogger, type Logger } from "../src/logger.js";
 import { MemoryLiveStore } from "../src/store/live-store.js";
 
 const A = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa";
@@ -35,7 +35,7 @@ let store: MemoryLiveStore;
 let api: InternalApi;
 let service: GameService;
 
-function build(customApi?: InternalApi): void {
+function build(customApi?: InternalApi, logger: Logger = silentLogger): void {
   clock = 1_000_000;
   emitter = new RecordingEmitter();
   store = new MemoryLiveStore();
@@ -44,7 +44,7 @@ function build(customApi?: InternalApi): void {
     store,
     api,
     emitter,
-    logger: silentLogger,
+    logger,
     now: () => clock,
     timing: { resultDeadlineMs: 50 },
   });
@@ -241,18 +241,29 @@ describe("GameService", () => {
 });
 
 describe("GameService con el api caído", () => {
-  it("sin loadout no hay cola: responde INTERNAL_ERROR", async () => {
+  // El 404 es el caso que vio Felipe: la ruta del loadout aún no existía y la Arena mostraba
+  // "Tu sesión expiró". El JWT ya se validó en el handshake: nunca debe ser UNAUTHORIZED.
+  it.each([
+    ["404 (ruta o usuario no encontrado)", 404],
+    ["500 del api", 500],
+    ["timeout o api apagado", null],
+  ] as const)("loadout con %s: responde INTERNAL_ERROR, no encola y lo registra", async (_case, status) => {
+    const errors: unknown[] = [];
     const broken: InternalApi = {
       getLoadout: async () => {
-        throw new InternalApiError("caído");
+        throw new InternalApiError("fallo simulado", status);
       },
       recordMatch: async () => {
-        throw new InternalApiError("caído");
+        throw new InternalApiError("fallo simulado", status);
       },
     };
-    build(broken);
+    build(broken, { ...silentLogger, error: (_message, extra) => errors.push(extra) });
     expect(await service.joinQueue(A, "ana")).toEqual({ ok: false, code: "INTERNAL_ERROR" });
     expect(service.isQueued(A)).toBe(false);
+    expect(store.queue.size).toBe(0);
+    expect(errors).toEqual([expect.objectContaining({ userId: A, status })]);
+    // Tras el fallo puede volver a intentarlo (no queda marcado como "entrando").
+    expect(await service.joinQueue(A, "ana")).toEqual({ ok: false, code: "INTERNAL_ERROR" });
   });
 
   it("si el registro falla, igual envía match:end con recompensas provisionales", async () => {
@@ -262,7 +273,7 @@ describe("GameService con el api caído", () => {
       getLoadout: (id, name) => dev.getLoadout(id, name),
       recordMatch: async (req): Promise<RecordMatchResponse> => {
         calls.push(req);
-        throw new InternalApiError("500");
+        throw new InternalApiError("500", 500);
       },
     };
     build(failing);

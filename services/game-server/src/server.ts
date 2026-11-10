@@ -83,9 +83,11 @@ export function createGameServer(options: GameServerOptions): GameServer {
     io,
     service,
     async close() {
-      await service.stop();
-      // io.close también cierra el servidor HTTP.
+      // Primero se deja de aceptar conexiones (io.close también cierra el servidor HTTP) y luego
+      // se esperan los registros de partida pendientes; al revés, entrarían jugadores nuevos
+      // mientras se espera al api.
       await new Promise<void>((resolve) => io.close(() => resolve()));
+      await service.stop();
     },
   };
 }
