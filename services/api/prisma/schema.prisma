@@ -21,13 +21,6 @@ enum SpellKind {
   ultimate
 }
 
-enum EndReason {
-  KO
-  TIMEOUT
-  DRAW
-  ABANDON
-}
-
 model User {
   id                 String   @id @default(uuid()) @db.Uuid
   username           String   @unique
@@ -99,15 +92,18 @@ model GrimoireSlot {
   @@map("grimoire_slots")
 }
 
+// Partidas — Daniel (ranking).
 model Match {
-  // Usa el mismo id que asignó el game-server, para casar Redis, logs y PostgreSQL.
-  id         String    @id @db.Uuid
-  endReason  EndReason @map("end_reason")
+  // Texto y no uuid (decisión de Daniel): el id lo genera el game-server y es la clave de
+  // idempotencia de POST /internal/matches. Acepta tanto UUID como ids tipo "m_8f2c41".
+  id         String   @id
+  // KO | TIMEOUT | DRAW | ABANDON: lo valida POST /internal/matches con END_REASONS de contracts.
+  endReason  String   @map("end_reason")
   // null en empate.
-  winnerId   String?   @map("winner_id") @db.Uuid
-  durationMs Int       @map("duration_ms")
-  startedAt  DateTime  @map("started_at") @db.Timestamptz(3)
-  endedAt    DateTime  @map("ended_at") @db.Timestamptz(3)
+  winnerId   String?  @map("winner_id") @db.Uuid
+  durationMs Int      @map("duration_ms")
+  startedAt  DateTime @map("started_at") @db.Timestamptz(3)
+  endedAt    DateTime @map("ended_at") @db.Timestamptz(3)
 
   winner  User?         @relation("MatchWinner", fields: [winnerId], references: [id])
   players MatchPlayer[]
@@ -116,9 +112,10 @@ model Match {
 }
 
 model MatchPlayer {
-  matchId      String @map("match_id") @db.Uuid
+  matchId      String @map("match_id")
   userId       String @map("user_id") @db.Uuid
   ratingBefore Int    @map("rating_before")
+  // Delta realmente aplicado (ya recortado para que el rating no baje de 0).
   ratingDelta  Int    @map("rating_delta")
   goldDelta    Int    @map("gold_delta")
   finalHp      Int    @map("final_hp")

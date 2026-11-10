@@ -1,10 +1,36 @@
 {
   "name": "@duelo/game-server",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "private": true,
   "type": "module",
   "description": "Servidor de partidas (Socket.IO, autoritativo). Dueño: Johan.",
+  "engines": {
+    "node": ">=22.12"
+  },
+  "scripts": {
+    "build:deps": "pnpm --filter @duelo/game-rules build",
+    "dev": "pnpm run build:deps && tsx watch --env-file-if-exists=.env src/index.ts",
+    "build": "pnpm run build:deps && tsc -p tsconfig.build.json",
+    "start": "node dist/index.js",
+    "typecheck": "pnpm run build:deps && tsc -p tsconfig.json --noEmit",
+    "test": "pnpm run build:deps && vitest run",
+    "duel": "tsx --env-file-if-exists=.env scripts/duel.ts",
+    "client": "tsx --env-file-if-exists=.env scripts/console-client.ts"
+  },
   "dependencies": {
-    "@duelo/contracts": "workspace:*"
+    "@duelo/contracts": "workspace:*",
+    "@duelo/game-rules": "workspace:*",
+    "ioredis": "^5.11.1",
+    "jsonwebtoken": "^9.0.3",
+    "socket.io": "^4.8.4",
+    "zod": "^4.6.7"
+  },
+  "devDependencies": {
+    "@types/jsonwebtoken": "^9.0.10",
+    "@types/node": "^24.19.2",
+    "socket.io-client": "^4.8.4",
+    "tsx": "^4.23.15",
+    "typescript": "6.0.3",
+    "vitest": "^5.1.0"
   }
 }

@@ -3,8 +3,10 @@ import { defineConfig } from "vitest/config";
 export default defineConfig({
   test: {
     include: ["test/**/*.test.ts"],
-    environment: "node",
-    // bcrypt y la primera consulta a la base pueden tardar más que el límite por defecto.
+    globalSetup: ["test/global-setup.ts"],
+    // Todas las pruebas comparten una base y un Redis reales: en paralelo se pisarían los datos.
+    fileParallelism: false,
     testTimeout: 20_000,
+    hookTimeout: 60_000,
   },
 });

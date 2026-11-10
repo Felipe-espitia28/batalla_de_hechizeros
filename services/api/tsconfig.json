@@ -6,7 +6,9 @@
     "moduleResolution": "nodenext",
     "lib": ["ES2023"],
     "types": ["node"],
-    "noEmit": true
+    "noEmit": true,
+    // Sin .d.ts: el api es una app, no una librería (y evita TS2883 en los helpers de prueba).
+    "declaration": false
   },
   "include": ["src", "test", "prisma", "prisma.config.ts", "vitest.config.ts"]
 }

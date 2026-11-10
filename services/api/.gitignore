@@ -1,2 +1,2 @@
-# Cliente de Prisma generado: se regenera con prisma generate (en build y typecheck).
+# Cliente de Prisma generado (`pnpm --filter @duelo/api prisma:generate`).
 src/generated/

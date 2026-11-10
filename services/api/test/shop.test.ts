@@ -1,7 +1,7 @@
 /**
- * Pruebas de integración de la tienda contra un PostgreSQL real (la compra atómica solo se puede
- * probar de verdad con transacciones y bloqueos reales, no con un mock).
- * Requieren TEST_DATABASE_URL con las migraciones y el seed aplicados; sin ella se omiten.
+ * Pruebas de integración de la tienda contra un PostgreSQL real (TEST_DATABASE_URL, ver test-env.ts).
+ * La compra atómica solo se puede probar de verdad con transacciones y bloqueos reales, no con un mock.
+ * global-setup.ts ya aplicó las migraciones y el seed (catálogo completo) antes de que corran.
  */
 import request from "supertest";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
@@ -9,20 +9,20 @@ import { SPELL_CATALOG } from "@duelo/game-rules";
 import { createApp } from "../src/app.js";
 import { loadEnv } from "../src/config/env.js";
 import { createPrismaClient, type PrismaClient } from "../src/lib/prisma.js";
-
-const databaseUrl = process.env.TEST_DATABASE_URL;
-if (!databaseUrl) {
-  console.warn("[test] TEST_DATABASE_URL no está definida: se omiten las pruebas de integración de tienda.");
-}
+import type { Redis } from "../src/lib/redis.js";
+import { createTestRedis } from "./helpers.js";
+import { TEST_DATABASE_URL } from "./test-env.js";
 
 const INTERNAL_KEY = "clave-interna-de-prueba";
 
-describe.skipIf(!databaseUrl)("tienda (integración)", () => {
+describe("tienda (integración)", () => {
   // Prefijo único por ejecución para no chocar con datos de corridas anteriores ni con auth.test.
   const prefix = `s_${Date.now().toString(36)}`;
   let counter = 0;
 
   let prisma: PrismaClient;
+  // La tienda no usa Redis, pero la app completa lo recibe (lo usa el ranking).
+  let redis: Redis;
   let app: ReturnType<typeof createApp>;
 
   /** Registra una cuenta nueva (con el grimorio inicial) y le da el oro pedido. */
@@ -45,18 +45,20 @@ describe.skipIf(!databaseUrl)("tienda (integración)", () => {
   beforeAll(() => {
     const env = loadEnv({
       NODE_ENV: "test",
-      DATABASE_URL: databaseUrl,
+      DATABASE_URL: TEST_DATABASE_URL,
       JWT_SECRET: "secreto-de-prueba-con-al-menos-32-caracteres",
       INTERNAL_API_KEY: INTERNAL_KEY,
       ALLOWED_ORIGINS: "http://localhost:5173",
     });
     prisma = createPrismaClient(env.DATABASE_URL);
-    app = createApp({ env, prisma });
+    redis = createTestRedis();
+    app = createApp({ env, prisma, redis });
   });
 
   afterAll(async () => {
     await prisma.user.deleteMany({ where: { username: { startsWith: prefix } } });
     await prisma.$disconnect();
+    redis.disconnect();
   });
 
   describe("GET /spells", () => {

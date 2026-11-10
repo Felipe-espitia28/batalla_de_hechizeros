@@ -1,0 +1,105 @@
+# CI del monorepo (R6: "Actions en verde"). Dueño: Daniel.
+#
+# En cada PR hacia main instala, revisa tipos, compila y prueba SOLO los paquetes que cambiaron
+# y los que dependen de ellos (si cambia @duelo/contracts se validan todos sus consumidores).
+# Si cambian archivos de la raíz (lockfile, pnpm-workspace.yaml, tsconfig.base.json, este workflow)
+# se valida todo, porque esos archivos afectan a cada paquete.
+#
+# Para que proteja main: en Settings → Rules → el ruleset de main, activar
+# "Require status checks to pass" y elegir el check "CI / verificar".
+name: CI
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+# Un push nuevo al mismo PR cancela la ejecución anterior: ahorra minutos y da el resultado antes.
+concurrency:
+  group: ci-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  verificar:
+    # Un solo job con nombre fijo: así el check obligatorio de main existe siempre,
+    # aunque el PR no toque ningún paquete.
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    # Bases reales para las pruebas de integración del api (mismas imágenes que docker-compose.yml).
+    # Son contenedores efímeros del runner: sus credenciales no protegen nada y no son secretos.
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_USER: duelo
+          POSTGRES_PASSWORD: duelo
+          POSTGRES_DB: duelo_test
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U duelo -d duelo_test"
+          --health-interval 5s --health-timeout 3s --health-retries 10
+      redis:
+        image: redis:7-alpine
+        ports: ["6379:6379"]
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s --health-timeout 3s --health-retries 10
+
+    env:
+      TEST_DATABASE_URL: postgresql://duelo:duelo@localhost:5432/duelo_test
+      TEST_REDIS_URL: redis://localhost:6379/15
+
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          # Historial completo: pnpm compara contra la rama base para saber qué cambió.
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+
+      # Sin "version": toma la de "packageManager" en package.json, la misma que usa el equipo.
+      - uses: pnpm/action-setup@v6
+        with:
+          cache: true
+
+      - name: Instalar dependencias
+        # --frozen-lockfile: si alguien cambió un package.json sin actualizar el lockfile, falla aquí.
+        run: pnpm install --frozen-lockfile
+
+      - name: Revisar tipos, compilar y probar lo afectado
+        env:
+          EVENT: ${{ github.event_name }}
+          BASE_REF: ${{ github.base_ref }}
+        run: |
+          # Selector de pnpm: todo, o "...[origin/main]" = cambiados + sus dependientes.
+          # Va en un arreglo para pasarlo siempre entre comillas (los corchetes son un glob para bash).
+          # Se excluye el paquete raíz: sus scripts ya son "pnpm -r ..." y correrían todo por duplicado
+          # (y en paralelo sobre la misma base de prueba).
+          all=(-r --filter "!duelo-de-hechiceros")
+          if [ "$EVENT" != "pull_request" ]; then
+            echo "Push a main: se valida todo el monorepo (es la referencia de los despliegues)."
+            scope=("${all[@]}")
+          else
+            filter="...[origin/$BASE_REF]"
+            changed=$(pnpm --filter "$filter" ls --depth -1 --json | jq -r '.[].name')
+            echo "Paquetes afectados:"; echo "${changed:-(ninguno)}"
+            # pnpm asigna los archivos de la raíz al paquete raíz: si aparece, cambió algo global.
+            if grep -qx "duelo-de-hechiceros" <<< "$changed"; then
+              echo "Cambió la raíz del repo: se valida todo."
+              scope=("${all[@]}")
+            else
+              scope=(--filter "$filter")
+            fi
+          fi
+          for script in typecheck build test; do
+            echo "::group::pnpm run $script"
+            pnpm "${scope[@]}" --if-present run "$script"
+            echo "::endgroup::"
+          done

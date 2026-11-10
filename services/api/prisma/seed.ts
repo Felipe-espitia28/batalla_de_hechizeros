@@ -11,7 +11,6 @@
  *
  * Uso: pnpm --filter @duelo/api db:seed
  */
-import "dotenv/config";
 import { SPELL_CATALOG } from "@duelo/game-rules";
 import { createPrismaClient } from "../src/lib/prisma.js";
 

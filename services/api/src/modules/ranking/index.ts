@@ -1,25 +1,48 @@
 /**
- * Módulo de ranking — dueño: Daniel Tapiero.
+ * Integración del módulo de ranking de Daniel (src/ranking/) con la base del api.
  *
- * Rutas que van aquí (sección 8 de CLAUDE.md; tipos en @duelo/contracts, rest.ts):
- *   GET  /ranking            -> RankingResponse        (público)
- *   GET  /ranking/me         -> RankingMeResponse      (requireAuth)
- *   GET  /me/matches         -> MatchHistoryResponse   (requireAuth)
- *   POST /internal/matches   -> RecordMatchResponse    (requireInternalKey; calcula recompensas)
+ * Su módulo define su propio contrato de autenticación: un middleware que deja `res.locals.userId`
+ * o responde el 401 él mismo. Aquí se adapta `requireAuth` a ese contrato sin tocar su código.
  *
- * También le toca el sorted set `dh:ranking` en Redis (REDIS_URL) y reconstruirlo desde `users`
- * al arrancar si se pierde. El rango se calcula con getRankForRating de @duelo/game-rules.
- *
- * Herramientas disponibles:
- *   - requireAuth(deps.env.JWT_SECRET) y getAuth(req)  -> ../../middleware/require-auth.js
- *   - requireInternalKey(deps.env.INTERNAL_API_KEY)    -> ../../middleware/require-internal-key.js
- *   - parseOrThrow(schema, req.body)                   -> ../../lib/validate.js
- * Se pueden crear más archivos dentro de esta carpeta (ranking.routes.ts, ranking.service.ts…).
+ * TODO(Daniel): si mueves tu código a esta carpeta (src/modules/ranking/), este archivo sigue
+ * siendo el punto de entrada que monta app.ts.
  */
-import { Router } from "express";
+import { Router, type RequestHandler } from "express";
+import type { ApiErrorBody } from "@duelo/contracts";
 import type { AppDeps } from "../../app-deps.js";
+import { HttpError } from "../../lib/http-error.js";
+import { requireAuth } from "../../middleware/require-auth.js";
+import { createRankingModule } from "../../ranking/index.js";
 
-export function createRankingRouter(_deps: AppDeps): Router {
+/** requireAuth con la forma que espera el ranking: 401 respondido aquí y userId en res.locals. */
+function createRankingAuthenticate(jwtSecret: string): RequestHandler {
+  const verify = requireAuth(jwtSecret);
+  return (req, res, next) => {
+    try {
+      verify(req, res, () => {
+        res.locals["userId"] = req.auth?.userId;
+        next();
+      });
+    } catch (error) {
+      if (error instanceof HttpError) {
+        const body: ApiErrorBody = { error: { code: error.code, message: error.message } };
+        res.status(error.status).json(body);
+        return;
+      }
+      next(error);
+    }
+  };
+}
+
+export function createRankingRouter({ env, prisma, redis }: AppDeps): Router {
+  const ranking = createRankingModule({
+    prisma,
+    redis,
+    authenticate: createRankingAuthenticate(env.JWT_SECRET),
+    internalApiKey: env.INTERNAL_API_KEY,
+  });
   const router = Router();
+  router.use(ranking.router);
+  router.use(ranking.internalRouter);
   return router;
 }

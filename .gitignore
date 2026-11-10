@@ -33,3 +33,6 @@ Thumbs.db
 
 # Pruebas
 coverage/
+
+# Configuración de servidores de prueba de Claude Code (rutas personales)
+.claude/launch.json

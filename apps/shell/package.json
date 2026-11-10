@@ -1,10 +1,30 @@
 {
   "name": "@duelo/shell",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "private": true,
   "type": "module",
-  "description": "Shell (host de Module Federation): login, sesión, navegación. Dueño: Felipe.",
+  "description": "Shell (host de Module Federation): login, sesión, navegación y carga de los remotes. Dueño: Felipe.",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -p tsconfig.json && vite build",
+    "preview": "vite preview",
+    "typecheck": "tsc -p tsconfig.json",
+    "test": "vitest run"
+  },
   "dependencies": {
-    "@duelo/contracts": "workspace:*"
+    "@duelo/contracts": "workspace:*",
+    "@module-federation/runtime": "2.9.0",
+    "react": "19.3.1",
+    "react-dom": "19.3.1",
+    "react-router-dom": "7.18.5"
+  },
+  "devDependencies": {
+    "@module-federation/vite": "1.22.1",
+    "@types/react": "19.3.0",
+    "@types/react-dom": "19.3.0",
+    "@vitejs/plugin-react": "6.1.2",
+    "typescript": "6.0.3",
+    "vite": "8.3.6",
+    "vitest": "5.0.5"
   }
 }

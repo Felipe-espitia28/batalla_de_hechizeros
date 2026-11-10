@@ -1,0 +1,80 @@
+/* Shell: noche de duelo. Mismo fondo que la Arena (#0f0d1a) para que el remote encaje sin costuras. */
+:root {
+  --bg: #0f0d1a;
+  --surface: #191628;
+  --surface-2: #221e36;
+  --line: #2f2a49;
+  --fg: #ece9fb;
+  --muted: #a39fbf;
+  --accent: #8f7cff;
+  --accent-fg: #0f0d1a;
+  --gold: #f2c45a;
+  --danger: #ff7a8a;
+  --danger-bg: #3a1822;
+  --info-bg: #1f2547;
+  --radius: 10px;
+  --font-display: "Segoe UI Semibold", "Segoe UI", system-ui, sans-serif;
+  --font-body: "Segoe UI", system-ui, -apple-system, sans-serif;
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+html, body, #root { height: 100%; }
+body { margin: 0; background: var(--bg); color: var(--fg); font-family: var(--font-body); font-size: 15px; line-height: 1.5; }
+h1, h2 { font-family: var(--font-display); line-height: 1.2; margin: 0; text-wrap: balance; }
+p { margin: 0; }
+code { background: var(--surface-2); padding: 1px 6px; border-radius: 4px; font-size: .9em; }
+.muted { color: var(--muted); }
+.num { font-variant-numeric: tabular-nums; }
+.eyebrow { font-size: .75rem; text-transform: uppercase; letter-spacing: .1em; color: var(--accent); font-weight: 600; }
+
+.button { display: inline-flex; align-items: center; justify-content: center; gap: 8px; font: inherit; font-weight: 600; padding: 9px 16px; border-radius: 8px; border: 1px solid var(--line); background: var(--surface-2); color: var(--fg); cursor: pointer; text-decoration: none; }
+.button:hover { border-color: var(--accent); }
+.button:disabled { opacity: .6; cursor: progress; }
+.button-primary { background: var(--accent); border-color: var(--accent); color: var(--accent-fg); }
+.button-ghost { background: transparent; padding: 6px 12px; }
+.link-button { background: none; border: 0; color: var(--danger); font: inherit; cursor: pointer; text-decoration: underline; }
+:is(a, button, input):focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/* Login y registro */
+.auth { min-height: 100%; display: grid; place-items: center; padding: 32px 16px; }
+.auth-card { width: min(420px, 100%); background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 28px; display: flex; flex-direction: column; gap: 14px; }
+.auth-card h1 { font-size: 1.6rem; }
+.segmented { display: grid; grid-template-columns: 1fr 1fr; background: var(--bg); border: 1px solid var(--line); border-radius: 8px; padding: 3px; }
+.segmented button { font: inherit; font-weight: 600; border: 0; background: transparent; color: var(--muted); padding: 7px; border-radius: 6px; cursor: pointer; }
+.segmented button[aria-selected="true"] { background: var(--surface-2); color: var(--fg); }
+.form { display: flex; flex-direction: column; gap: 12px; }
+.form label { display: flex; flex-direction: column; gap: 5px; font-size: .9rem; font-weight: 600; }
+.form small { color: var(--muted); font-weight: 400; }
+.form input { font: inherit; padding: 9px 11px; border-radius: 8px; border: 1px solid var(--line); background: var(--bg); color: var(--fg); }
+.alert { padding: 9px 12px; border-radius: 8px; font-size: .9rem; }
+.alert-error { background: var(--danger-bg); color: var(--danger); }
+.alert-info { background: var(--info-bg); color: var(--fg); }
+
+/* Layout con barra superior */
+.layout { min-height: 100%; display: flex; flex-direction: column; }
+.topbar { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 24px; padding: 10px 20px; background: var(--surface); border-bottom: 1px solid var(--line); }
+.brand { font-family: var(--font-display); font-weight: 700; color: var(--fg); text-decoration: none; }
+.topbar nav { display: flex; gap: 4px; }
+.navlink { color: var(--muted); text-decoration: none; font-weight: 600; padding: 6px 12px; border-radius: 8px; }
+.navlink:hover { color: var(--fg); }
+.navlink.active { color: var(--fg); background: var(--surface-2); }
+.player { margin-left: auto; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.player-name { font-weight: 600; }
+.chip { font-size: .8rem; font-weight: 600; padding: 3px 10px; border-radius: 999px; border: 1px solid var(--line); }
+.chip-rank { color: var(--accent); }
+.chip-gold { color: var(--gold); }
+.content { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+
+/* Estados de carga y error de los remotes */
+.remote-state { margin: auto; max-width: 480px; padding: 48px 16px; display: flex; flex-direction: column; align-items: center; gap: 12px; text-align: center; }
+.remote-error h2 { color: var(--danger); font-size: 1.2rem; }
+.actions { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
+.spinner { width: 28px; height: 28px; border-radius: 50%; border: 3px solid var(--line); border-top-color: var(--accent); animation: spin .9s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .spinner { animation-duration: 3s; } }
+
+@media (max-width: 640px) {
+  .topbar { padding: 10px 16px; }
+  .player { margin-left: 0; width: 100%; }
+}
