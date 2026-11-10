@@ -1,8 +1,68 @@
 # Duelo de hechiceros
 
-Juego web 1 contra 1 en tiempo real: cada jugador lanza hechizos dibujando gestos frente a su cámara (MediaPipe corre en su propio PC) y activa los definitivos gritando su nombre. Proyecto final de Arquitectura de Software.
+Juego web 1 contra 1 en tiempo real: cada jugador lanza hechizos dibujando gestos frente a su cámara (MediaPipe corre en su propio PC) y activa los definitivos gritando su nombre. Proyecto final de Arquitectura de Software · Ingeniería de Sistemas · 2026.
 
-El diseño completo (requisitos R1–R7, arquitectura, reglas del juego, contratos y despliegue) está en [CLAUDE.md](CLAUDE.md). Es la fuente de verdad.
+El diseño completo (reglas del juego, contratos, esquemas de datos y convenciones) está en [CLAUDE.md](CLAUDE.md), que es la fuente de verdad. El guion de la sustentación está en [docs/guion.md](docs/guion.md).
+
+**Equipo:** Felipe Espitia · Juan Arias · Johan Soriano · Angel Arenales · Daniel Tapiero.
+
+## Arquitectura
+
+```mermaid
+flowchart LR
+  subgraph PC["PC del jugador (navegador)"]
+    LOCAL["spell-engine (módulo local)<br/>MediaPipe + reconocedor de gestos<br/>Web Audio + Web Speech"]
+    SHELL["Shell (host)<br/>login, sesión, navegación"]
+    ARENA["Remote Arena"]
+    TIENDA["Remote Tienda"]
+    RANK["Remote Ranking"]
+    LOCAL -- "{ spellId, confidence }" --> ARENA
+    SHELL -. "Module Federation" .-> ARENA & TIENDA & RANK
+  end
+  subgraph NUBE["Nube (capas gratuitas)"]
+    GS["game-server<br/>Socket.IO, autoritativo"]
+    API["api<br/>Express + Prisma"]
+    PG[("PostgreSQL<br/>Neon")]
+    RD[("Redis<br/>Upstash")]
+  end
+  ARENA -- "WSS + JWT" --> GS
+  SHELL & TIENDA & RANK -- "HTTPS + JWT" --> API
+  GS -- "/internal: loadout y resultado" --> API
+  GS --> RD
+  API --> PG & RD
+```
+
+- **Módulo local:** la cámara y el micrófono se procesan en el navegador del jugador. Al servidor solo viajan eventos pequeños (`{ spellId, confidence }`), nunca video ni audio.
+- **Servidor autoritativo:** el cliente solo dice "lancé X". El `game-server` valida maná, cooldowns y grimorio, y decide el daño. La partida vive en su memoria (tick de 100 ms).
+- **Dos bases de datos:** PostgreSQL guarda lo permanente (usuarios, inventario, partidas). Redis guarda lo vivo (cola de emparejamiento, instantáneas de partida y el ranking `dh:ranking`). Si Redis falla, el ranking responde desde PostgreSQL.
+- **Micro frontends:** el shell carga cada remote en tiempo de ejecución desde su propia URL. Cada uno se despliega por separado, y si uno cae el resto sigue funcionando.
+
+### Cómo se cumple cada requisito
+
+| Req. | Requisito | Qué lo cumple |
+|---|---|---|
+| R1 | Desplegado en la nube | Vercel (4 frontends), Render (api y game-server), Neon, Upstash |
+| R2 | Módulo local | `packages/spell-engine`: MediaPipe y reconocedor en el PC del jugador |
+| R3 | Sockets | `services/game-server` con Socket.IO |
+| R4 | Cámara y micrófono | Gestos con la cámara; definitivos gritando al micrófono |
+| R5 | Mínimo 2 bases de datos | PostgreSQL (Neon) + Redis (Upstash) |
+| R6 | Código en GitHub | Este monorepo: PRs revisados y GitHub Actions en verde |
+| R7 | Micro frontends | Shell + 3 remotes con Module Federation, cada uno con su URL |
+
+## URLs desplegadas
+
+| Parte | URL |
+|---|---|
+| Shell | _pendiente_ (`https://duelohechiceros.qd.je` cuando se delegue el DNS) |
+| Arena | _pendiente_ (`https://arena.duelohechiceros.qd.je`) |
+| Tienda | _pendiente_ (`https://tienda.duelohechiceros.qd.je`) |
+| Ranking | _pendiente_ (`https://ranking.duelohechiceros.qd.je`) |
+| api | _pendiente_ (`https://api.duelohechiceros.qd.je`) |
+| game-server | _pendiente_ (`https://game.duelohechiceros.qd.je`) |
+
+> Mientras el dominio propio no esté delegado, cada parte funciona en su URL por defecto de Vercel (`*.vercel.app`) o Render (`*.onrender.com`). Rellenar esta tabla con las URLs reales antes del 14 de noviembre.
+>
+> En el plan gratuito, Render duerme los servicios tras 15 minutos sin uso (tardan ~1 minuto en despertar) y Neon suspende la base tras 5 minutos. Antes de una demostración, abre el shell y el ranking unos minutos antes.
 
 ## Estructura
 
@@ -80,6 +140,26 @@ docs/          Hoja de hechizos, DNS, guion
 
    Cada remote también corre solo, sin el shell, con una sesión de prueba: `pnpm dev:arena`, `pnpm dev:tienda`, `pnpm dev:ranking`.
 
+### Puertos locales
+
+| Parte | Puerto | Variable para el shell (`apps/shell/.env.local`) |
+|---|---|---|
+| Shell | 5173 | — |
+| Arena | 5174 | `VITE_REMOTE_ARENA_URL=http://localhost:5174` |
+| Tienda | 5175 (previsto) | `VITE_REMOTE_TIENDA_URL=http://localhost:5175` |
+| Ranking | 5176 | `VITE_REMOTE_RANKING_URL=http://localhost:5176` |
+| api | 4000 | `VITE_API_URL=http://localhost:4000` |
+| game-server | 3001 | (lo usa la Arena: `VITE_GAME_SERVER_URL`) |
+
+Si el puerto 5432 ya está ocupado en tu PC por otro Postgres, crea un `docker-compose.override.yml` **local** (no lo subas) que publique Postgres en otro puerto y ajusta `DATABASE_URL`:
+
+```yaml
+services:
+  postgres:
+    ports: !override
+      - "5433:5432"
+```
+
 ## API (services/api)
 
 Express 5 + Prisma 7 sobre PostgreSQL, organizada por módulos para que cada uno trabaje en su carpeta:
@@ -111,6 +191,15 @@ pnpm --filter @duelo/api db:seed
 - Para cambiar el esquema: editar `prisma/schema.prisma` y crear la migración con `pnpm --filter @duelo/api db:migrate --name <cambio>`.
 - Tests: `pnpm --filter @duelo/api test`. Antes de correr, aplican las migraciones y el seed sobre `TEST_DATABASE_URL`, que **debe** ser una base cuyo nombre contenga `test` (las pruebas la vacían). Sin Docker se puede usar la base `duelo_test` de la rama `dev` de Neon (misma cadena que `DATABASE_URL`, cambiando `/neondb` por `/duelo_test`). Las pruebas del ranking también necesitan Redis en `TEST_REDIS_URL` (por defecto `redis://localhost:6379/15`); en el CI de GitHub ya están los dos.
 - Todo error responde `{ error: { code, message } }` (`ApiErrorBody` en contracts). Un 401 (`UNAUTHORIZED` o `TOKEN_EXPIRED`) en una ruta que no sea `/auth/*` significa sesión vencida: el frontend emite `duelo:session-expired`.
+
+## Ranking
+
+- **api** (`services/api/src/modules/ranking`): `GET /ranking` (top, público), `GET /ranking/me` y `GET /me/matches` (con JWT), y `POST /internal/matches`, que el game-server llama al terminar cada partida.
+  - El cierre de partida va en una transacción: historial, rating (nunca menor que 0), oro y victorias, derrotas y empates.
+  - Es idempotente por `matchId`: si el game-server reintenta, no se suman puntos dos veces.
+  - Rangos y economía salen de `@duelo/game-rules`.
+- **Redis:** `dh:ranking` es una copia rápida que se reconstruye desde PostgreSQL al arrancar el api. Si Redis no responde, el ranking contesta desde PostgreSQL y solo deja un aviso corto en el log.
+- **Remote** (`apps/ranking`, puerto 5176): tu posición, el top y tu historial. Se recarga sola con el evento `duelo:match-ended` que emite la Arena. Con un 401 emite `duelo:session-expired`, y mientras Render o Neon despiertan muestra un aviso. Solo (`pnpm dev:ranking`) pide un login real contra el api para obtener la sesión de prueba.
 
 ## Scripts de la raíz
 
