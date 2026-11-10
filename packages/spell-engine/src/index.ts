@@ -2,6 +2,8 @@
 export { SpellEngine, type SpellEngineOptions } from "./spell-engine";
 export { KeyboardSpellSource } from "./keyboard-source";
 export type { SpellSource } from "./spell-source";
+export { VoiceListener, getSpeechRecognition, type VoiceListenerOptions } from "./voice-listener";
+export { ShoutDetector, DEFAULT_SHOUT_THRESHOLD } from "./shout-detector";
 export type {
   SpellEngineError,
   SpellEngineErrorCode,
