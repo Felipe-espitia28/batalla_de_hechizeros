@@ -1,48 +1,26 @@
 /**
- * Integración del módulo de ranking de Daniel (src/ranking/) con la base del api.
+ * Módulo de ranking — dueño: Daniel Tapiero. Punto de entrada que monta app.ts.
  *
- * Su módulo define su propio contrato de autenticación: un middleware que deja `res.locals.userId`
- * o responde el 401 él mismo. Aquí se adapta `requireAuth` a ese contrato sin tocar su código.
+ * - createRankingRouter(deps): GET /ranking, /ranking/me, /me/matches y POST /internal/matches.
+ * - RankingService.rebuildCache(): index.ts la llama al arrancar para reconstruir dh:ranking
+ *   desde PostgreSQL (sección 8).
  *
- * TODO(Daniel): si mueves tu código a esta carpeta (src/modules/ranking/), este archivo sigue
- * siendo el punto de entrada que monta app.ts.
+ * PostgreSQL es la fuente de verdad; Redis (dh:ranking) es una copia que se puede perder.
  */
-import { Router, type RequestHandler } from "express";
-import type { ApiErrorBody } from "@duelo/contracts";
+import { Router } from "express";
 import type { AppDeps } from "../../app-deps.js";
-import { HttpError } from "../../lib/http-error.js";
-import { requireAuth } from "../../middleware/require-auth.js";
-import { createRankingModule } from "../../ranking/index.js";
-
-/** requireAuth con la forma que espera el ranking: 401 respondido aquí y userId en res.locals. */
-function createRankingAuthenticate(jwtSecret: string): RequestHandler {
-  const verify = requireAuth(jwtSecret);
-  return (req, res, next) => {
-    try {
-      verify(req, res, () => {
-        res.locals["userId"] = req.auth?.userId;
-        next();
-      });
-    } catch (error) {
-      if (error instanceof HttpError) {
-        const body: ApiErrorBody = { error: { code: error.code, message: error.message } };
-        res.status(error.status).json(body);
-        return;
-      }
-      next(error);
-    }
-  };
-}
+import { RankingCache } from "./ranking-cache.js";
+import { createRankingRoutes } from "./ranking.routes.js";
+import { RankingService } from "./ranking-service.js";
 
 export function createRankingRouter({ env, prisma, redis }: AppDeps): Router {
-  const ranking = createRankingModule({
-    prisma,
-    redis,
-    authenticate: createRankingAuthenticate(env.JWT_SECRET),
+  const service = new RankingService(prisma, new RankingCache(redis));
+  return createRankingRoutes({
+    service,
+    jwtSecret: env.JWT_SECRET,
     internalApiKey: env.INTERNAL_API_KEY,
   });
-  const router = Router();
-  router.use(ranking.router);
-  router.use(ranking.internalRouter);
-  return router;
 }
+
+export { RankingCache, RANKING_KEY } from "./ranking-cache.js";
+export { RankingService } from "./ranking-service.js";

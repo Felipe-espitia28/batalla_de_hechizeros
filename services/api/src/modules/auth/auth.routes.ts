@@ -9,7 +9,7 @@ import type { AuthResponse, MeResponse } from "@duelo/contracts";
 import type { AppDeps } from "../../app-deps.js";
 import { parseOrThrow } from "../../lib/validate.js";
 import { getAuth, requireAuth } from "../../middleware/require-auth.js";
-import { RankingCache } from "../../ranking/index.js";
+import { RankingCache } from "../ranking/index.js";
 import { loginSchema, registerSchema } from "./auth.schemas.js";
 import { AuthService } from "./auth.service.js";
 
