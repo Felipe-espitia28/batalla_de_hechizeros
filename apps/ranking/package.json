@@ -1,10 +1,29 @@
 {
   "name": "@duelo/ranking",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "private": true,
   "type": "module",
   "description": "Remote Ranking: top, posición propia e historial. Dueño: Daniel.",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -p tsconfig.json && vite build",
+    "preview": "vite preview",
+    "typecheck": "tsc -p tsconfig.json",
+    "test": "vitest run"
+  },
   "dependencies": {
-    "@duelo/contracts": "workspace:*"
+    "@duelo/contracts": "workspace:*",
+    "@duelo/game-rules": "workspace:*",
+    "react": "19.3.1",
+    "react-dom": "19.3.1"
+  },
+  "devDependencies": {
+    "@module-federation/vite": "1.22.1",
+    "@types/react": "19.3.0",
+    "@types/react-dom": "19.3.0",
+    "@vitejs/plugin-react": "6.1.2",
+    "typescript": "6.0.3",
+    "vite": "8.3.6",
+    "vitest": "5.0.5"
   }
 }
