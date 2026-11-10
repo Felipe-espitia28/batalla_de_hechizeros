@@ -5,8 +5,17 @@
 import type { SpellId } from "@duelo/contracts";
 import { SpellEngine, drawDebug, drawStroke, type SpellFailedEvent, type SpellEvent } from "../src";
 
-const GRIMOIRE: SpellId[] = ["lightning", "shield"];
-const LABELS: Partial<Record<SpellId, string>> = { lightning: "⚡ Rayo", shield: "🛡️ Escudo", slash: "🗡️ Corte" };
+// Todas las figuras a la vez: es el caso más difícil para el $1 (más candidatos con qué confundirse).
+const GRIMOIRE: SpellId[] = ["lightning", "shield", "slash", "fireball", "heal", "poison", "freeze"];
+const LABELS: Partial<Record<SpellId, string>> = {
+  lightning: "⚡ Rayo",
+  shield: "🛡️ Escudo",
+  slash: "🗡️ Corte",
+  fireball: "🔥 Fuego",
+  heal: "💚 Curación",
+  poison: "🐍 Veneno",
+  freeze: "❄️ Congelar",
+};
 
 const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
 const video = $<HTMLVideoElement>("video");
