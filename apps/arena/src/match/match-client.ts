@@ -16,6 +16,7 @@ import {
   type PlayerSummary,
   type ServerToClientEvents,
   type SpellId,
+  type UltimateId,
   type UserId,
 } from "@duelo/contracts";
 import { io, type Socket } from "socket.io-client";
@@ -159,6 +160,20 @@ export class MatchClient {
     if (!matchId || phase !== "active") return;
     const castId = `c_${++this.castCounter}_${Date.now().toString(36)}`;
     this.socket.timeout(ACK_TIMEOUT_MS).emit("combat:cast-spell", { matchId, castId, spellId, confidence }, (err: Error | null, ack?: AckResponse) => {
+      if (err) this.notify("Sin respuesta del servidor", "bad");
+      else if (ack && !ack.ok) this.reject(castId, ack.code);
+    });
+  }
+
+  /**
+   * Definitivo: solo el texto reconocido (R2), nunca audio. El servidor vuelve a validar la palabra,
+   * el maná lleno y el requisito; la Arena no decide nada.
+   */
+  castUltimate(ultimateId: UltimateId, transcript: string): void {
+    const { matchId, phase } = this.snapshot;
+    if (!matchId || phase !== "active") return;
+    const castId = `u_${++this.castCounter}_${Date.now().toString(36)}`;
+    this.socket.timeout(ACK_TIMEOUT_MS).emit("combat:cast-ultimate", { matchId, castId, ultimateId, transcript }, (err: Error | null, ack?: AckResponse) => {
       if (err) this.notify("Sin respuesta del servidor", "bad");
       else if (ack && !ack.ok) this.reject(castId, ack.code);
     });

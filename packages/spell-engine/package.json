@@ -8,14 +8,16 @@
     ".": "./src/index.ts"
   },
   "scripts": {
+    "build:deps": "pnpm --filter @duelo/game-rules build",
     "assets": "node scripts/copy-assets.mjs playground/public/mediapipe",
-    "playground": "pnpm run assets && vite --config playground/vite.config.ts",
-    "test": "vitest run",
+    "playground": "pnpm run build:deps && pnpm run assets && vite --config playground/vite.config.ts",
+    "test": "pnpm run build:deps && vitest run",
     "test:watch": "vitest",
-    "typecheck": "tsc -p tsconfig.json"
+    "typecheck": "pnpm run build:deps && tsc -p tsconfig.json"
   },
   "dependencies": {
     "@duelo/contracts": "workspace:*",
+    "@duelo/game-rules": "workspace:*",
     "@mediapipe/tasks-vision": "1.2.2"
   },
   "devDependencies": {

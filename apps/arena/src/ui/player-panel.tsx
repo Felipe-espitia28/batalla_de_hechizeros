@@ -3,6 +3,7 @@
  * en match:state; no calcula nada.
  */
 import type { PlayerState, PlayerSummary, SpellId } from "@duelo/contracts";
+import type { ReactNode } from "react";
 import { SPELL_GESTURES, SPELL_LABELS } from "../match/messages";
 
 interface Props {
@@ -13,11 +14,13 @@ interface Props {
   side: "you" | "rival";
   /** Solo para el jugador propio: hechizos del grimorio con su cooldown. */
   grimoire?: readonly SpellId[];
+  /** Contenido extra al final (el definitivo del jugador propio). */
+  footer?: ReactNode;
 }
 
 const EFFECT_LABELS = { burn: "🔥 Quemadura", poison: "🐍 Veneno", freeze: "❄️ ¡Congelado!", storm: "🌪️ Tormenta" } as const;
 
-export function PlayerPanel({ summary, state, now, side, grimoire }: Props) {
+export function PlayerPanel({ summary, state, now, side, grimoire, footer }: Props) {
   const hp = state?.hp ?? 100;
   const mana = state?.mana ?? 0;
   const shielded = state?.shieldUntil != null && state.shieldUntil > now;
@@ -65,6 +68,7 @@ export function PlayerPanel({ summary, state, now, side, grimoire }: Props) {
           })}
         </ul>
       )}
+      {footer}
     </section>
   );
 }

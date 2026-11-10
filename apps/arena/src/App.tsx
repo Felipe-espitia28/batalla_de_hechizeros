@@ -6,12 +6,14 @@ import { emitDueloEvent, type RemoteAppProps, type SpellId } from "@duelo/contra
 import type { SpellEvent } from "@duelo/spell-engine";
 import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { MATCH_RULES } from "@duelo/game-rules";
-import { fetchGold, fetchGrimoire } from "./api";
-import { DEFAULT_GRIMOIRE, GAME_SERVER_URL } from "./config";
+import { DEFAULT_LOADOUT, fetchGold, fetchLoadout, type Loadout } from "./api";
+import { GAME_SERVER_URL } from "./config";
 import { useSpellSource } from "./engine/use-spell-source";
+import { useVoice } from "./engine/use-voice";
 import { MatchClient, type Notice } from "./match/match-client";
 import { EndScreen } from "./ui/end-screen";
 import { PlayerPanel } from "./ui/player-panel";
+import { UltimateRow } from "./ui/ultimate-row";
 import { useNow } from "./ui/use-now";
 import "./arena.css";
 
@@ -59,10 +61,12 @@ function ArenaView({ session, navigate, client }: RemoteAppProps & { client: Mat
   const ticking = match.phase === "countdown" || match.phase === "active" || match.opponentGraceUntil !== null;
   const now = useNow(getServerNow, ticking);
 
-  const [grimoire, setGrimoire] = useState<readonly SpellId[]>(DEFAULT_GRIMOIRE);
+  const [loadout, setLoadout] = useState<Loadout>(DEFAULT_LOADOUT);
   useEffect(() => {
-    void fetchGrimoire(session.token).then(setGrimoire);
+    void fetchLoadout(session.token).then(setLoadout);
   }, [session.token]);
+  const grimoire: readonly SpellId[] = loadout.spells;
+  const ultimateId = loadout.ultimateId;
 
   // --- Módulo local ----------------------------------------------------------
   const [debug, setDebug] = useState(false);
@@ -76,6 +80,7 @@ function ArenaView({ session, navigate, client }: RemoteAppProps & { client: Mat
   const engine = useSpellSource({
     enabled: inMatch,
     grimoire,
+    ultimateId,
     minConfidence: MATCH_RULES.minConfidence,
     debug,
     video: videoRef,
@@ -92,7 +97,18 @@ function ArenaView({ session, navigate, client }: RemoteAppProps & { client: Mat
         lockedUntil.current = Date.now() + MATCH_RULES.failedCastPenaltyMs;
         client.notify("¡Hechizo fallido!", "bad");
       },
+      // Solo en modo teclado (tecla 9); con micrófono lo emite useVoice.
+      onUltimate: ({ ultimateId: id, transcript }) => client.castUltimate(id, transcript),
     },
+  });
+
+  // --- Voz: definitivos (grito + palabra) ---------------------------------------
+  const meterRef = useRef<HTMLDivElement>(null);
+  const voice = useVoice({
+    enabled: inMatch && !engine.keyboard,
+    ultimateId,
+    meter: meterRef,
+    onUltimate: ({ ultimateId: id, transcript }) => client.castUltimate(id, transcript),
   });
 
   // --- Fin de partida: avisar al shell y al ranking (sección 9) ---------------
@@ -170,6 +186,13 @@ function ArenaView({ session, navigate, client }: RemoteAppProps & { client: Mat
                 Rival: <strong>{match.rival?.username}</strong> ({match.rival?.rank})
               </p>
               <p>{engine.handVisible ? "✅ Mano detectada. Prueba hacer la pinza." : "✋ Pon la mano frente a la cámara."}</p>
+              {!engine.keyboard && (
+                <p className="ar-muted">
+                  {voice.status === "ready" && "🎤 Micrófono listo: prueba gritar y mira el medidor."}
+                  {voice.status === "loading" && "🎤 Pidiendo el micrófono…"}
+                  {voice.status === "disabled" && `🎤 ${voice.message}`}
+                </p>
+              )}
               {match.phase === "found" ? (
                 <button className="ar-btn ar-btn--primary" onClick={() => client.ready()} disabled={engine.status !== "running" || !engine.handVisible}>
                   ¡Estoy listo!
@@ -186,7 +209,22 @@ function ArenaView({ session, navigate, client }: RemoteAppProps & { client: Mat
           {(match.phase === "countdown" || match.phase === "active") && (
             <>
               <div className="ar-duel">
-                <PlayerPanel side="you" summary={match.you} state={you} now={now} grimoire={grimoire} />
+                <PlayerPanel
+                  side="you"
+                  summary={match.you}
+                  state={you}
+                  now={now}
+                  grimoire={grimoire}
+                  footer={
+                    <UltimateRow
+                      ultimateId={ultimateId}
+                      voice={voice}
+                      keyboard={engine.keyboard}
+                      manaFull={(you?.mana ?? 0) >= MATCH_RULES.maxMana}
+                      meter={meterRef}
+                    />
+                  }
+                />
                 <div className="ar-duel__center">
                   {match.phase === "countdown" && match.startsAt && (
                     <div className="ar-countdown">{Math.max(1, Math.ceil((match.startsAt - now) / 1000))}</div>

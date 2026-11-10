@@ -80,6 +80,19 @@ describe("MatchClient", () => {
     expect(Object.keys(cast.payload as object).sort()).toEqual(["castId", "confidence", "matchId", "spellId"]);
   });
 
+  it("definitivo: solo { matchId, castId, ultimateId, transcript } y solo con la partida activa", () => {
+    const { client, sent, server } = setup();
+    client.castUltimate("meteor", "¡meteoro!");
+    expect(sent.some((s) => s.event === "combat:cast-ultimate")).toBe(false);
+
+    server("match:found", { matchId: "m1", you: { id: "u1" }, rival: { id: "u2" } });
+    server("match:state", state(Date.now()));
+    client.castUltimate("meteor", "¡meteoro!");
+    const cast = sent.find((s) => s.event === "combat:cast-ultimate")!;
+    expect(cast.payload).toMatchObject({ matchId: "m1", ultimateId: "meteor", transcript: "¡meteoro!" });
+    expect(Object.keys(cast.payload as object).sort()).toEqual(["castId", "matchId", "transcript", "ultimateId"]);
+  });
+
   it("calcula el desfase de reloj con serverNow", () => {
     const { client, server } = setup();
     server("match:state", state(Date.now() + 5000));

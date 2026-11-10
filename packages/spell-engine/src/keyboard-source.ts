@@ -1,11 +1,11 @@
 /**
- * Modo teclado, SOLO para pruebas: permite probar la Arena y el game-server sin cámara
+ * Modo teclado (1–4 = espacios del grimorio, 9 = definitivo, 0 = fallido), SOLO para pruebas: permite probar la Arena y el game-server sin cámara
  * (por ejemplo, dos pestañas en el mismo PC). Emite los mismos eventos que el motor real,
  * así que la Arena no sabe cuál de los dos está usando.
  *
  * No debe activarse en producción: la Arena lo habilita únicamente en desarrollo.
  */
-import type { SpellId } from "@duelo/contracts";
+import type { SpellId, UltimateId } from "@duelo/contracts";
 import type { SpellEngineHandlers } from "./events";
 import type { SpellSource } from "./spell-source";
 
@@ -19,6 +19,8 @@ export class KeyboardSpellSource implements SpellSource {
   constructor(
     grimoire: readonly SpellId[],
     private readonly handlers: SpellEngineHandlers = {},
+    /** Definitivo equipado: la tecla 9 simula gritarlo. */
+    private ultimateId: UltimateId = "meteor",
   ) {
     this.grimoire = grimoire;
   }
@@ -38,8 +40,18 @@ export class KeyboardSpellSource implements SpellSource {
     this.grimoire = grimoire;
   }
 
+  setUltimate(ultimateId: UltimateId): void {
+    this.ultimateId = ultimateId;
+  }
+
   private onKeyDown = (event: KeyboardEvent): void => {
     if (event.repeat || isTyping(event.target)) return;
+    if (event.key === "9") {
+      // Simula el grito: el transcript es el nombre en español, como lo entregaría Web Speech.
+      const words: Record<UltimateId, string> = { meteor: "meteoro", storm: "tormenta", rebirth: "renacer", "purple-void": "vacío" };
+      this.handlers.onUltimate?.({ ultimateId: this.ultimateId, transcript: words[this.ultimateId] });
+      return;
+    }
     if (event.key === "0") {
       // Simula un trazo mal hecho para probar el aviso de "¡Hechizo fallido!".
       this.handlers.onSpellFailed?.({ bestGuess: null, confidence: 0 });
