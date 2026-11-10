@@ -109,6 +109,16 @@ describe("MatchClient", () => {
     expect(sent.at(-1)).toMatchObject({ event: "match:rejoin", payload: { matchId: "m1" } });
   });
 
+  it("un ack UNAUTHORIZED con el socket conectado muestra el error sin cerrar la sesión", () => {
+    const { client, sent, server, expired } = setup();
+    server("connect");
+    client.joinQueue();
+    (sent.at(-1)!.ack as (a: AckResponse) => void)({ ok: false, code: "UNAUTHORIZED" });
+    expect(client.getSnapshot()).toMatchObject({ phase: "idle", connection: "online" });
+    expect(client.getSnapshot().error).toMatch(/no reconoce tu cuenta/);
+    expect(expired()).toBe(0);
+  });
+
   it("token rechazado → avisa al shell con session-expired", () => {
     const { client, server, expired } = setup();
     server("connect_error", new Error("UNAUTHORIZED"));

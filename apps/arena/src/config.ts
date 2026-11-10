@@ -2,8 +2,9 @@
  * Configuración de la Arena. Ninguna URL se escribe en el código: todas salen de variables
  * de entorno (sección 4 de CLAUDE.md).
  */
-export const GAME_SERVER_URL: string = import.meta.env.VITE_GAME_SERVER_URL ?? "";
-export const API_URL: string = import.meta.env.VITE_API_URL ?? "";
+const clean = (value: string | undefined) => (value ?? "").trim().replace(/\/+$/, "");
+export const GAME_SERVER_URL = clean(import.meta.env.VITE_GAME_SERVER_URL);
+export const API_URL = clean(import.meta.env.VITE_API_URL);
 
 /**
  * Archivos de MediaPipe servidos por la propia Arena (copiados a public/mediapipe en dev y build).

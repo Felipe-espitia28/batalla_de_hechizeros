@@ -19,7 +19,7 @@ import {
   type UserId,
 } from "@duelo/contracts";
 import { io, type Socket } from "socket.io-client";
-import { ACK_ERROR_MESSAGES, SPELL_LABELS } from "./messages";
+import { ACK_ERROR_MESSAGES, SESSION_EXPIRED_MESSAGE, SPELL_LABELS } from "./messages";
 
 export type Phase =
   | "idle" // conectado, sin buscar partida
@@ -56,6 +56,8 @@ export interface MatchSnapshot {
   end: MatchEndPayload | null;
   /** Hora del servidor hasta la que se espera al rival desconectado. */
   opponentGraceUntil: number | null;
+  /** Duración total de esa espera (graceMs del servidor), para no mostrar más segundos de los reales. */
+  opponentGraceMs: number;
   /** El rival está cargando la X del Sello. */
   sealWarning: boolean;
   notices: Notice[];
@@ -89,6 +91,7 @@ const INITIAL: MatchSnapshot = {
   state: null,
   end: null,
   opponentGraceUntil: null,
+  opponentGraceMs: 0,
   sealWarning: false,
   notices: [],
   error: null,
@@ -205,7 +208,7 @@ export class MatchClient {
 
     s.on("connect_error", (error) => {
       if (error.message === SOCKET_UNAUTHORIZED) {
-        this.update({ connection: "unauthorized", error: ACK_ERROR_MESSAGES.UNAUTHORIZED });
+        this.update({ connection: "unauthorized", error: SESSION_EXPIRED_MESSAGE });
         this.options.onSessionExpired?.();
         s.disconnect();
       } else {
@@ -248,7 +251,9 @@ export class MatchClient {
       this.sealWarningTimer = setTimeout(() => this.update({ sealWarning: false }), 1500);
     });
 
-    s.on("match:opponent-disconnected", ({ graceMs }) => this.update({ opponentGraceUntil: this.serverNow() + graceMs }));
+    s.on("match:opponent-disconnected", ({ graceMs }) =>
+      this.update({ opponentGraceUntil: this.serverNow() + graceMs, opponentGraceMs: graceMs }),
+    );
     s.on("match:opponent-reconnected", () => this.update({ opponentGraceUntil: null }));
 
     s.on("match:end", (end) => this.update({ phase: "ended", end, opponentGraceUntil: null, sealWarning: false }));

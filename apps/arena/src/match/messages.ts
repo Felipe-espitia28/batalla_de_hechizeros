@@ -37,13 +37,18 @@ export const ACK_ERROR_MESSAGES: Record<AckErrorCode, string> = {
   ALREADY_USED: "Ya lo usaste en esta partida",
   MATCH_NOT_ACTIVE: "La partida no está activa",
   SEAL_NOT_CHARGED: "El sello no se cargó a tiempo",
-  UNAUTHORIZED: "Tu sesión expiró",
+  // Como ack de un evento (no del handshake): el servidor no encontró la cuenta en el api.
+  // No cierra la sesión: el socket sigue conectado y el jugador puede reintentar.
+  UNAUTHORIZED: "El servidor de juego no reconoce tu cuenta. Espera un momento y vuelve a intentarlo.",
   INVALID_PAYLOAD: "Error de comunicación con el servidor",
   ALREADY_QUEUED: "Ya estás buscando rival",
   ALREADY_IN_MATCH: "Ya estás en una partida",
   MATCH_NOT_FOUND: "La partida ya no existe",
   INTERNAL_ERROR: "Error del servidor; inténtalo de nuevo",
 };
+
+/** connect_error "UNAUTHORIZED": el JWT ya no sirve y el shell debe llevar al login. */
+export const SESSION_EXPIRED_MESSAGE = "Tu sesión expiró. Vuelve a iniciar sesión.";
 
 export const END_REASON_MESSAGES: Record<EndReason, string> = {
   KO: "Por K.O.",
