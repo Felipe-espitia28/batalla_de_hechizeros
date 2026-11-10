@@ -16,7 +16,7 @@ afterEach(() => {
 
 // config lee VITE_API_URL al importarse: se fija antes del import dinámico.
 vi.stubEnv("VITE_API_URL", "http://api.test/");
-const { fetchGold, fetchGrimoire } = await import("../src/api");
+const { fetchGold, fetchLoadout } = await import("../src/api");
 
 const json = (status: number, body: unknown) =>
   vi.fn(async () => new Response(JSON.stringify(body), { status, headers: { "content-type": "application/json" } }));
@@ -46,11 +46,17 @@ describe("api de la Arena", () => {
 
   it("grimorio: usa los espacios llenos de /me/inventory", async () => {
     const fetchImpl = json(200, { items: [], grimoire: { slots: ["lightning", "shield", "fireball", null], ultimateId: "meteor" } });
-    expect(await fetchGrimoire("tok", fetchImpl as unknown as typeof fetch)).toEqual(["lightning", "shield", "fireball"]);
+    expect(await fetchLoadout("tok", fetchImpl as unknown as typeof fetch)).toEqual({
+      spells: ["lightning", "shield", "fireball"],
+      ultimateId: "meteor",
+    });
   });
 
-  it("grimorio: si el endpoint aún no existe (404) juega con Rayo y Escudo", async () => {
-    expect(await fetchGrimoire("tok", json(404, {}) as unknown as typeof fetch)).toEqual(["lightning", "shield"]);
+  it("grimorio: si el endpoint aún no existe (404) juega con Rayo, Escudo y Meteoro", async () => {
+    expect(await fetchLoadout("tok", json(404, {}) as unknown as typeof fetch)).toEqual({
+      spells: ["lightning", "shield"],
+      ultimateId: "meteor",
+    });
     expect(events).toEqual([]);
   });
 });

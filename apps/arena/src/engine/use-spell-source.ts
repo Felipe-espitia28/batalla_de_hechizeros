@@ -2,7 +2,7 @@
  * Conecta el módulo local (spell-engine) con React. Crea el motor de cámara o, en desarrollo
  * con ?teclado, el modo teclado. Libera la cámara al desmontar (al salir de la Arena).
  */
-import type { SpellId } from "@duelo/contracts";
+import type { SpellId, UltimateId } from "@duelo/contracts";
 import {
   KeyboardSpellSource,
   SpellEngine,
@@ -28,6 +28,8 @@ export interface SpellSourceState {
 interface Options {
   enabled: boolean;
   grimoire: readonly SpellId[];
+  /** Definitivo equipado: en modo teclado la tecla 9 lo simula. */
+  ultimateId: UltimateId;
   /** Confianza mínima del $1 (MATCH_RULES.minConfidence de game-rules). */
   minConfidence: number;
   /** Mostrar esqueleto de la mano (modo depuración). */
@@ -39,7 +41,7 @@ interface Options {
   attempt?: number;
 }
 
-export function useSpellSource({ enabled, grimoire, minConfidence, debug, handlers, video, canvas, attempt = 0 }: Options): SpellSourceState {
+export function useSpellSource({ enabled, grimoire, ultimateId, minConfidence, debug, handlers, video, canvas, attempt = 0 }: Options): SpellSourceState {
   const keyboard = keyboardModeEnabled();
   const [status, setStatus] = useState<EngineStatus>("off");
   const [error, setError] = useState<SpellEngineError | null>(null);
@@ -57,6 +59,7 @@ export function useSpellSource({ enabled, grimoire, minConfidence, debug, handle
     const stable: SpellEngineHandlers = {
       onSpell: (e) => handlersRef.current.onSpell?.(e),
       onSpellFailed: (e) => handlersRef.current.onSpellFailed?.(e),
+      onUltimate: (e) => handlersRef.current.onUltimate?.(e),
       onError: (e) => {
         setError(e);
         setStatus("error");
@@ -66,7 +69,7 @@ export function useSpellSource({ enabled, grimoire, minConfidence, debug, handle
 
     let source: SpellSource;
     if (keyboard) {
-      source = new KeyboardSpellSource(grimoire, stable);
+      source = new KeyboardSpellSource(grimoire, stable, ultimateId);
     } else {
       const videoEl = video.current;
       if (!videoEl) return;
@@ -123,6 +126,11 @@ export function useSpellSource({ enabled, grimoire, minConfidence, debug, handle
   useEffect(() => {
     sourceRef.current?.setGrimoire(grimoire);
   }, [grimoire]);
+
+  // El definitivo llega con el inventario, después de crear la fuente.
+  useEffect(() => {
+    if (sourceRef.current instanceof KeyboardSpellSource) sourceRef.current.setUltimate(ultimateId);
+  }, [ultimateId, status]);
 
   return { status, error, keyboard, handVisible: keyboard || handVisible };
 }

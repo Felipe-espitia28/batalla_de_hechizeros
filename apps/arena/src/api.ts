@@ -11,6 +11,7 @@ import {
   type InventoryResponse,
   type MeResponse,
   type SpellId,
+  type UltimateId,
 } from "@duelo/contracts";
 import { API_URL, DEFAULT_GRIMOIRE } from "./config";
 
@@ -44,16 +45,24 @@ export async function fetchGold(token: string, fetchImpl?: typeof fetch): Promis
   }
 }
 
+export interface Loadout {
+  spells: SpellId[];
+  ultimateId: UltimateId;
+}
+
+/** Sin inventario: lo que recibe toda cuenta nueva (Rayo, Escudo y Meteoro). */
+export const DEFAULT_LOADOUT: Loadout = { spells: [...DEFAULT_GRIMOIRE], ultimateId: "meteor" };
+
 /**
- * Hechizos del grimorio. Mientras GET /me/inventory no exista (o falle), Rayo y Escudo,
- * que siempre están en los espacios 1 y 2. El servidor NO recibe esto: consulta el loadout por su cuenta.
+ * Grimorio y definitivo equipado. Mientras GET /me/inventory no exista (o falle), el inicial.
+ * El servidor NO recibe esto: consulta el loadout al api por su cuenta (sección 6).
  */
-export async function fetchGrimoire(token: string, fetchImpl?: typeof fetch): Promise<SpellId[]> {
+export async function fetchLoadout(token: string, fetchImpl?: typeof fetch): Promise<Loadout> {
   try {
     const inventory = await getJson<InventoryResponse>("/me/inventory", token, fetchImpl);
     const spells = inventory.grimoire.slots.filter((s): s is SpellId => s !== null);
-    return spells.length > 0 ? spells : [...DEFAULT_GRIMOIRE];
+    return { spells: spells.length > 0 ? spells : [...DEFAULT_GRIMOIRE], ultimateId: inventory.grimoire.ultimateId };
   } catch {
-    return [...DEFAULT_GRIMOIRE];
+    return DEFAULT_LOADOUT;
   }
 }

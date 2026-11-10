@@ -104,3 +104,12 @@
 .arena .ar-end__rewards div { display: flex; gap: 12px; justify-content: center; }
 .arena .ar-end__rewards dt { color: var(--a-muted); }
 .arena .ar-end__rewards dd { margin: 0; font-weight: 700; }
+
+/* --- Definitivo y medidor de voz --- */
+.arena .ar-ultimate { display: grid; gap: 6px; padding: 8px 10px; border-radius: 8px; background: #221d38; border: 1px solid transparent; }
+.arena .ar-ultimate--ready { border-color: var(--a-accent); box-shadow: 0 0 12px rgba(124, 92, 255, 0.4); }
+.arena .ar-ultimate__head { display: flex; justify-content: space-between; gap: 8px; flex-wrap: wrap; font-size: 14px; }
+.arena .ar-ultimate__off { margin: 0; font-size: 12px; color: var(--a-warn); }
+.arena .ar-meter { --level: 0; height: 6px; border-radius: 3px; background: #0b0a12; overflow: hidden; }
+.arena .ar-meter__fill { height: 100%; width: calc(var(--level) * 100%); background: var(--a-mana); transition: width 60ms linear; }
+.arena .ar-meter[data-shout="true"] .ar-meter__fill { background: var(--a-good); }
