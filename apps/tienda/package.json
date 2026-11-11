@@ -5,10 +5,11 @@
   "type": "module",
   "description": "Remote Tienda: catálogo, compra, inventario y grimorio. Dueño: Angel.",
   "scripts": {
-    "dev": "vite",
-    "build": "tsc -p tsconfig.json && vite build",
+    "build:deps": "tsc -p ../../packages/contracts/tsconfig.json && tsc -p ../../packages/game-rules/tsconfig.json",
+    "dev": "npm run build:deps && vite",
+    "build": "npm run build:deps && tsc -p tsconfig.json && vite build",
     "preview": "vite preview",
-    "typecheck": "tsc -p tsconfig.json",
+    "typecheck": "npm run build:deps && tsc -p tsconfig.json",
     "test": "vitest run"
   },
   "dependencies": {
