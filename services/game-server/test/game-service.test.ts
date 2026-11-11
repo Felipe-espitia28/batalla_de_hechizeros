@@ -276,6 +276,17 @@ describe("GameService con hechizos P1 y P2", () => {
 
 
 
+  it("la quemadura llega a match:state y puede terminar la partida por KO en el tick", async () => {
+    build(fullGrimoire);
+    const matchId = await startMatch();
+    service.castSpell(A, { matchId, castId: "f1", spellId: "fireball", confidence: 1 });
+    expect(emitter.last(B, "match:state").players[B].effects).toEqual([{ type: "burn", until: clock + 3_000 }]);
+    service.getCombatState(matchId)!.players[B]!.hp = 2;
+    clock += 1_000;
+    service.tick();
+    await service.whenIdle();
+    expect(emitter.last(A, "match:end")).toMatchObject({ winnerId: A, reason: "KO" });
+  });
 });
 
 describe("GameService con el api caído", () => {

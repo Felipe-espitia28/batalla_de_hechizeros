@@ -257,10 +257,184 @@ describe("Meteoro", () => {
   });
 });
 
+// ---------------------------------------------------------------------------
+// P1
+// ---------------------------------------------------------------------------
+
+describe("Corte", () => {
+  it("hace 5 de daño, gasta 6 y tiene cooldown de 0,8 s", () => {
+    const state = activeMatch();
+    expect(castSpell(state, A, "slash", 0.9, START)).toEqual({ ok: true, outcome: "hit", damage: 5, targetId: B });
+    expect(player(state, B).hp).toBe(95);
+    expect(player(state, A).mana).toBe(24);
+    expect(castSpell(state, A, "slash", 0.9, START + 799)).toEqual({ ok: false, code: "COOLDOWN" });
+  });
+});
+
+describe("Bola de fuego", () => {
+  it("hace 15 de daño y deja una quemadura de 2/s durante 3 s (21 en total)", () => {
+    const state = activeMatch();
+    expect(castSpell(state, A, "fireball", 0.9, START)).toMatchObject({ ok: true, outcome: "hit", damage: 15 });
+    expect(player(state, B).hp).toBe(85);
+    expect(effectsOf(state, B, START)).toEqual([{ type: "burn", until: START + 3_000 }]);
+
+    advance(state, START + 999);
+    expect(player(state, B).hp).toBe(85);
+    advance(state, START + 1_000);
+    expect(player(state, B).hp).toBe(83);
+    advance(state, START + 5_000);
+    expect(player(state, B).hp).toBe(79);
+    expect(effectsOf(state, B, START + 5_000)).toEqual([]);
+  });
+
+  it("gasta 25 de maná y tiene cooldown de 4 s", () => {
+    const state = activeMatch();
+    player(state, A).mana = 100;
+    castSpell(state, A, "fireball", 0.9, START);
+    expect(player(state, A).mana).toBe(75);
+    expect(castSpell(state, A, "fireball", 0.9, START + 3_999)).toEqual({ ok: false, code: "COOLDOWN" });
+  });
+});
+
+describe("Curación", () => {
+  it("cura 15 sin pasar de 100", () => {
+    const state = activeMatch();
+    player(state, A).hp = 50;
+    expect(castSpell(state, A, "heal", 0.9, START)).toEqual({ ok: true, outcome: "self", damage: 0, targetId: A });
+    expect(player(state, A).hp).toBe(65);
+    player(state, A).hp = 95;
+    player(state, A).mana = 100;
+    player(state, A).cooldownsUntil = {};
+    castSpell(state, A, "heal", 0.9, START + GAP);
+    expect(player(state, A).hp).toBe(100);
+  });
+
+  it("con quemadura o veneno cura la vida pero el efecto sigue", () => {
+    const state = activeMatch();
+    player(state, B).mana = 100;
+    castSpell(state, B, "fireball", 0.9, START);
+    castSpell(state, B, "poison", 0.9, START + GAP);
+    player(state, A).mana = 100;
+    castSpell(state, A, "heal", 0.9, START + 500);
+    expect(player(state, A).hp).toBe(100);
+    expect(effectsOf(state, A, START + 500).map((e) => e.type).sort()).toEqual(["burn", "poison"]);
+  });
+});
+
+describe("Veneno", () => {
+  it("quita 2 de vida y 3 de maná por segundo durante 6 s", () => {
+    // Sin regeneración para ver solo el drenaje.
+    const rules = { ...MATCH_RULES, manaRegenPerSecond: 0 };
+    const state = activeMatch({ rules });
+    player(state, A).mana = 100;
+    castSpell(state, A, "poison", 0.9, START, rules);
+    player(state, B).mana = 50;
+    advance(state, START + 6_000, rules);
+    expect(player(state, B).hp).toBe(88);
+    expect(player(state, B).mana).toBe(32);
+    advance(state, START + 10_000, rules);
+    expect(player(state, B).hp).toBe(88);
+  });
+
+  it("con el rival en 0 de maná sigue haciendo daño y el maná no baja de 0", () => {
+    const rules = { ...MATCH_RULES, manaRegenPerSecond: 0 };
+    const state = activeMatch({ rules });
+    castSpell(state, A, "poison", 0.9, START, rules);
+    player(state, B).mana = 1;
+    advance(state, START + 6_000, rules);
+    expect(player(state, B).mana).toBe(0);
+    expect(player(state, B).hp).toBe(88);
+  });
+});
+
+describe("Congelar", () => {
+  it("los cooldowns del rival duran el doble durante 5 s", () => {
+    const state = activeMatch();
+    player(state, A).mana = 100;
+    castSpell(state, A, "freeze", 0.9, START);
+    expect(effectsOf(state, B, START)).toEqual([{ type: "freeze", until: START + 5_000 }]);
+
+    castSpell(state, B, "lightning", 0.9, START + 100);
+    expect(player(state, B).cooldownsUntil.lightning).toBe(START + 100 + 2 * SPELLS.lightning.cooldownMs);
+    // Pasado el efecto, cooldown normal.
+    castSpell(state, B, "slash", 0.9, START + 5_000);
+    expect(player(state, B).cooldownsUntil.slash).toBe(START + 5_000 + SPELLS.slash.cooldownMs);
+  });
+
+  it("no afecta al que lo lanza", () => {
+    const state = activeMatch();
+    player(state, A).mana = 100;
+    castSpell(state, A, "freeze", 0.9, START);
+    castSpell(state, A, "lightning", 0.9, START + GAP);
+    expect(player(state, A).cooldownsUntil.lightning).toBe(START + GAP + SPELLS.lightning.cooldownMs);
+  });
+});
+
+describe("efectos combinados y KO por efectos", () => {
+  it("Fuego y Veneno se acumulan", () => {
+    const state = activeMatch();
+    player(state, A).mana = 100;
+    castSpell(state, A, "fireball", 0.9, START);
+    castSpell(state, A, "poison", 0.9, START + GAP);
+    // 15 del impacto + 3 golpes de quemadura (2) + 6 golpes de veneno (2).
+    advance(state, START + 10_000);
+    expect(player(state, B).hp).toBe(100 - 15 - 6 - 12);
+  });
+
+  it("un efecto por segundo puede causar KO", () => {
+    const state = activeMatch();
+    player(state, A).mana = 100;
+    castSpell(state, A, "fireball", 0.9, START);
+    player(state, B).hp = 2;
+    advance(state, START + 1_000);
+    expect(checkEnd(state, START + 1_000)).toEqual({ winnerId: A, reason: "KO" });
+  });
+
+  it("si ambos llegan a 0 en el mismo tick es DRAW", () => {
+    const state = activeMatch();
+    player(state, A).mana = 100;
+    player(state, B).mana = 100;
+    castSpell(state, A, "fireball", 0.9, START);
+    castSpell(state, B, "fireball", 0.9, START);
+    player(state, A).hp = 2;
+    player(state, B).hp = 2;
+    advance(state, START + 1_000);
+    expect(checkEnd(state, START + 1_000)).toEqual({ winnerId: null, reason: "DRAW" });
+  });
+
+  it("match:state solo expone { type, until } de cada efecto", () => {
+    const state = activeMatch();
+    player(state, A).mana = 100;
+    castSpell(state, A, "poison", 0.9, START);
+    expect(Object.keys(effectsOf(state, B, START)[0]!).sort()).toEqual(["type", "until"]);
+  });
+});
 
 // ---------------------------------------------------------------------------
-// Orden de llegada
+// Tabla de interacciones (sección 6)
 // ---------------------------------------------------------------------------
+
+describe("interacciones con el Escudo", () => {
+  it.each(["lightning", "slash", "fireball", "poison", "freeze"] as const)(
+    "%s contra Escudo: absorbido por completo, sin efecto y el escudo desaparece",
+    (spellId) => {
+      const state = activeMatch();
+      castSpell(state, B, "shield", 0.9, START);
+      player(state, A).mana = 100;
+      const result =
+        spellId === "silence-seal" ? castSeal(state, A, START) : castSpell(state, A, spellId, 0.9, START + 100);
+      expect(result).toMatchObject({ ok: true, outcome: "blocked", damage: 0 });
+      advance(state, START + 10_000);
+      expect(player(state, B).hp).toBe(100);
+      expect(player(state, B).effects).toEqual([]);
+      expect(player(state, B).silencedUntil).toBeNull();
+      expect(player(state, B).shieldUntil).toBeNull();
+    },
+  );
+
+
+});
+
 
 describe("orden de llegada", () => {
   it("dos hechizos casi simultáneos se procesan en el orden en que llegan", () => {

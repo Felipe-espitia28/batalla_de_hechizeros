@@ -38,9 +38,9 @@ import {
 /**
  * Hechizos con efecto implementado. Un hechizo del grimorio que no esté aquí se descarta al cargar
  * el loadout y responde NOT_IN_GRIMOIRE: así nunca se acepta uno que el servidor no sabe resolver.
- * Hoy: P0 (Rayo, Escudo) y Meteoro; P1 y P2 llegan en los siguientes commits.
+ * Hoy: P0 y P1. El Sello y los definitivos de P2 llegan en el siguiente commit.
  */
-export const IMPLEMENTED_SPELLS: ReadonlySet<SpellId> = new Set<SpellId>(["lightning", "shield"]);
+export const IMPLEMENTED_SPELLS: ReadonlySet<SpellId> = new Set<SpellId>(["lightning", "shield", "slash", "fireball", "heal", "poison", "freeze"]);
 export const IMPLEMENTED_ULTIMATES: ReadonlySet<UltimateId> = new Set<UltimateId>(["meteor"]);
 
 /**
