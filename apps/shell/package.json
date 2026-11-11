@@ -6,7 +6,8 @@
   "description": "Shell (host de Module Federation): login, sesión, navegación y carga de los remotes. Dueño: Felipe.",
   "scripts": {
     "dev": "vite",
-    "build": "tsc -p tsconfig.json && vite build",
+    "build:deps": "tsc -p ../../packages/contracts/tsconfig.json",
+    "build": "npm run build:deps && tsc -p tsconfig.json && vite build",
     "preview": "vite preview",
     "typecheck": "tsc -p tsconfig.json",
     "test": "vitest run"
