@@ -169,6 +169,24 @@ export class MatchClient {
    * Definitivo: solo el texto reconocido (R2), nunca audio. El servidor vuelve a validar la palabra,
    * el maná lleno y el requisito; la Arena no decide nada.
    */
+  /**
+   * X del Sello formada (sección 6): avisa al servidor para que empiece a contar los 0,6 s que
+   * exige antes de aceptar `silence-seal`. Sin ack de error visible: si falla, el rechazo llega
+   * con el lanzamiento.
+   */
+  sealCharging(): void {
+    const { matchId, phase } = this.snapshot;
+    if (!matchId || phase !== "active") return;
+    this.socket.emit("combat:seal-charging", { matchId }, () => undefined);
+  }
+
+  /** La X se deshizo antes de tiempo: no se gasta maná. */
+  sealCancel(): void {
+    const { matchId, phase } = this.snapshot;
+    if (!matchId || phase !== "active") return;
+    this.socket.emit("combat:seal-cancel", { matchId }, () => undefined);
+  }
+
   castUltimate(ultimateId: UltimateId, transcript: string): void {
     const { matchId, phase } = this.snapshot;
     if (!matchId || phase !== "active") return;

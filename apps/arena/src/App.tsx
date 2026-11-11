@@ -99,6 +99,16 @@ function ArenaView({ session, navigate, client }: RemoteAppProps & { client: Mat
       },
       // Solo en modo teclado (tecla 9); con micrófono lo emite useVoice.
       onUltimate: ({ ultimateId: id, transcript }) => client.castUltimate(id, transcript),
+      onSealCharging() {
+        if (match.phase !== "active") return;
+        client.sealCharging();
+        client.notify("✖️ Cargando el Sello… sostén la X", "info");
+      },
+      onSealCancel() {
+        if (match.phase !== "active") return;
+        client.sealCancel();
+        client.notify("Sello cancelado", "info");
+      },
     },
   });
 
@@ -279,7 +289,7 @@ function StatusBar({ connection, keyboard }: { connection: string; keyboard: boo
       {connection === "connecting" && <span>Conectando con el servidor…</span>}
       {connection === "reconnecting" && <span className="ar-warn">Conexión perdida. Reconectando…</span>}
       {connection === "unauthorized" && <span className="ar-warn">Tu sesión expiró. Vuelve a iniciar sesión.</span>}
-      {keyboard && <span>Modo teclado (pruebas): 1 = Rayo, 2 = Escudo, 0 = fallido</span>}
+      {keyboard && <span>Modo teclado (pruebas): 1–4 = espacios del grimorio, 9 = definitivo, 0 = fallido</span>}
     </div>
   );
 }

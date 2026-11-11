@@ -93,6 +93,22 @@ describe("MatchClient", () => {
     expect(Object.keys(cast.payload as object).sort()).toEqual(["castId", "matchId", "transcript", "ultimateId"]);
   });
 
+  it("Sello: seal-charging y seal-cancel solo con { matchId } y solo con la partida activa", () => {
+    const { client, sent, server } = setup();
+    client.sealCharging();
+    expect(sent.some((s) => s.event.startsWith("combat:seal"))).toBe(false);
+
+    server("match:found", { matchId: "m1", you: { id: "u1" }, rival: { id: "u2" } });
+    server("match:state", state(Date.now()));
+    client.sealCharging();
+    client.sealCancel();
+    const seal = sent.filter((s) => s.event.startsWith("combat:seal"));
+    expect(seal.map((s) => [s.event, s.payload])).toEqual([
+      ["combat:seal-charging", { matchId: "m1" }],
+      ["combat:seal-cancel", { matchId: "m1" }],
+    ]);
+  });
+
   it("calcula el desfase de reloj con serverNow", () => {
     const { client, server } = setup();
     server("match:state", state(Date.now() + 5000));
