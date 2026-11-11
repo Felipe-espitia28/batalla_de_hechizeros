@@ -274,7 +274,35 @@ describe("GameService con hechizos P1 y P2", () => {
     expect(emitter.last(A, "combat:spell-rejected")).toEqual({ castId: "u1", code: "LOW_CONFIDENCE" });
   });
 
+  it("seal-charging avisa solo al rival con combat:seal-warning y el Sello entra tras 0,6 s", async () => {
+    build(fullGrimoire);
+    const matchId = await startMatch();
+    service.getCombatState(matchId)!.players[A]!.mana = 100;
+    expect(service.sealCharging(A, matchId)).toEqual({ ok: true });
+    expect(emitter.last(B, "combat:seal-warning")).toEqual({ byPlayerId: A });
+    expect(emitter.of(A, "combat:seal-warning")).toHaveLength(0);
 
+    clock += 600;
+    expect(service.castSpell(A, { matchId, castId: "s1", spellId: "silence-seal", confidence: 1 })).toEqual({ ok: true });
+    expect(emitter.last(B, "match:state").players[B].silencedUntil).toBe(clock + 7_000);
+    expect(service.castSpell(B, { matchId, castId: "b1", spellId: "lightning", confidence: 1 })).toEqual({
+      ok: false,
+      code: "SILENCED",
+    });
+  });
+
+  it("seal-cancel anula la carga", async () => {
+    build(fullGrimoire);
+    const matchId = await startMatch();
+    service.getCombatState(matchId)!.players[A]!.mana = 100;
+    service.sealCharging(A, matchId);
+    expect(service.sealCancel(A, matchId)).toEqual({ ok: true });
+    clock += 1_000;
+    expect(service.castSpell(A, { matchId, castId: "s1", spellId: "silence-seal", confidence: 1 })).toEqual({
+      ok: false,
+      code: "SEAL_NOT_CHARGED",
+    });
+  });
 
   it("la quemadura llega a match:state y puede terminar la partida por KO en el tick", async () => {
     build(fullGrimoire);

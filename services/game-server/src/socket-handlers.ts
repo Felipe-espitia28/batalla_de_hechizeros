@@ -80,8 +80,8 @@ export function registerHandlers(socket: GameSocket, service: GameService, logge
   on("match:rejoin", matchRefSchema, (p) => service.rejoin(userId, p.matchId));
   on("combat:cast-spell", castSpellSchema, (p) => service.castSpell(userId, p));
   on("combat:cast-ultimate", castUltimateSchema, (p) => service.castUltimate(userId, p));
-  on("combat:seal-charging", matchRefSchema, (p) => service.sealEvent(userId, p.matchId));
-  on("combat:seal-cancel", matchRefSchema, (p) => service.sealEvent(userId, p.matchId));
+  on("combat:seal-charging", matchRefSchema, (p) => service.sealCharging(userId, p.matchId));
+  on("combat:seal-cancel", matchRefSchema, (p) => service.sealCancel(userId, p.matchId));
 
   socket.on("disconnect", () => service.onDisconnected(userId));
 }

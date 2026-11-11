@@ -24,6 +24,7 @@ import type {
   UltimateId,
   UserId,
 } from "@duelo/contracts";
+import { SPELL_IDS, ULTIMATE_IDS } from "@duelo/contracts";
 import {
   MATCH_RULES,
   SPELLS,
@@ -38,10 +39,10 @@ import {
 /**
  * Hechizos con efecto implementado. Un hechizo del grimorio que no esté aquí se descarta al cargar
  * el loadout y responde NOT_IN_GRIMOIRE: así nunca se acepta uno que el servidor no sabe resolver.
- * Hoy: P0 y P1. El Sello y los definitivos de P2 llegan en el siguiente commit.
+ * Hoy están todos (P0, P1 y P2).
  */
-export const IMPLEMENTED_SPELLS: ReadonlySet<SpellId> = new Set<SpellId>(["lightning", "shield", "slash", "fireball", "heal", "poison", "freeze"]);
-export const IMPLEMENTED_ULTIMATES: ReadonlySet<UltimateId> = new Set<UltimateId>(["meteor"]);
+export const IMPLEMENTED_SPELLS: ReadonlySet<SpellId> = new Set<SpellId>(SPELL_IDS);
+export const IMPLEMENTED_ULTIMATES: ReadonlySet<UltimateId> = new Set<UltimateId>(ULTIMATE_IDS);
 
 /**
  * Efecto con duración tal como vive en el servidor. Hacia los clientes solo viaja `{ type, until }`

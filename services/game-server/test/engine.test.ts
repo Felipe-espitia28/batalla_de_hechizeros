@@ -411,11 +411,179 @@ describe("efectos combinados y KO por efectos", () => {
 });
 
 // ---------------------------------------------------------------------------
+// P2
+// ---------------------------------------------------------------------------
+
+describe("Sello de silencio", () => {
+  it("con 0,6 s de carga: el rival queda sellado 7 s y se avisa del uso", () => {
+    const state = activeMatch();
+    player(state, A).mana = 100;
+    expect(castSeal(state, A, START)).toEqual({ ok: true, outcome: "hit", damage: 0, targetId: B });
+    const sealedAt = START + 600;
+    expect(player(state, A).mana).toBe(30);
+    expect(toMatchState(state, sealedAt).players[B]!.silencedUntil).toBe(sealedAt + 7_000);
+    expect(toMatchState(state, sealedAt).players[A]!.used["silence-seal"]).toBe(true);
+  });
+
+  it("sin seal-charging previo o con menos de 0,6 s: SEAL_NOT_CHARGED", () => {
+    const state = activeMatch();
+    player(state, A).mana = 100;
+    expect(castSpell(state, A, "silence-seal", 1, START)).toEqual({ ok: false, code: "SEAL_NOT_CHARGED" });
+    expect(castSeal(state, A, START + GAP, 599)).toEqual({ ok: false, code: "SEAL_NOT_CHARGED" });
+    expect(player(state, A).mana).toBe(100);
+  });
+
+  it("seal-cancel anula la carga", () => {
+    const state = activeMatch();
+    player(state, A).mana = 100;
+    sealCharging(state, A, START);
+    sealCancel(state, A);
+    expect(castSpell(state, A, "silence-seal", 1, START + 1_000)).toEqual({ ok: false, code: "SEAL_NOT_CHARGED" });
+  });
+
+  it("una sola vez por partida", () => {
+    const state = activeMatch();
+    player(state, A).mana = 100;
+    castSeal(state, A, START);
+    player(state, A).mana = 100;
+    expect(sealCharging(state, A, START + 10_000)).toEqual({ ok: false, code: "ALREADY_USED" });
+    expect(castSpell(state, A, "silence-seal", 1, START + 10_700)).toEqual({ ok: false, code: "ALREADY_USED" });
+  });
+
+  it("sellado no puede lanzar nada, ni definitivos", () => {
+    const state = activeMatch();
+    player(state, A).mana = 100;
+    castSeal(state, A, START);
+    player(state, B).mana = 100;
+    expect(castSpell(state, B, "lightning", 0.9, START + 1_000)).toEqual({ ok: false, code: "SILENCED" });
+    expect(castUltimate(state, B, "meteor", "meteoro", START + 2_000)).toEqual({ ok: false, code: "SILENCED" });
+    expect(sealCharging(state, B, START + 3_000)).toEqual({ ok: false, code: "SILENCED" });
+    // Al terminar el silencio vuelve a lanzar.
+    expect(castSpell(state, B, "lightning", 0.9, START + 600 + 7_000)).toMatchObject({ ok: true });
+  });
+
+  it("sellado recupera maná a 8/s", () => {
+    const state = activeMatch();
+    player(state, A).mana = 100;
+    castSeal(state, A, START);
+    player(state, B).mana = 0;
+    advance(state, START + 600 + 2_000);
+    expect(player(state, B).mana).toBeCloseTo(16);
+  });
+
+  it("sellar a un rival ya sellado se rechaza sin gastar el uso ni el maná", () => {
+    const state = activeMatch();
+    player(state, B).silencedUntil = START + 10_000;
+    player(state, A).mana = 100;
+    expect(castSeal(state, A, START)).toEqual({ ok: false, code: "REQUIREMENT_NOT_MET" });
+    expect(player(state, A).mana).toBe(100);
+    expect(player(state, A).used["silence-seal"]).toBe(false);
+  });
+
+  it("si el rival lo sella mientras carga, la carga se pierde", () => {
+    const state = activeMatch();
+    player(state, A).mana = 100;
+    player(state, B).mana = 100;
+    sealCharging(state, B, START);
+    castSeal(state, A, START);
+    expect(player(state, B).sealChargingSince).toBeNull();
+  });
+});
+
+describe("Tormenta", () => {
+  it("8 de daño por segundo durante 5 s (40) y gasta el maná lleno", () => {
+    const state = activeMatch({ ultimateA: "storm" });
+    player(state, A).mana = 100;
+    expect(castUltimate(state, A, "storm", "tormenta", START)).toEqual({ ok: true, outcome: "hit", damage: 0, targetId: B });
+    expect(effectsOf(state, B, START)).toEqual([{ type: "storm", until: START + 5_000 }]);
+    advance(state, START + 10_000);
+    expect(player(state, B).hp).toBe(60);
+  });
+});
+
+describe("Renacer", () => {
+  it("+40 de vida sin pasar de 100 y quita quemadura, veneno y efectos negativos", () => {
+    const state = activeMatch({ ultimateA: "rebirth" });
+    player(state, B).mana = 100;
+    castSpell(state, B, "fireball", 0.9, START);
+    castSpell(state, B, "poison", 0.9, START + GAP);
+    castSpell(state, B, "freeze", 0.9, START + 2 * GAP);
+    player(state, A).hp = 30;
+    player(state, A).mana = 100;
+    // Antes del primer golpe de la quemadura (+1 s), para que la cuenta sea exacta.
+    expect(castUltimate(state, A, "rebirth", "renacer", START + 900)).toEqual({ ok: true, outcome: "self", damage: 0, targetId: A });
+    expect(player(state, A).hp).toBe(70);
+    expect(effectsOf(state, A, START + 900)).toEqual([]);
+    // Sin efectos, ya no hay más golpes.
+    advance(state, START + 8_000);
+    expect(player(state, A).hp).toBe(70);
+    player(state, A).hp = 90;
+    player(state, A).mana = 100;
+    castUltimate(state, A, "rebirth", "renacer", START + 2_000);
+    expect(player(state, A).hp).toBe(100);
+  });
+});
+
+describe("Vacío púrpura", () => {
+  it("con vida ≤ 30 hace 50 de daño", () => {
+    const state = activeMatch({ ultimateA: "purple-void" });
+    player(state, A).hp = 30;
+    player(state, A).mana = 100;
+    expect(castUltimate(state, A, "purple-void", "¡Vacío!", START)).toEqual({ ok: true, outcome: "hit", damage: 50, targetId: B });
+    expect(player(state, B).hp).toBe(50);
+    expect(toMatchState(state, START).players[A]!.used["purple-void"]).toBe(true);
+  });
+
+  it("acepta también «púrpura»", () => {
+    const state = activeMatch({ ultimateA: "purple-void" });
+    player(state, A).hp = 10;
+    player(state, A).mana = 100;
+    expect(castUltimate(state, A, "purple-void", "púrpura", START)).toMatchObject({ ok: true });
+  });
+
+  it("con vida > 30: REQUIREMENT_NOT_MET y no gasta maná", () => {
+    const state = activeMatch({ ultimateA: "purple-void" });
+    player(state, A).hp = 31;
+    player(state, A).mana = 100;
+    expect(castUltimate(state, A, "purple-void", "vacio", START)).toEqual({ ok: false, code: "REQUIREMENT_NOT_MET" });
+    expect(player(state, A).mana).toBe(100);
+  });
+
+  it("curarse por encima de 30 lo vuelve a bloquear", () => {
+    const state = activeMatch({ ultimateA: "purple-void" });
+    player(state, A).hp = 25;
+    player(state, A).mana = 100;
+    castSpell(state, A, "heal", 0.9, START);
+    player(state, A).mana = 100;
+    expect(castUltimate(state, A, "purple-void", "vacio", START + GAP)).toEqual({ ok: false, code: "REQUIREMENT_NOT_MET" });
+  });
+
+  it("contra escudo hace la mitad (25) y el escudo desaparece", () => {
+    const state = activeMatch({ ultimateA: "purple-void" });
+    castSpell(state, B, "shield", 0.9, START);
+    player(state, A).hp = 20;
+    player(state, A).mana = 100;
+    expect(castUltimate(state, A, "purple-void", "vacio", START + 100)).toMatchObject({ outcome: "reduced", damage: 25 });
+    expect(player(state, B).shieldUntil).toBeNull();
+  });
+
+  it("una sola vez por partida", () => {
+    const state = activeMatch({ ultimateA: "purple-void" });
+    player(state, A).hp = 20;
+    player(state, A).mana = 100;
+    castUltimate(state, A, "purple-void", "vacio", START);
+    player(state, A).mana = 100;
+    expect(castUltimate(state, A, "purple-void", "vacio", START + GAP)).toEqual({ ok: false, code: "ALREADY_USED" });
+    expect(player(state, A).mana).toBe(100);
+  });
+});
+
+// ---------------------------------------------------------------------------
 // Tabla de interacciones (sección 6)
 // ---------------------------------------------------------------------------
 
 describe("interacciones con el Escudo", () => {
-  it.each(["lightning", "slash", "fireball", "poison", "freeze"] as const)(
+  it.each(["lightning", "slash", "fireball", "poison", "freeze", "silence-seal"] as const)(
     "%s contra Escudo: absorbido por completo, sin efecto y el escudo desaparece",
     (spellId) => {
       const state = activeMatch();
@@ -432,9 +600,24 @@ describe("interacciones con el Escudo", () => {
     },
   );
 
+  it("el Sello absorbido por el escudo se gasta igual (1 vez por partida)", () => {
+    const state = activeMatch();
+    castSpell(state, B, "shield", 0.9, START);
+    player(state, A).mana = 100;
+    castSeal(state, A, START);
+    expect(player(state, A).used["silence-seal"]).toBe(true);
+  });
 
+  it("Tormenta contra Escudo no se bloquea y el escudo sigue", () => {
+    const state = activeMatch({ ultimateA: "storm" });
+    castSpell(state, B, "shield", 0.9, START);
+    player(state, A).mana = 100;
+    expect(castUltimate(state, A, "storm", "tormenta", START + 100)).toMatchObject({ ok: true, outcome: "hit" });
+    expect(player(state, B).shieldUntil).toBe(START + 3_000);
+    advance(state, START + 10_000);
+    expect(player(state, B).hp).toBe(100 - ULTIMATES.storm.effect.storm.damagePerSecond * 5);
+  });
 });
-
 
 describe("orden de llegada", () => {
   it("dos hechizos casi simultáneos se procesan en el orden en que llegan", () => {

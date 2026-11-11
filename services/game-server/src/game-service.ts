@@ -32,6 +32,8 @@ import {
   createCombatState,
   finish,
   getOpponentId,
+  sealCancel,
+  sealCharging,
   startCountdown,
   toMatchState,
   type CombatState,
@@ -367,12 +369,25 @@ export class GameService {
     return ok;
   }
 
-  /** Sello de silencio (P2): mientras no esté implementado, no está en ningún grimorio. */
-  sealEvent(userId: UserId, matchId: MatchId): AckResponse {
+  /**
+   * La X del Sello se formó. Empieza la carga que el motor exige (≥ 0,6 s) y se avisa al rival
+   * con `combat:seal-warning` para que la Arena le muestre que viene un Sello.
+   */
+  sealCharging(userId: UserId, matchId: MatchId): AckResponse {
     const match = this.findMemberMatch(userId, matchId);
-    if (!match || match.ending || match.combat.status !== "active") return fail("MATCH_NOT_ACTIVE");
-    // IMPLEMENTED_SPELLS aún no incluye "silence-seal", así que ningún grimorio lo tiene.
-    return fail("NOT_IN_GRIMOIRE");
+    if (!match || match.ending) return fail("MATCH_NOT_ACTIVE");
+    const result = sealCharging(match.combat, userId, this.now(), this.rules);
+    if (!result.ok) return fail(result.code);
+    this.emitter.emit([getOpponentId(match.combat, userId)], "combat:seal-warning", { byPlayerId: userId });
+    return ok;
+  }
+
+  /** La X se deshizo antes de lanzar: se anula la carga sin gastar maná. */
+  sealCancel(userId: UserId, matchId: MatchId): AckResponse {
+    const match = this.findMemberMatch(userId, matchId);
+    if (!match || match.ending) return fail("MATCH_NOT_ACTIVE");
+    const result = sealCancel(match.combat, userId);
+    return result.ok ? ok : fail(result.code);
   }
 
   private afterResolvedCast(
