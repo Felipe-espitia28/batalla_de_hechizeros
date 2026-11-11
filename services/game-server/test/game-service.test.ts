@@ -240,6 +240,44 @@ describe("GameService", () => {
   });
 });
 
+describe("GameService con hechizos P1 y P2", () => {
+  /** api simulado con el grimorio completo que armaría la Tienda. */
+  const fullGrimoire: InternalApi = {
+    getLoadout: async (userId, username) => ({
+      userId,
+      username,
+      rating: 0,
+      rank: "Grado 4",
+      spells: ["lightning", "shield", "fireball", "silence-seal"],
+      ultimateId: "meteor",
+    }),
+    recordMatch: (req) => new DevInternalApi().recordMatch(req),
+  };
+
+  it("Meteoro por el servicio: valida el transcript, avisa a ambos y envía el estado", async () => {
+    build();
+    const matchId = await startMatch();
+    service.getCombatState(matchId)!.players[A]!.mana = 100;
+    expect(service.castUltimate(A, { matchId, castId: "u1", ultimateId: "meteor", transcript: "¡Meteoro!" })).toEqual({ ok: true });
+    expect(emitter.last(B, "combat:spell-resolved")).toEqual({ castId: "u1", casterId: A, spellId: "meteor", outcome: "hit", damage: 35 });
+    expect(emitter.last(B, "match:state").players[B].hp).toBe(65);
+  });
+
+  it("Meteoro con la palabra equivocada: rechazo al lanzador", async () => {
+    build();
+    const matchId = await startMatch();
+    service.getCombatState(matchId)!.players[A]!.mana = 100;
+    expect(service.castUltimate(A, { matchId, castId: "u1", ultimateId: "meteor", transcript: "tormenta" })).toEqual({
+      ok: false,
+      code: "LOW_CONFIDENCE",
+    });
+    expect(emitter.last(A, "combat:spell-rejected")).toEqual({ castId: "u1", code: "LOW_CONFIDENCE" });
+  });
+
+
+
+});
+
 describe("GameService con el api caído", () => {
   // El 404 es el caso que vio Felipe: la ruta del loadout aún no existía y la Arena mostraba
   // "Tu sesión expiró". El JWT ya se validó en el handshake: nunca debe ser UNAUTHORIZED.

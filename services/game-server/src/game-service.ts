@@ -356,7 +356,7 @@ export class GameService {
     const match = this.findMemberMatch(userId, payload.matchId);
     const result =
       match && !match.ending
-        ? castUltimate(match.combat, userId, payload.ultimateId, now, this.rules)
+        ? castUltimate(match.combat, userId, payload.ultimateId, payload.transcript, now, this.rules)
         : ({ ok: false, code: "MATCH_NOT_ACTIVE" } as const);
 
     if (!result.ok) {
