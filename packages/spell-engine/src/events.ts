@@ -3,8 +3,8 @@
  * si mañana la fuente de eventos cambia (modo teclado, un agente local en Python…),
  * la Arena no se toca.
  *
- * Por ahora solo se emiten onSpell, onSpellFailed y onError (P0). onUltimate, onSealCharging
- * y onSealCancel llegarán con la voz y la X de dos manos.
+ * onUltimate lo emite VoiceListener (grito + palabra). onSealCharging y onSealCancel llegarán
+ * con la X de dos manos (P2).
  */
 import type { SpellId, UltimateId } from "@duelo/contracts";
 
@@ -30,13 +30,18 @@ export type SpellEngineErrorCode =
   | "CAMERA_DENIED"
   | "CAMERA_NOT_FOUND"
   | "CAMERA_IN_USE"
-  | "MEDIAPIPE_LOAD_FAILED";
+  | "MEDIAPIPE_LOAD_FAILED"
+  // Voz: nunca fatales, solo desactivan los definitivos (sección 11).
+  | "MIC_DENIED"
+  | "MIC_NOT_FOUND"
+  | "SPEECH_UNSUPPORTED"
+  | "SPEECH_NETWORK";
 
 export interface SpellEngineError {
   code: SpellEngineErrorCode;
   /** Mensaje en español apto para mostrarse tal cual al jugador. */
   message: string;
-  /** Sin cámara o sin MediaPipe no se puede jugar; el micrófono (futuro) no será fatal. */
+  /** Sin cámara o sin MediaPipe no se puede jugar (true); sin micrófono solo se pierden los definitivos (false). */
   fatal: boolean;
   cause?: unknown;
 }
@@ -60,6 +65,12 @@ export const ERROR_MESSAGES: Record<SpellEngineErrorCode, string> = {
     "La cámara está ocupada por otra aplicación (Zoom, Meet, Teams u otra pestaña). Ciérrala y recarga la página.",
   MEDIAPIPE_LOAD_FAILED:
     "No se pudo cargar el detector de manos. Recarga la página; si sigue fallando, prueba en Chrome o Edge actualizados.",
+  MIC_DENIED:
+    "Bloqueaste el micrófono: los definitivos están desactivados. Para usarlos, permite el micrófono en el candado junto a la dirección y recarga. El resto del juego funciona igual.",
+  MIC_NOT_FOUND: "No encontramos micrófono: los definitivos están desactivados. El resto del juego funciona igual.",
+  SPEECH_UNSUPPORTED:
+    "Tu navegador no reconoce voz: los definitivos están desactivados. Usa Chrome o Edge para gritar los definitivos.",
+  SPEECH_NETWORK: "El reconocimiento de voz necesita internet. Revisa tu conexión para usar los definitivos.",
 };
 
 export function engineError(code: SpellEngineErrorCode, cause?: unknown): SpellEngineError {

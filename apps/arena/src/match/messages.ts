@@ -24,6 +24,10 @@ export const SPELL_GESTURES: Partial<Record<AnySpellId, string>> = {
   lightning: "zigzag",
   shield: "círculo",
   slash: "línea recta",
+  fireball: "triángulo",
+  heal: "V",
+  poison: "S hacia abajo",
+  freeze: "cuadrado",
 };
 
 export const ACK_ERROR_MESSAGES: Record<AckErrorCode, string> = {
