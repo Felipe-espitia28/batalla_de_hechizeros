@@ -6,12 +6,12 @@
  * Así quedan servidos desde el mismo origen de la app.
  *
  * Uso: node scripts/copy-assets.mjs <carpeta-destino>
- *   - <destino>/wasm/*                → copiados de @mediapipe/tasks-vision/wasm
+ *   - <destino>/wasm/vision_wasm_internal.{js,wasm} → copiados de @mediapipe/tasks-vision/wasm
  *   - <destino>/hand_landmarker.task  → descargado una vez del repositorio oficial de modelos
  *
  * Los archivos generados no se versionan (pesan ~20 MB); se regeneran en dev y en el build.
  */
-import { copyFile, mkdir, readdir, stat, writeFile } from "node:fs/promises";
+import { copyFile, mkdir, stat, writeFile } from "node:fs/promises";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -31,8 +31,11 @@ const bundlePath = fileURLToPath(import.meta.resolve("@mediapipe/tasks-vision"))
 const wasmSource = join(dirname(bundlePath), "wasm");
 const wasmTarget = join(targetDir, "wasm");
 
+// Solo la variante que carga FilesetResolver.forVisionTasks(basePath) por defecto: la "module"
+// pesa otros ~15 MB y nunca se pide. Menos peso = despliegue y primera carga más rápidos.
+const WASM_FILES = ["vision_wasm_internal.js", "vision_wasm_internal.wasm"];
 await mkdir(wasmTarget, { recursive: true });
-for (const file of await readdir(wasmSource)) {
+for (const file of WASM_FILES) {
   await copyFile(join(wasmSource, file), join(wasmTarget, file));
 }
 console.log(`[spell-engine] wasm copiados a ${wasmTarget}`);

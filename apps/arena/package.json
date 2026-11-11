@@ -5,7 +5,7 @@
   "type": "module",
   "description": "Remote Arena: combate en vivo con cámara y micrófono. Dueño: Juan.",
   "scripts": {
-    "build:deps": "pnpm --filter @duelo/game-rules build",
+    "build:deps": "pnpm --filter @duelo/contracts --filter @duelo/game-rules build",
     "assets": "node ../../packages/spell-engine/scripts/copy-assets.mjs public/mediapipe",
     "dev": "pnpm run build:deps && pnpm run assets && vite",
     "build": "pnpm run build:deps && pnpm run assets && tsc -p tsconfig.json && vite build",
