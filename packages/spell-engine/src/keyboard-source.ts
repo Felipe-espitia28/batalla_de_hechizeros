@@ -59,7 +59,13 @@ export class KeyboardSpellSource implements SpellSource {
     }
     const slot = SLOT_KEYS.indexOf(event.key as (typeof SLOT_KEYS)[number]);
     const spellId = slot >= 0 ? this.grimoire[slot] : undefined;
-    if (spellId) this.handlers.onSpell?.({ spellId, confidence: 1 });
+    if (spellId === "silence-seal") {
+      // Simula la X: carga y, tras 0,7 s, lanza el Sello (el servidor exige la carga previa).
+      this.handlers.onSealCharging?.();
+      setTimeout(() => this.handlers.onSpell?.({ spellId, confidence: 1 }), 700);
+    } else if (spellId) {
+      this.handlers.onSpell?.({ spellId, confidence: 1 });
+    }
   };
 }
 

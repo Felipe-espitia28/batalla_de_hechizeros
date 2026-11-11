@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import type { ClassifyResult } from "../src/classifier";
+import type { GestureResult } from "../src/gesture-processor";
 import { GestureProcessor } from "../src/gesture-processor";
 import { PinchDetector } from "../src/pinch";
 import type { Point } from "../src/geometry";
@@ -10,7 +10,7 @@ const SIZE = { width: 640, height: 480 };
 /** Simula: mano abierta → pinza → dibuja `path` → abre. Devuelve los resultados no nulos. */
 function drawWithPinch(processor: GestureProcessor, path: Point[]) {
   let time = 0;
-  const results: ClassifyResult[] = [];
+  const results: GestureResult[] = [];
   const frame = (tip: Point, pinched: boolean) => {
     time += 33;
     const result = processor.process({ hands: [syntheticHand(tip, pinched)], ...SIZE, time });

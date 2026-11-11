@@ -8,6 +8,10 @@ import { classifyStroke, type ClassifyResult } from "./classifier";
 import { distance, type Point } from "./geometry";
 import { INDEX_TIP, type Hand } from "./hand";
 import { PinchDetector, type PinchOptions } from "./pinch";
+import { SealDetector, type SealDetectorOptions, type SealEvent } from "./seal-detector";
+
+/** Lo que puede salir de un fotograma: el final de un trazo o un evento del Sello. */
+export type GestureResult = ClassifyResult | SealEvent;
 
 export interface GestureFrame {
   /** Manos detectadas, en píxeles y ya corregidas por el espejo. */
@@ -24,6 +28,7 @@ export interface GestureProcessorOptions {
   pinch?: Partial<PinchOptions>;
   /** Tiempo sin ver la mano antes de descartar el trazo en curso. */
   lostHandTimeoutMs?: number;
+  seal?: SealDetectorOptions;
 }
 
 export interface GestureSnapshot {
@@ -33,6 +38,8 @@ export interface GestureSnapshot {
   stroke: Point[];
   /** true mientras hay dos manos: el dibujo con pinza se pausa (sección 6). */
   twoHandsPaused: boolean;
+  /** 0..1 mientras se carga la X del Sello (círculo de carga); null si no. */
+  sealProgress: number | null;
 }
 
 /** Suavizado exponencial de la punta del índice: quita el temblor sin meter mucho retraso. */
@@ -48,33 +55,45 @@ export class GestureProcessor {
   private stroke: Point[] = [];
   private drawing = false;
   private lastHandSeenAt = 0;
-  private snapshot: GestureSnapshot = { hands: [], isPinched: false, stroke: [], twoHandsPaused: false };
+  private readonly seal: SealDetector;
+  private snapshot: GestureSnapshot = { hands: [], isPinched: false, stroke: [], twoHandsPaused: false, sealProgress: null };
 
   constructor(options: GestureProcessorOptions) {
     this.grimoire = options.grimoire;
     this.minConfidence = options.minConfidence;
     this.lostHandTimeoutMs = options.lostHandTimeoutMs ?? 250;
     this.pinch = new PinchDetector(options.pinch);
+    this.seal = new SealDetector(options.seal);
   }
 
   setGrimoire(grimoire: readonly SpellId[]): void {
     this.grimoire = grimoire;
+    if (!this.hasSeal) this.seal.reset();
+  }
+
+  /** Sin el Sello en el grimorio, las dos manos solo pausan el dibujo: no se detecta la X. */
+  private get hasSeal(): boolean {
+    return this.grimoire.includes("silence-seal");
   }
 
   getSnapshot(): GestureSnapshot {
     return this.snapshot;
   }
 
-  /** Procesa un fotograma. Devuelve el resultado solo cuando un trazo termina. */
-  process(frame: GestureFrame): ClassifyResult | null {
+  /** Procesa un fotograma. Devuelve algo solo cuando termina un trazo o cambia el Sello. */
+  process(frame: GestureFrame): GestureResult | null {
+    // La X va primero (sección 6: dos manos → Sello) y también recibe los fotogramas con una
+    // mano o ninguna, para poder cancelar la carga cuando se separan.
+    const sealEvent = this.hasSeal ? this.seal.update(frame.hands, frame.time) : null;
     const result = this.step(frame);
     this.snapshot = {
       hands: frame.hands,
       isPinched: this.pinch.isPinched,
       stroke: this.drawing ? [...this.stroke] : [],
       twoHandsPaused: frame.hands.length >= 2,
+      sealProgress: this.hasSeal ? this.seal.progress(frame.time) : null,
     };
-    return result;
+    return sealEvent ?? result;
   }
 
   private step(frame: GestureFrame): ClassifyResult | null {
