@@ -1,24 +1,67 @@
 /**
  * Módulo de tienda — dueño: Angel Arenales.
  *
- * Rutas que van aquí (sección 8 de CLAUDE.md; tipos en @duelo/contracts, rest.ts):
- *   GET  /spells                       -> SpellsResponse
- *   GET  /me/inventory                 -> InventoryResponse          (requireAuth)
- *   POST /shop/purchase                -> PurchaseResponse           (requireAuth; compra atómica)
- *   PUT  /me/grimoire                  -> UpdateGrimoireResponse     (requireAuth)
- *   GET  /internal/users/:id/loadout   -> LoadoutResponse            (requireInternalKey)
+ *   GET  /spells                      -> 200 SpellsResponse          (público)
+ *   GET  /me/inventory                -> 200 InventoryResponse       (requireAuth)
+ *   POST /shop/purchase               -> 200 PurchaseResponse        (requireAuth; compra atómica)
+ *   PUT  /me/grimoire                 -> 200 UpdateGrimoireResponse  (requireAuth)
+ *   GET  /internal/users/:id/loadout  -> 200 LoadoutResponse         (requireInternalKey)
  *
- * Herramientas disponibles:
- *   - requireAuth(deps.env.JWT_SECRET) y getAuth(req)  -> ../../middleware/require-auth.js
- *   - requireInternalKey(deps.env.INTERNAL_API_KEY)    -> ../../middleware/require-internal-key.js
- *   - parseOrThrow(schema, req.body)                   -> ../../lib/validate.js
- *   - throw new HttpError(409, "INSUFFICIENT_GOLD", "…") -> ../../lib/http-error.js
- * Se pueden crear más archivos dentro de esta carpeta (shop.routes.ts, shop.service.ts…).
+ * Errores (ApiErrorBody): SPELL_NOT_FOUND 404, ALREADY_OWNED 409, INSUFFICIENT_GOLD 409,
+ * INVALID_GRIMOIRE 400 (con `details` por espacio), UNAUTHORIZED 401, FORBIDDEN 403, NOT_FOUND 404.
  */
 import { Router } from "express";
+import type {
+  InventoryResponse,
+  LoadoutResponse,
+  PurchaseResponse,
+  SpellsResponse,
+  UpdateGrimoireResponse,
+} from "@duelo/contracts";
 import type { AppDeps } from "../../app-deps.js";
+import { notFound } from "../../lib/http-error.js";
+import { parseOrThrow } from "../../lib/validate.js";
+import { getAuth, requireAuth } from "../../middleware/require-auth.js";
+import { requireInternalKey } from "../../middleware/require-internal-key.js";
+import { grimoireSchema, loadoutParamsSchema, purchaseSchema } from "./shop.schemas.js";
+import { ShopService } from "./shop.service.js";
 
-export function createShopRouter(_deps: AppDeps): Router {
+export function createShopRouter({ env, prisma }: AppDeps): Router {
   const router = Router();
+  const service = new ShopService(prisma);
+  const auth = requireAuth(env.JWT_SECRET);
+
+  // Va primero porque Johan lo necesita para el game-server.
+  router.get("/internal/users/:id/loadout", requireInternalKey(env.INTERNAL_API_KEY), async (req, res) => {
+    const params = loadoutParamsSchema.safeParse(req.params);
+    if (!params.success) {
+      throw notFound(`No existe el usuario ${req.params.id}`);
+    }
+    const body: LoadoutResponse = await service.getLoadout(params.data.id);
+    res.json(body);
+  });
+
+  router.get("/spells", async (_req, res) => {
+    const body: SpellsResponse = await service.listSpells();
+    res.json(body);
+  });
+
+  router.get("/me/inventory", auth, async (req, res) => {
+    const body: InventoryResponse = await service.getInventory(getAuth(req).userId);
+    res.json(body);
+  });
+
+  router.post("/shop/purchase", auth, async (req, res) => {
+    const input = parseOrThrow(purchaseSchema, req.body);
+    const body: PurchaseResponse = await service.purchase(getAuth(req).userId, input.spellId);
+    res.json(body);
+  });
+
+  router.put("/me/grimoire", auth, async (req, res) => {
+    const input = parseOrThrow(grimoireSchema, req.body);
+    const body: UpdateGrimoireResponse = await service.updateGrimoire(getAuth(req).userId, input);
+    res.json(body);
+  });
+
   return router;
 }
