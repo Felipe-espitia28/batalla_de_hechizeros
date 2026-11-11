@@ -6,7 +6,8 @@
   "description": "Remote Ranking: top, posición propia e historial. Dueño: Daniel.",
   "scripts": {
     "dev": "vite",
-    "build": "tsc -p tsconfig.json && vite build",
+    "build:deps": "tsc -p ../../packages/contracts/tsconfig.json && tsc -p ../../packages/game-rules/tsconfig.json",
+    "build": "npm run build:deps && tsc -p tsconfig.json && vite build",
     "preview": "vite preview",
     "typecheck": "tsc -p tsconfig.json",
     "test": "vitest run"
