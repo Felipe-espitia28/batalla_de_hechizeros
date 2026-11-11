@@ -3,10 +3,10 @@
  * la tasa de acierto con la cámara real antes de integrarlo en el juego.
  */
 import type { SpellId } from "@duelo/contracts";
-import { SpellEngine, drawDebug, drawStroke, type SpellFailedEvent, type SpellEvent } from "../src";
+import { SpellEngine, drawDebug, drawSeal, drawStroke, type SpellFailedEvent, type SpellEvent } from "../src";
 
 // Todas las figuras a la vez: es el caso más difícil para el $1 (más candidatos con qué confundirse).
-const GRIMOIRE: SpellId[] = ["lightning", "shield", "slash", "fireball", "heal", "poison", "freeze"];
+const GRIMOIRE: SpellId[] = ["lightning", "shield", "slash", "fireball", "heal", "poison", "freeze", "silence-seal"];
 const LABELS: Partial<Record<SpellId, string>> = {
   lightning: "⚡ Rayo",
   shield: "🛡️ Escudo",
@@ -15,6 +15,7 @@ const LABELS: Partial<Record<SpellId, string>> = {
   heal: "💚 Curación",
   poison: "🐍 Veneno",
   freeze: "❄️ Congelar",
+  "silence-seal": "✖️ Sello",
 };
 
 const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
@@ -100,7 +101,9 @@ const engine = new SpellEngine(
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       if (debugToggle.checked) drawDebug(ctx, snapshot);
       drawStroke(ctx, snapshot.stroke);
-      overlay.textContent = snapshot.twoHandsPaused ? "Dos manos: dibujo en pausa" : "";
+      drawSeal(ctx, snapshot);
+      overlay.textContent =
+        snapshot.sealProgress !== null ? "✖️ Cargando el Sello…" : snapshot.twoHandsPaused ? "Dos manos: cruza los índices en X" : "";
     },
   },
   {

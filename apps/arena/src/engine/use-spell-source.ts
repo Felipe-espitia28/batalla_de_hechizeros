@@ -7,6 +7,7 @@ import {
   KeyboardSpellSource,
   SpellEngine,
   drawDebug,
+  drawSeal,
   drawStroke,
   type SpellEngineError,
   type SpellEngineHandlers,
@@ -60,6 +61,8 @@ export function useSpellSource({ enabled, grimoire, ultimateId, minConfidence, d
       onSpell: (e) => handlersRef.current.onSpell?.(e),
       onSpellFailed: (e) => handlersRef.current.onSpellFailed?.(e),
       onUltimate: (e) => handlersRef.current.onUltimate?.(e),
+      onSealCharging: () => handlersRef.current.onSealCharging?.(),
+      onSealCancel: () => handlersRef.current.onSealCancel?.(),
       onError: (e) => {
         setError(e);
         setStatus("error");
@@ -98,6 +101,7 @@ export function useSpellSource({ enabled, grimoire, ultimateId, minConfidence, d
             ctx.clearRect(0, 0, c.width, c.height);
             if (debugRef.current) drawDebug(ctx, snapshot);
             drawStroke(ctx, snapshot.stroke);
+            drawSeal(ctx, snapshot);
           },
         },
         stable,

@@ -50,3 +50,22 @@ describe("ShoutDetector (grito + palabra)", () => {
     expect(d.feedTranscript("¡Tormenta!", 200)).toEqual({ ultimateId: "storm", transcript: "¡Tormenta!" });
   });
 });
+
+describe("Palabras de los demás definitivos (P2), normalizadas", () => {
+  it.each([
+    ["storm", "¡TORMENTA!"],
+    ["rebirth", "renacer"],
+    ["purple-void", "¡Vacío!"],
+    ["purple-void", "púrpura"],
+  ] as const)("%s acepta «%s»", (ultimateId, said) => {
+    const d = new ShoutDetector({ ultimateId, shoutThreshold: 0.12 });
+    d.feedLevel(0.4, 0);
+    expect(d.feedTranscript(said, 300)).toEqual({ ultimateId, transcript: said });
+  });
+
+  it("Vacío púrpura no se activa con «vaciar»", () => {
+    const d = new ShoutDetector({ ultimateId: "purple-void" });
+    d.feedLevel(0.4, 0);
+    expect(d.feedTranscript("vaciar", 300)).toBeNull();
+  });
+});

@@ -106,10 +106,23 @@ export class SpellEngine implements SpellSource {
 
     this.options.onFrame?.(this.processor.getSnapshot(), size);
 
-    if (result?.kind === "spell") {
-      this.handlers.onSpell?.({ spellId: result.spellId, confidence: result.confidence });
-    } else if (result?.kind === "failed") {
-      this.handlers.onSpellFailed?.({ bestGuess: result.bestGuess, confidence: result.confidence });
+    switch (result?.kind) {
+      case "spell":
+        this.handlers.onSpell?.({ spellId: result.spellId, confidence: result.confidence });
+        break;
+      case "failed":
+        this.handlers.onSpellFailed?.({ bestGuess: result.bestGuess, confidence: result.confidence });
+        break;
+      case "seal-charging":
+        this.handlers.onSealCharging?.();
+        break;
+      case "seal-cancel":
+        this.handlers.onSealCancel?.();
+        break;
+      case "seal-cast":
+        // El Sello viaja como cualquier hechizo: el servidor exige el seal-charging previo.
+        this.handlers.onSpell?.({ spellId: "silence-seal", confidence: result.confidence });
+        break;
     }
   };
 

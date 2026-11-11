@@ -13,9 +13,10 @@ export type {
   UltimateEvent,
 } from "./events";
 export { ERROR_MESSAGES } from "./events";
-export type { GestureSnapshot } from "./gesture-processor";
+export type { GestureResult, GestureSnapshot } from "./gesture-processor";
+export { SealDetector, type SealEvent } from "./seal-detector";
 export { GestureProcessor } from "./gesture-processor";
 export { classifyStroke, isStraightStroke, DEFAULT_MIN_CONFIDENCE, type ClassifyResult } from "./classifier";
-export { drawDebug, drawStroke } from "./debug";
+export { drawDebug, drawSeal, drawStroke } from "./debug";
 export type { Point } from "./geometry";
 export type { Hand } from "./hand";

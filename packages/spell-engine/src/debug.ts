@@ -3,7 +3,7 @@
  * Canvas 2D sin librerías (sección 3). La Arena puede reutilizar `drawStroke` para la estela.
  */
 import type { Point } from "./geometry";
-import { HAND_CONNECTIONS, INDEX_TIP, THUMB_TIP } from "./hand";
+import { HAND_CONNECTIONS, INDEX_MCP, INDEX_TIP, THUMB_TIP } from "./hand";
 import type { GestureSnapshot } from "./gesture-processor";
 
 export function drawStroke(ctx: CanvasRenderingContext2D, stroke: readonly Point[], color = "#7c5cff"): void {
@@ -41,5 +41,30 @@ export function drawDebug(ctx: CanvasRenderingContext2D, snapshot: GestureSnapsh
       ctx.fill();
     });
   }
+  ctx.restore();
+}
+
+/**
+ * Círculo de carga del Sello (sección 6), centrado donde se cruzan los índices.
+ * No es depuración: el jugador debe ver cuánto le falta sostener la X.
+ */
+export function drawSeal(ctx: CanvasRenderingContext2D, snapshot: GestureSnapshot): void {
+  if (snapshot.sealProgress === null || snapshot.hands.length < 2) return;
+  const points = snapshot.hands.slice(0, 2).flatMap((h) => [h[INDEX_MCP]!, h[INDEX_TIP]!]);
+  const cx = points.reduce((sum, p) => sum + p.x, 0) / points.length;
+  const cy = points.reduce((sum, p) => sum + p.y, 0) / points.length;
+  ctx.save();
+  ctx.lineWidth = 8;
+  ctx.lineCap = "round";
+  ctx.strokeStyle = "rgba(255,255,255,0.25)";
+  ctx.beginPath();
+  ctx.arc(cx, cy, 60, 0, Math.PI * 2);
+  ctx.stroke();
+  ctx.strokeStyle = "#e11d48";
+  ctx.shadowColor = "#e11d48";
+  ctx.shadowBlur = 16;
+  ctx.beginPath();
+  ctx.arc(cx, cy, 60, -Math.PI / 2, -Math.PI / 2 + snapshot.sealProgress * Math.PI * 2);
+  ctx.stroke();
   ctx.restore();
 }
