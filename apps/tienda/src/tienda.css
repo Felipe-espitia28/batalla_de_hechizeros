@@ -67,7 +67,6 @@
 .tienda .t-grid { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(min(250px, 100%), 1fr)); gap: 12px; }
 .tienda .t-card { background: var(--t-surface); border: 1px solid var(--t-line); border-radius: 12px; padding: 14px; display: flex; flex-direction: column; gap: 8px; }
 .tienda .t-card--owned, .tienda .t-card--starter { border-color: #3c3466; }
-.tienda .t-card--coming-soon { opacity: .7; }
 .tienda .t-card-top { display: flex; gap: 10px; align-items: center; }
 .tienda .t-emoji { font-size: 1.7rem; width: 44px; height: 44px; display: grid; place-items: center; background: var(--t-surface-2); border-radius: 10px; flex: none; }
 .tienda .t-gesture { color: var(--t-muted); font-size: .88rem; }

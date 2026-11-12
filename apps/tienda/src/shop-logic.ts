@@ -11,8 +11,6 @@ export type SpellStatus =
   /** Inicial: viene con la cuenta. */
   | "starter"
   | "owned"
-  /** P2 aún sin implementar en combate (sección 2: "próximamente" en el catálogo). */
-  | "coming-soon"
   | "affordable"
   | "too-expensive";
 
@@ -33,9 +31,8 @@ export function getDefinition(id: AnySpellId): SpellDefinition | UltimateDefinit
 
 export function getSpellStatus(item: SpellCatalogItem, owned: ReadonlySet<string>, gold: number): SpellStatus {
   if (owned.has(item.id)) return item.isStarter ? "starter" : "owned";
-  // Se bloquea la compra de P2 para no cobrar oro por algo que hoy el servidor rechaza.
-  // Cuando Johan los implemente, basta con quitar esta línea.
-  if (getDefinition(item.id).priority === "P2") return "coming-soon";
+  // Los P2 (Sello, Tormenta, Renacer, Vacío púrpura) ya los resuelve el game-server:
+  // se venden igual que el resto.
   return gold >= item.price ? "affordable" : "too-expensive";
 }
 

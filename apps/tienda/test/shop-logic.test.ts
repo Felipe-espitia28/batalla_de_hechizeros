@@ -32,9 +32,13 @@ describe("getSpellStatus", () => {
     expect(getSpellStatus(item("fireball"), owned, 99)).toBe("too-expensive");
   });
 
-  it("marca los P2 como próximamente aunque alcance el oro", () => {
-    expect(getSpellStatus(item("silence-seal"), starter, 10_000)).toBe("coming-soon");
-    expect(getSpellStatus(item("purple-void"), starter, 10_000)).toBe("coming-soon");
+  it("vende los P2 igual que el resto: el game-server ya los resuelve", () => {
+    const seal = item("silence-seal");
+    const purpleVoid = item("purple-void");
+    expect(getSpellStatus(seal, starter, seal.price)).toBe("affordable");
+    expect(getSpellStatus(purpleVoid, starter, purpleVoid.price)).toBe("affordable");
+    expect(getSpellStatus(seal, starter, seal.price - 1)).toBe("too-expensive");
+    expect(getSpellStatus(item("storm"), new Set([...starter, "storm"]), 0)).toBe("owned");
   });
 });
 
