@@ -113,3 +113,19 @@
 .arena .ar-meter { --level: 0; height: 6px; border-radius: 3px; background: #0b0a12; overflow: hidden; }
 .arena .ar-meter__fill { height: 100%; width: calc(var(--level) * 100%); background: var(--a-mana); transition: width 60ms linear; }
 .arena .ar-meter[data-shout="true"] .ar-meter__fill { background: var(--a-good); }
+
+/* Arena de entrenamiento (practice/practice-view.tsx) */
+.arena .ar-practice__center { padding-top: 16px; }
+.arena .ar-practice__center h2 { margin: 0; font-size: 18px; }
+.arena .ar-practice__stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin: 0; width: 100%; text-align: center; }
+.arena .ar-practice__stats dt { font-size: 12px; color: var(--a-muted); }
+.arena .ar-practice__stats dd { margin: 0; font-size: 22px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.arena .ar-practice__info { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+@media (max-width: 760px) { .arena .ar-practice__info { grid-template-columns: 1fr; } }
+.arena .ar-practice__info h3 { margin: 0 0 10px; font-size: 15px; }
+.arena .ar-practice__log, .arena .ar-practice__guide { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.arena .ar-practice__entry { padding: 6px 10px; border-radius: 8px; background: #262140; }
+.arena .ar-practice__entry--good { color: var(--a-good); }
+.arena .ar-practice__entry--bad { color: var(--a-bad); }
+.arena .ar-practice__entry--info { color: var(--a-muted); }
+.arena .ar-practice__guide li { display: flex; flex-direction: column; gap: 2px; }

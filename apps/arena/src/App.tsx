@@ -11,6 +11,7 @@ import { GAME_SERVER_URL } from "./config";
 import { useSpellSource } from "./engine/use-spell-source";
 import { useVoice } from "./engine/use-voice";
 import { MatchClient, type Notice } from "./match/match-client";
+import { PracticeView } from "./practice/practice-view";
 import { EndScreen } from "./ui/end-screen";
 import { PlayerPanel } from "./ui/player-panel";
 import { UltimateRow } from "./ui/ultimate-row";
@@ -67,6 +68,11 @@ function ArenaView({ session, navigate, client }: RemoteAppProps & { client: Mat
   }, [session.token]);
   const grimoire: readonly SpellId[] = loadout.spells;
   const ultimateId = loadout.ultimateId;
+
+  // Arena de entrenamiento: solo desde el lobby. Mientras dura, la cámara la abre PracticeView
+  // y la de la partida sigue apagada (inMatch es falso), así que nunca hay dos a la vez.
+  const [practicing, setPracticing] = useState(false);
+  const showPractice = practicing && match.phase === "idle";
 
   // --- Módulo local ----------------------------------------------------------
   const [debug, setDebug] = useState(false);
@@ -148,13 +154,22 @@ function ArenaView({ session, navigate, client }: RemoteAppProps & { client: Mat
 
       {match.error && <div className="ar-panel ar-error">{match.error}</div>}
 
-      {match.phase === "idle" && (
+      {showPractice && <PracticeView grimoire={grimoire} ultimateId={ultimateId} onExit={() => setPracticing(false)} />}
+
+      {match.phase === "idle" && !showPractice && (
         <div className="ar-panel ar-center">
           <h2>Arena</h2>
           <p className="ar-muted">Dibuja con la pinza: ⚡ zigzag = Rayo, 🛡️ círculo = Escudo.</p>
-          <button className="ar-btn ar-btn--primary" onClick={() => client.joinQueue()} disabled={match.connection !== "online"}>
-            Buscar rival
-          </button>
+          <div className="ar-row">
+            <button className="ar-btn ar-btn--primary" onClick={() => client.joinQueue()} disabled={match.connection !== "online"}>
+              Buscar rival
+            </button>
+            {/* La práctica no usa el servidor: funciona aunque el game-server esté dormido. */}
+            <button className="ar-btn" onClick={() => setPracticing(true)}>
+              Entrenar
+            </button>
+          </div>
+          <p className="ar-muted">Entrenar: practica tus gestos contra un muñeco, sin rival y sin perder puntos.</p>
         </div>
       )}
 

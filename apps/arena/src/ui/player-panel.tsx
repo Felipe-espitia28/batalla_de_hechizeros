@@ -12,6 +12,8 @@ interface Props {
   /** Hora estimada del servidor. */
   now: number;
   side: "you" | "rival";
+  /** Nombre a mostrar sin `summary` (el muñeco de la arena de entrenamiento). */
+  name?: string;
   /** Solo para el jugador propio: hechizos del grimorio con su cooldown. */
   grimoire?: readonly SpellId[];
   /** Contenido extra al final (el definitivo del jugador propio). */
@@ -20,7 +22,7 @@ interface Props {
 
 const EFFECT_LABELS = { burn: "🔥 Quemadura", poison: "🐍 Veneno", freeze: "❄️ ¡Congelado!", storm: "🌪️ Tormenta" } as const;
 
-export function PlayerPanel({ summary, state, now, side, grimoire, footer }: Props) {
+export function PlayerPanel({ summary, state, now, side, name, grimoire, footer }: Props) {
   const hp = state?.hp ?? 100;
   const mana = state?.mana ?? 0;
   const shielded = state?.shieldUntil != null && state.shieldUntil > now;
@@ -30,7 +32,7 @@ export function PlayerPanel({ summary, state, now, side, grimoire, footer }: Pro
   return (
     <section className={`ar-player ar-player--${side}${shielded ? " ar-player--shielded" : ""}${hp <= 0 ? " ar-player--down" : ""}`}>
       <header className="ar-player__header">
-        <span className="ar-player__name">{summary?.username ?? (side === "you" ? "Tú" : "Rival")}</span>
+        <span className="ar-player__name">{summary?.username ?? name ?? (side === "you" ? "Tú" : "Rival")}</span>
         {summary && <span className="ar-player__rank">{summary.rank}</span>}
       </header>
 
