@@ -127,12 +127,6 @@ function BuyButton(props: {
     case "starter":
     case "owned":
       return null;
-    case "coming-soon":
-      return (
-        <button type="button" className="t-btn" disabled>
-          Próximamente
-        </button>
-      );
     case "too-expensive":
       return (
         <button type="button" className="t-btn" disabled title="Gana oro en la Arena">
