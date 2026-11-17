@@ -13,6 +13,7 @@ import { useVoice } from "./engine/use-voice";
 import { MatchClient, type Notice } from "./match/match-client";
 import { PracticeView } from "./practice/practice-view";
 import { EndScreen } from "./ui/end-screen";
+import { GestureCard, LIGHTNING_ART, SHIELD_ART } from "./ui/gesture-card";
 import { PlayerPanel } from "./ui/player-panel";
 import { UltimateRow } from "./ui/ultimate-row";
 import { useNow } from "./ui/use-now";
@@ -157,20 +158,30 @@ function ArenaView({ session, navigate, client }: RemoteAppProps & { client: Mat
       {showPractice && <PracticeView grimoire={grimoire} ultimateId={ultimateId} onExit={() => setPracticing(false)} />}
 
       {match.phase === "idle" && !showPractice && (
-        <div className="ar-panel ar-center">
-          <h2>Arena</h2>
-          <p className="ar-muted">Dibuja con la pinza: ⚡ zigzag = Rayo, 🛡️ círculo = Escudo.</p>
-          <div className="ar-row">
-            <button className="ar-btn ar-btn--primary" onClick={() => client.joinQueue()} disabled={match.connection !== "online"}>
-              Buscar rival
-            </button>
-            {/* La práctica no usa el servidor: funciona aunque el game-server esté dormido. */}
-            <button className="ar-btn" onClick={() => setPracticing(true)}>
-              Entrenar
-            </button>
+        <section className="ar-lobby" aria-labelledby="ar-lobby-title">
+          <div className="ar-lobby__actions">
+            <h2 id="ar-lobby-title" className="ar-lobby__title">
+              Arena
+            </h2>
+            <div className="ar-lobby__buttons">
+              <button className="ar-lobby__btn ar-lobby__btn--primary" onClick={() => client.joinQueue()} disabled={match.connection !== "online"}>
+                Buscar rival
+              </button>
+              {/* La práctica no usa el servidor: funciona aunque el game-server esté dormido. */}
+              <button className="ar-lobby__btn" onClick={() => setPracticing(true)}>
+                Entrenar
+              </button>
+            </div>
+            <p className="ar-lobby__hint">Entrenar: practica tus gestos contra un muñeco, sin rival y sin perder puntos.</p>
           </div>
-          <p className="ar-muted">Entrenar: practica tus gestos contra un muñeco, sin rival y sin perder puntos.</p>
-        </div>
+          <div className="ar-lobby__guide">
+            <p className="ar-lobby__guide-title">Dibuja con la pinza:</p>
+            <div className="ar-lobby__gestures">
+              <GestureCard art={LIGHTNING_ART} label="zigzag = Rayo" tone="gold" />
+              <GestureCard art={SHIELD_ART} label="círculo = Escudo" tone="violet" />
+            </div>
+          </div>
+        </section>
       )}
 
       {match.phase === "queued" && (

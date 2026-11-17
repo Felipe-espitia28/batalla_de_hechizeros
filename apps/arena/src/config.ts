@@ -15,6 +15,8 @@ export const API_URL = clean(import.meta.env.VITE_API_URL);
 const ARENA_ORIGIN = new URL(import.meta.url).origin;
 export const MEDIAPIPE_WASM_PATH = `${ARENA_ORIGIN}/mediapipe/wasm`;
 export const MEDIAPIPE_MODEL_PATH = `${ARENA_ORIGIN}/mediapipe/hand_landmarker.task`;
+/** Imágenes del lobby (public/ui), por la misma razón: dentro del shell, "/ui/..." apuntaría al shell. */
+export const UI_ASSETS_PATH = `${ARENA_ORIGIN}/ui`;
 
 /** Grimorio por defecto (sección 6): Rayo y Escudo fijos en los espacios 1 y 2. */
 export const DEFAULT_GRIMOIRE = ["lightning", "shield"] as const;
