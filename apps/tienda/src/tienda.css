@@ -1,106 +1,168 @@
 /* Estilos de la Tienda. Todo bajo .tienda (y prefijo t-) para no chocar con el shell ni la Arena
-   cuando conviven en la misma página por Module Federation. Paleta igual a la del shell. */
+   cuando conviven en la misma página por Module Federation.
+   Valores del diseño de Figma "Tienda · Grimorio"; mismo fondo que el shell (#0e0c19). */
 .tienda {
-  --t-bg: #0f0d1a;
-  --t-surface: #191628;
-  --t-surface-2: #221e36;
-  --t-line: #2f2a49;
-  --t-fg: #ece9fb;
-  --t-muted: #a39fbf;
-  --t-accent: #8f7cff;
-  --t-accent-fg: #0f0d1a;
-  --t-gold: #f2c45a;
-  --t-good: #4ade80;
-  --t-good-bg: #12301f;
-  --t-danger: #ff7a8a;
+  --t-bg: #0e0c19;
+  --t-surface: #181526;
+  --t-surface-2: #211b32;
+  --t-line: #342b47;
+  --t-row-line: #352b49;
+  --t-control-line: #45395c;
+  --t-fg: #f5f1ff;
+  --t-muted: #aca5c2;
+  --t-soft: #c6bed9;
+  --t-accent: #b69cff;
+  --t-primary: #7952ff;
+  --t-gold: #f7c753;
+  --t-good: #6ce3a1;
+  --t-good-bg: #17382d;
+  --t-danger: #ff839c;
   --t-danger-bg: #3a1822;
 
   min-height: 100%;
-  padding: 20px 16px 32px;
+  width: 100%;
+  max-width: 1440px;
+  margin: 0 auto;
+  padding: 48px 80px 56px;
   background: var(--t-bg);
   color: var(--t-fg);
-  font: 15px/1.5 "Segoe UI", system-ui, -apple-system, sans-serif;
+  font: 14px/1.45 "Inter", "Segoe UI", system-ui, -apple-system, sans-serif;
   display: flex;
   flex-direction: column;
-  gap: 18px;
-  max-width: 1080px;
-  margin: 0 auto;
+  gap: 24px;
 }
 .tienda *, .tienda *::before, .tienda *::after { box-sizing: border-box; }
-.tienda h2, .tienda h3, .tienda h4 { margin: 0; line-height: 1.2; font-family: "Segoe UI Semibold", "Segoe UI", system-ui, sans-serif; }
-.tienda h2 { font-size: 1.5rem; }
-.tienda h3 { font-size: 1.15rem; }
-.tienda h4 { font-size: 1.02rem; }
+.tienda h2, .tienda h3, .tienda h4 { margin: 0; font-weight: 600; color: var(--t-fg); }
+.tienda h2 { font-size: 36px; line-height: 46px; letter-spacing: -1.2px; }
+.tienda h3 { font-size: 18px; line-height: 26px; }
+.tienda h4 { font-size: 15px; line-height: 22px; }
 .tienda p { margin: 0; }
 .tienda code { background: var(--t-surface-2); padding: 1px 6px; border-radius: 4px; }
-.tienda .t-muted { color: var(--t-muted); }
+.tienda .t-muted { color: var(--t-muted); line-height: 20px; }
 .tienda .t-num { font-variant-numeric: tabular-nums; }
-.tienda .t-eyebrow { font-size: .75rem; text-transform: uppercase; letter-spacing: .1em; color: var(--t-accent); font-weight: 600; }
+.tienda .t-eyebrow { font-size: 12px; line-height: 17px; font-weight: 600; letter-spacing: 1.8px; text-transform: uppercase; color: var(--t-accent); margin-bottom: 6px; }
 .tienda .t-sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 
-.tienda .t-panel { background: var(--t-surface); border: 1px solid var(--t-line); border-radius: 12px; padding: 18px; display: flex; flex-direction: column; gap: 12px; }
-.tienda .t-center { align-items: center; text-align: center; padding: 40px 18px; }
+.tienda .t-panel { background: var(--t-surface); border: 1px solid var(--t-line); border-radius: 20px; padding: 28px; display: flex; flex-direction: column; gap: 24px; }
+.tienda .t-center { align-items: center; text-align: center; padding: 40px 18px; gap: 12px; }
 .tienda .t-error { border-color: var(--t-danger); background: var(--t-danger-bg); }
 
-.tienda .t-btn { font: inherit; font-weight: 600; color: var(--t-fg); background: var(--t-surface-2); border: 1px solid var(--t-line); border-radius: 8px; padding: 8px 16px; cursor: pointer; white-space: nowrap; }
-.tienda .t-btn:hover:not(:disabled) { border-color: var(--t-accent); }
+.tienda .t-btn { font: inherit; font-size: 14px; font-weight: 600; line-height: 20px; color: #f9f6ff; background: #2a2340; border: 1px solid var(--t-control-line); border-radius: 10px; padding: 12px 20px; cursor: pointer; white-space: nowrap; }
+.tienda .t-btn:hover:not(:disabled) { filter: brightness(1.12); }
 .tienda .t-btn:disabled { opacity: .55; cursor: not-allowed; }
-.tienda .t-btn--primary { background: var(--t-accent); border-color: var(--t-accent); color: var(--t-accent-fg); }
+.tienda .t-btn--primary { background: var(--t-primary); border-color: var(--t-primary); }
 .tienda .t-link { background: none; border: 0; padding: 0; color: var(--t-accent); font: inherit; font-weight: 600; cursor: pointer; text-decoration: underline; }
 .tienda :is(button, select, input):focus-visible { outline: 2px solid var(--t-accent); outline-offset: 2px; }
+/* El radio nativo está oculto: el foco se muestra en su tarjeta. */
+.tienda .t-ultimate:has(input:focus-visible) { outline: 2px solid var(--t-accent); outline-offset: 2px; }
 
 .tienda .t-spinner { width: 28px; height: 28px; border-radius: 50%; border: 3px solid var(--t-line); border-top-color: var(--t-accent); animation: t-spin .9s linear infinite; }
 @keyframes t-spin { to { transform: rotate(360deg); } }
 @media (prefers-reduced-motion: reduce) { .tienda .t-spinner { animation-duration: 3s; } }
 
-/* Encabezado y pestañas */
-.tienda .t-header { display: flex; justify-content: space-between; align-items: flex-end; gap: 12px; flex-wrap: wrap; }
-.tienda .t-gold { font-size: 1.1rem; padding: 6px 14px; border: 1px solid var(--t-line); border-radius: 999px; background: var(--t-surface); }
-.tienda .t-gold strong { color: var(--t-gold); }
-.tienda .t-tabs { display: inline-grid; grid-auto-flow: column; gap: 4px; background: var(--t-surface); border: 1px solid var(--t-line); border-radius: 10px; padding: 4px; justify-self: start; align-self: flex-start; }
-.tienda .t-tabs button { font: inherit; font-weight: 600; border: 0; background: transparent; color: var(--t-muted); padding: 7px 18px; border-radius: 7px; cursor: pointer; }
-.tienda .t-tabs button[aria-selected="true"] { background: var(--t-surface-2); color: var(--t-fg); }
+/* Iconos del diseño (spell-icon.tsx): cada SVG a su tamaño; el emoji de respaldo en una caja de 22 px. */
+.tienda .t-icon { display: block; flex-shrink: 0; }
+.tienda .t-icon--emoji { width: 22px; height: 22px; display: grid; place-items: center; font-size: 17px; line-height: 1; }
 
-/* Catálogo */
-.tienda .t-catalog { display: flex; flex-direction: column; gap: 26px; }
-.tienda .t-section-head { display: flex; flex-direction: column; gap: 2px; margin-bottom: 10px; }
-.tienda .t-grid { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(min(250px, 100%), 1fr)); gap: 12px; }
-.tienda .t-card { background: var(--t-surface); border: 1px solid var(--t-line); border-radius: 12px; padding: 14px; display: flex; flex-direction: column; gap: 8px; }
-.tienda .t-card--owned, .tienda .t-card--starter { border-color: #3c3466; }
-.tienda .t-card-top { display: flex; gap: 10px; align-items: center; }
-.tienda .t-emoji { font-size: 1.7rem; width: 44px; height: 44px; display: grid; place-items: center; background: var(--t-surface-2); border-radius: 10px; flex: none; }
-.tienda .t-gesture { color: var(--t-muted); font-size: .88rem; }
-.tienda .t-stats { color: var(--t-muted); font-size: .85rem; }
-.tienda .t-card-foot { margin-top: auto; padding-top: 6px; display: flex; justify-content: space-between; align-items: center; gap: 8px; }
-.tienda .t-price { font-weight: 700; color: var(--t-gold); }
-.tienda .t-badge { font-size: .75rem; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; padding: 3px 9px; border-radius: 999px; background: var(--t-surface-2); color: var(--t-muted); }
-.tienda .t-badge--owned { background: var(--t-good-bg); color: var(--t-good); }
+/* --- Encabezado y pestañas --- */
+.tienda .t-header { display: flex; justify-content: space-between; align-items: center; gap: 16px; flex-wrap: wrap; }
+.tienda .t-gold { display: flex; align-items: center; gap: 10px; padding: 13px 18px; border-radius: 12px; background: #241f20; border: 1px solid #443827; }
+.tienda .t-gold strong { font-size: 18px; line-height: 25px; font-weight: 600; color: var(--t-gold); }
+.tienda .t-tabs { display: inline-flex; gap: 4px; padding: 5px; background: var(--t-surface); border: 1px solid var(--t-line); border-radius: 12px; align-self: flex-start; }
+.tienda .t-tabs button { font: inherit; font-size: 14px; line-height: 20px; font-weight: 500; border: 0; background: transparent; color: var(--t-muted); padding: 12px 24px; border-radius: 8px; cursor: pointer; }
+.tienda .t-tabs button:hover { color: var(--t-fg); }
+.tienda .t-tabs button[aria-selected="true"] { background: #332647; color: var(--t-fg); font-weight: 600; }
 
-.tienda .t-feedback { font-size: .88rem; padding: 7px 10px; border-radius: 8px; }
+.tienda .t-section-head { display: flex; flex-direction: column; gap: 8px; }
+
+/* --- Grimorio: Hechizos (752) y Definitivo (504) lado a lado; guardar abajo a la derecha --- */
+.tienda .t-grimoire { display: grid; grid-template-columns: minmax(0, 752fr) minmax(0, 504fr); gap: 24px; align-items: start; }
+.tienda .t-grimoire > .t-actions { grid-column: 1 / -1; }
+
+.tienda .t-slots, .tienda .t-ultimates { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 12px; }
+/* 68 px como en el diseño: el selector (48 px) + borde llena la fila sin padding vertical. */
+.tienda .t-slot { display: flex; align-items: center; flex-wrap: wrap; gap: 4px 16px; min-height: 68px; padding: 0 16px; border: 1px solid var(--t-row-line); border-radius: 12px; }
+.tienda .t-slot--invalid { padding-bottom: 10px; }
+.tienda .t-slot--fixed { background: var(--t-surface-2); }
+.tienda .t-slot--invalid { border-color: var(--t-danger); }
+.tienda .t-slot-num { width: 32px; height: 32px; border-radius: 16px; display: grid; place-items: center; flex-shrink: 0; background: #302640; color: var(--t-soft); font-size: 12px; line-height: 17px; font-weight: 600; }
+.tienda .t-slot-spell { flex: 1; min-width: 0; display: flex; align-items: center; gap: 12px; }
+.tienda .t-slot-name { flex: 1; min-width: 0; font-size: 15px; line-height: 22px; font-weight: 500; }
+.tienda .t-fixed { font-size: 11px; line-height: 16px; font-weight: 600; letter-spacing: 1.2px; text-transform: uppercase; color: var(--t-muted); }
+
+/* Selector: <select> nativo con el icono del hechizo a la izquierda y el chevron del diseño a la derecha. */
+.tienda .t-select { position: relative; flex: 1; min-width: 0; display: flex; align-items: center; }
+.tienda .t-select select {
+  width: 100%; appearance: none; -webkit-appearance: none; cursor: pointer;
+  font: inherit; font-size: 15px; line-height: 22px; font-weight: 500; color: var(--t-fg);
+  padding: 12px 42px 12px 48px; border-radius: 8px; border: 1px solid var(--t-control-line); background: var(--t-surface-2);
+}
+.tienda .t-select--empty select { padding-left: 14px; color: var(--t-muted); }
+.tienda .t-select select option { background: var(--t-surface-2); color: var(--t-fg); }
+.tienda .t-select__icon { position: absolute; left: 14px; pointer-events: none; }
+.tienda .t-select__chevron { position: absolute; right: 14px; pointer-events: none; }
+.tienda .t-field-error { width: 100%; color: var(--t-danger); font-size: 13px; padding-left: 48px; }
+.tienda .t-hint { font-size: 14px; color: var(--t-muted); }
+
+/* Definitivo */
+.tienda .t-ultimate { display: flex; align-items: center; gap: 14px; height: 68px; padding: 0 18px; border-radius: 12px; cursor: pointer; background: var(--t-surface-2); border: 1px solid var(--t-row-line); font-size: 15px; line-height: 22px; font-weight: 500; }
+.tienda .t-ultimate:hover { border-color: var(--t-control-line); }
+.tienda .t-ultimate--active { background: #2c2144; border: 1.5px solid #9b7aff; font-weight: 600; }
+.tienda .t-ultimate--active:hover { border-color: #9b7aff; }
+
+/* Guardar: sin cambios se ve como en el diseño (#59458f); con cambios, el primario de todo el rediseño. */
+.tienda .t-actions { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 12px; }
+.tienda .t-actions .t-btn { padding: 16px 24px; }
+.tienda .t-actions .t-btn--primary:disabled { opacity: 1; background: #59458f; border-color: #59458f; color: #e2d9f5; }
+.tienda .t-actions .t-feedback { flex-basis: 100%; text-align: right; }
+
+.tienda .t-feedback { font-size: 13px; line-height: 18px; padding: 8px 12px; border-radius: 8px; }
 .tienda .t-feedback--ok { background: var(--t-good-bg); color: var(--t-good); }
 .tienda .t-feedback--error { background: var(--t-danger-bg); color: var(--t-danger); }
 
-/* Grimorio */
-.tienda .t-grimoire { display: flex; flex-direction: column; gap: 14px; max-width: 640px; }
-.tienda .t-slots { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
-.tienda .t-slot { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; padding: 10px 12px; border: 1px solid var(--t-line); border-radius: 10px; background: var(--t-bg); }
-.tienda .t-slot--fixed { background: var(--t-surface-2); }
-.tienda .t-slot--fixed .t-badge { margin-left: auto; }
-.tienda .t-slot--invalid { border-color: var(--t-danger); }
-.tienda .t-slot-num { width: 26px; height: 26px; border-radius: 50%; display: grid; place-items: center; background: var(--t-surface-2); color: var(--t-muted); font-weight: 700; font-size: .85rem; flex: none; }
-.tienda .t-slot select { flex: 1; min-width: 180px; font: inherit; padding: 7px 10px; border-radius: 8px; border: 1px solid var(--t-line); background: var(--t-surface); color: var(--t-fg); }
-.tienda .t-field-error { width: 100%; color: var(--t-danger); font-size: .85rem; }
-.tienda .t-hint { font-size: .9rem; color: var(--t-muted); }
-.tienda .t-ultimates { display: flex; flex-wrap: wrap; gap: 8px; }
-.tienda .t-ultimate { display: flex; align-items: center; gap: 8px; padding: 8px 14px; border: 1px solid var(--t-line); border-radius: 999px; cursor: pointer; background: var(--t-bg); }
-.tienda .t-ultimate--active { border-color: var(--t-accent); background: var(--t-surface-2); }
-.tienda .t-ultimate input { accent-color: var(--t-accent); margin: 0; }
-.tienda .t-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
-.tienda .t-actions .t-feedback { flex-basis: 100%; }
+/* --- Catálogo (Figma "Tienda · Catálogo completo"): tarjetas de 302 × 312 en 4 columnas --- */
+.tienda .t-catalog { display: flex; flex-direction: column; gap: 24px; }
+.tienda .t-catalog > section { display: flex; flex-direction: column; gap: 24px; }
+.tienda .t-catalog .t-section-head h3 { font-size: 20px; line-height: 29px; }
+.tienda .t-grid { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 24px; }
+/* min-height y no height: el aviso de compra aparece dentro de la tarjeta. */
+.tienda .t-card {
+  display: flex; flex-direction: column; justify-content: space-between; gap: 16px;
+  min-height: 312px; padding: 24px; border-radius: 20px;
+  background: var(--t-surface); border: 1px solid var(--t-line);
+}
+.tienda .t-card-body { display: flex; flex-direction: column; gap: 12px; }
+.tienda .t-card-top { display: flex; gap: 12px; align-items: center; }
+.tienda .t-card-top h4 { flex: 1; min-width: 0; font-size: 16px; line-height: 23px; font-weight: 600; }
+.tienda .t-emoji { width: 44px; height: 44px; display: grid; place-items: center; flex: none; background: #2a2340; border-radius: 12px; }
+.tienda .t-gesture { color: var(--t-muted); font-size: 13px; line-height: 19px; }
+.tienda .t-effect { color: #e8e0f5; font-size: 14px; line-height: 20px; font-weight: 500; }
+.tienda .t-stats { color: var(--t-muted); font-size: 12px; line-height: 17px; }
+.tienda .t-card-foot { display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap; }
+.tienda .t-card-foot .t-btn { padding: 10px 18px; }
+.tienda .t-price { display: inline-flex; align-items: center; gap: 8px; font-size: 16px; line-height: 23px; font-weight: 600; color: var(--t-gold); }
+.tienda .t-badge { font-size: 10px; line-height: 15px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; padding: 5px 10px; border-radius: 7px; background: #2a2340; color: #bdb1d2; }
+.tienda .t-badge--owned { background: var(--t-good-bg); color: var(--t-good); }
+@media (max-width: 1100px) { .tienda .t-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 640px) { .tienda .t-grid { grid-template-columns: minmax(0, 1fr); } .tienda .t-card { min-height: 0; } }
+
+/* --- Responsive --- */
+@media (max-width: 1000px) {
+  .tienda { padding: 32px 24px 48px; }
+  .tienda .t-grimoire { grid-template-columns: minmax(0, 1fr); }
+}
+@media (max-width: 640px) {
+  .tienda { padding: 24px 16px 40px; }
+  .tienda h2 { font-size: 28px; line-height: 36px; letter-spacing: -0.8px; }
+  .tienda .t-panel { padding: 20px; }
+  .tienda .t-slot { padding: 0 12px; gap: 4px 12px; }
+  .tienda .t-actions { justify-content: stretch; }
+  .tienda .t-actions .t-btn { flex: 1; }
+}
 
 /* Solo en el arranque independiente (main.tsx) */
 .t-devbar { display: flex; gap: 12px; align-items: center; justify-content: center; flex-wrap: wrap; padding: 6px 12px; font: 13px system-ui, sans-serif; background: #2a2440; color: #ece9fb; }
-.t-devbar .t-link { background: none; border: 0; color: #8f7cff; cursor: pointer; text-decoration: underline; font: inherit; }
+.t-devbar .t-link { background: none; border: 0; color: #b69cff; cursor: pointer; text-decoration: underline; font: inherit; }
 .tienda .t-dev-login { max-width: 420px; width: 100%; margin: 40px auto; }
-.tienda .t-dev-login label { display: flex; flex-direction: column; gap: 5px; font-weight: 600; font-size: .9rem; }
+.tienda .t-dev-login label { display: flex; flex-direction: column; gap: 5px; font-weight: 600; font-size: 14px; }
 .tienda .t-dev-login input { font: inherit; padding: 9px 11px; border-radius: 8px; border: 1px solid var(--t-line); background: var(--t-bg); color: var(--t-fg); }

@@ -19,6 +19,7 @@ import { ShopApi, ShopApiError } from "./api";
 import { CatalogView } from "./catalog-view";
 import { API_URL } from "./config";
 import { GrimoireEditor } from "./grimoire-editor";
+import { UiIcon } from "./spell-icon";
 import "./tienda.css";
 
 export default function App(props: RemoteAppProps) {
@@ -160,7 +161,8 @@ function Shop({ session, navigate }: RemoteAppProps) {
           <h2>Hola, {session.user.username}</h2>
         </div>
         <p className="t-gold" aria-label={`Oro arcano: ${data.gold}`}>
-          <span aria-hidden="true">🪙</span> <strong className="t-num">{data.gold}</strong> oro
+          <UiIcon name="moneda" size={22} />
+          <strong className="t-num">{data.gold} oro</strong>
         </p>
       </header>
 
