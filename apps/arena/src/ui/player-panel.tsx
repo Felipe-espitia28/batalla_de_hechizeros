@@ -1,10 +1,15 @@
 /**
- * Un hechicero: vida, maná, escudo, efectos y cooldowns. Solo dibuja lo que manda el servidor
- * en match:state; no calcula nada.
+ * Un hechicero en la partida (Figma "Arena · Duelo en curso"): nombre y grado, vida, maná,
+ * efectos y, para el jugador propio, los hechizos del grimorio con su cooldown. Solo dibuja lo
+ * que manda el servidor en match:state; no calcula nada.
+ *
+ * La cámara del jugador no vive aquí: es el primer hijo de .ar-stage (ver arena.css) y el CSS la
+ * coloca encima de este panel, dentro de la misma tarjeta.
  */
 import type { PlayerState, PlayerSummary, SpellId } from "@duelo/contracts";
 import type { ReactNode } from "react";
-import { SPELL_GESTURES, SPELL_LABELS } from "../match/messages";
+import { UI_ASSETS_PATH } from "../config";
+import { SpellRows, StatBars, StatusEffects } from "./duel-parts";
 
 interface Props {
   summary: PlayerSummary | null;
@@ -12,81 +17,49 @@ interface Props {
   /** Hora estimada del servidor. */
   now: number;
   side: "you" | "rival";
-  /** Nombre a mostrar sin `summary` (el muñeco de la arena de entrenamiento). */
-  name?: string;
-  /** false cuando la cámara del jugador ocupa el lugar del avatar (sin cámara, en modo teclado, sí se ve). */
+  /** true cuando no hay cámara (modo teclado): se dibuja el mago en su lugar. El rival siempre lo lleva. */
   avatar?: boolean;
+  /** Modo teclado: los hechizos muestran su tecla en vez del gesto. */
+  keyboard?: boolean;
   /** Solo para el jugador propio: hechizos del grimorio con su cooldown. */
   grimoire?: readonly SpellId[];
-  /** Contenido extra al final (el definitivo del jugador propio). */
+  /** Fila extra al final de la lista de hechizos (el definitivo del jugador propio). */
   footer?: ReactNode;
 }
 
-const EFFECT_LABELS = { burn: "🔥 Quemadura", poison: "🐍 Veneno", freeze: "❄️ ¡Congelado!", storm: "🌪️ Tormenta" } as const;
-
-export function PlayerPanel({ summary, state, now, side, name, avatar = true, grimoire, footer }: Props) {
+export function PlayerPanel({ summary, state, now, side, avatar = side === "rival", keyboard = false, grimoire, footer }: Props) {
   const hp = state?.hp ?? 100;
   const mana = state?.mana ?? 0;
   const shielded = state?.shieldUntil != null && state.shieldUntil > now;
-  const silenced = state?.silencedUntil != null && state.silencedUntil > now;
-  const effects = (state?.effects ?? []).filter((e) => e.until > now);
+  const titleId = `ar-fighter-${side}`;
 
   return (
-    <section className={`ar-player ar-player--${side}${shielded ? " ar-player--shielded" : ""}${hp <= 0 ? " ar-player--down" : ""}`}>
-      <header className="ar-player__header">
-        <span className="ar-player__name">{summary?.username ?? name ?? (side === "you" ? "Tú" : "Rival")}</span>
-        {summary && <span className="ar-player__rank">{summary.rank}</span>}
+    <section
+      className={`ar-fighter ar-fighter--${side}${shielded ? " ar-fighter--shielded" : ""}${hp <= 0 ? " ar-fighter--down" : ""}`}
+      aria-labelledby={titleId}
+    >
+      <header className="ar-fighter__identity">
+        <h2 id={titleId} className="ar-fighter__name">
+          {summary?.username ?? (side === "you" ? "Tú" : "Rival")}
+        </h2>
+        {summary && <span className="ar-fighter__rank">{summary.rank}</span>}
       </header>
 
       {avatar && (
-        <div className="ar-player__avatar" aria-hidden>
-          🧙
-          {shielded && <span className="ar-player__shield" />}
+        <div className="ar-fighter__figure">
+          <img src={`${UI_ASSETS_PATH}/duelo/mago.png`} width={144} height={145} alt="" aria-hidden="true" />
         </div>
       )}
 
-      <Bar label="Vida" value={hp} max={100} kind="hp" />
-      <Bar label="Maná" value={mana} max={100} kind="mana" />
-
-      <ul className="ar-player__effects">
-        {shielded && <li className="ar-chip ar-chip--good">🛡️ Escudo</li>}
-        {silenced && <li className="ar-chip ar-chip--bad">✖️ Sellado</li>}
-        {effects.map((e) => (
-          <li key={`${e.type}-${e.until}`} className="ar-chip ar-chip--bad">
-            {EFFECT_LABELS[e.type]}
-          </li>
-        ))}
-      </ul>
+      <StatBars hp={hp} mana={mana} />
+      <StatusEffects state={state} now={now} />
 
       {grimoire && (
-        <ul className="ar-player__spells">
-          {grimoire.map((spellId, i) => {
-            const until = state?.cooldownsUntil[spellId];
-            const remaining = until && until > now ? (until - now) / 1000 : 0;
-            return (
-              <li key={spellId} className={`ar-spell${remaining ? " ar-spell--cooling" : ""}`}>
-                <span className="ar-spell__name">{SPELL_LABELS[spellId]}</span>
-                <span className="ar-spell__hint">
-                  {remaining ? `${remaining.toFixed(1)} s` : (SPELL_GESTURES[spellId] ?? `tecla ${i + 1}`)}
-                </span>
-              </li>
-            );
-          })}
+        <ul className="ar-training__spells">
+          <SpellRows grimoire={grimoire} cooldownsUntil={state?.cooldownsUntil ?? {}} now={now} keyboard={keyboard} />
+          {footer}
         </ul>
       )}
-      {footer}
     </section>
-  );
-}
-
-function Bar({ label, value, max, kind }: { label: string; value: number; max: number; kind: "hp" | "mana" }) {
-  const pct = Math.max(0, Math.min(100, (value / max) * 100));
-  return (
-    <div className={`ar-bar ar-bar--${kind}`} role="meter" aria-label={label} aria-valuenow={Math.round(value)} aria-valuemin={0} aria-valuemax={max}>
-      <div className="ar-bar__fill" style={{ width: `${pct}%` }} />
-      <span className="ar-bar__text">
-        {label} {Math.floor(value)}
-      </span>
-    </div>
   );
 }

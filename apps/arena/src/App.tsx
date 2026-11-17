@@ -4,18 +4,18 @@
  */
 import { emitDueloEvent, type RemoteAppProps, type SpellId } from "@duelo/contracts";
 import type { SpellEvent } from "@duelo/spell-engine";
-import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
+import { useCallback, useEffect, useRef, useState, useSyncExternalStore, type ReactNode } from "react";
 import { MATCH_RULES } from "@duelo/game-rules";
 import { DEFAULT_LOADOUT, fetchGold, fetchLoadout, type Loadout } from "./api";
-import { GAME_SERVER_URL } from "./config";
+import { GAME_SERVER_URL, UI_ASSETS_PATH } from "./config";
 import { useSpellSource } from "./engine/use-spell-source";
 import { useVoice } from "./engine/use-voice";
 import { MatchClient, type Notice } from "./match/match-client";
 import { PracticeView } from "./practice/practice-view";
 import { EndScreen } from "./ui/end-screen";
 import { GestureCard, LIGHTNING_ART, SHIELD_ART } from "./ui/gesture-card";
+import { UltimateLine } from "./ui/duel-parts";
 import { PlayerPanel } from "./ui/player-panel";
-import { UltimateRow } from "./ui/ultimate-row";
 import { useNow } from "./ui/use-now";
 import "./arena.css";
 
@@ -185,15 +185,20 @@ function ArenaView({ session, navigate, client }: RemoteAppProps & { client: Mat
       )}
 
       {match.phase === "queued" && (
-        <div className="ar-panel ar-center">
-          <h2>Buscando rival…</h2>
-          <p className="ar-muted">
-            {match.ratingRange === null ? "Aceptando cualquier rival" : `Rivales a ±${match.ratingRange} puntos`}
-          </p>
-          <button className="ar-btn" onClick={() => client.leaveQueue()}>
+        <section className="ar-search" aria-live="polite" aria-labelledby="ar-search-title">
+          <img className="ar-search__spinner" src={`${UI_ASSETS_PATH}/buscando.svg`} width={72} height={72} alt="" aria-hidden="true" />
+          <div className="ar-search__text">
+            <h2 id="ar-search-title" className="ar-search__title">
+              Buscando rival...
+            </h2>
+            <p className="ar-search__range">
+              {match.ratingRange === null ? "Aceptando cualquier rival" : `Rivales a ±${match.ratingRange} puntos`}
+            </p>
+          </div>
+          <button className="ar-search__cancel" onClick={() => client.leaveQueue()}>
             Cancelar
           </button>
-        </div>
+        </section>
       )}
 
       {inMatch && (
@@ -251,9 +256,10 @@ function ArenaView({ session, navigate, client }: RemoteAppProps & { client: Mat
                   state={you}
                   now={now}
                   avatar={engine.keyboard}
+                  keyboard={engine.keyboard}
                   grimoire={grimoire}
                   footer={
-                    <UltimateRow
+                    <UltimateLine
                       ultimateId={ultimateId}
                       voice={voice}
                       keyboard={engine.keyboard}
@@ -265,7 +271,9 @@ function ArenaView({ session, navigate, client }: RemoteAppProps & { client: Mat
                 <div className="ar-duel__center">
                   <span className="ar-vs">VS</span>
                   {match.phase === "countdown" && match.startsAt && (
-                    <div className="ar-countdown">{Math.max(1, Math.ceil((match.startsAt - now) / 1000))}</div>
+                    <Clock className="ar-timer ar-timer--countdown" label="Cuenta regresiva">
+                      {Math.max(1, Math.ceil((match.startsAt - now) / 1000))}
+                    </Clock>
                   )}
                   {match.phase === "active" && match.endsAt && (
                     <Timer seconds={Math.max(0, Math.ceil((match.endsAt - now) / 1000))} />
@@ -284,13 +292,16 @@ function ArenaView({ session, navigate, client }: RemoteAppProps & { client: Mat
                 </div>
                 <PlayerPanel side="rival" summary={match.rival} state={rival} now={now} />
               </div>
+              {/* Fondo de la tarjeta "Tú" detrás de la cámara y del panel. Va al final para que el
+                  <video> siga siendo el primer hijo de .ar-stage y no se pierda la imagen. */}
+              <div className="ar-stage__you-card" aria-hidden="true" />
             </>
           )}
         </div>
       )}
 
       {match.phase === "ended" && match.end && (
-        <EndScreen end={match.end} userId={userId} onPlayAgain={() => client.backToLobby()} onExit={() => navigate("/ranking")} />
+        <EndScreen end={match.end} userId={userId} lastHit={match.lastHit} onPlayAgain={() => client.backToLobby()} onExit={() => navigate("/ranking")} />
       )}
 
       {!(match.phase === "countdown" || match.phase === "active") && <Notices notices={visibleNotices} />}
@@ -301,8 +312,21 @@ function ArenaView({ session, navigate, client }: RemoteAppProps & { client: Mat
 /** Reloj de la partida: en los últimos 10 s se pone rojo y late para que nadie se distraiga. */
 function Timer({ seconds }: { seconds: number }) {
   return (
-    <div className={`ar-timer${seconds <= 10 ? " ar-timer--low" : ""}`} role="timer" aria-label={`Quedan ${seconds} segundos`}>
+    <Clock className={`ar-timer${seconds <= 10 ? " ar-timer--low" : ""}`} label={`Quedan ${seconds} segundos`}>
       {seconds} s
+    </Clock>
+  );
+}
+
+/**
+ * Círculo de 112 px del diseño. El borde es un <img> y no un background de CSS: dentro del shell
+ * una url() relativa apuntaría al dominio del shell; UI_ASSETS_PATH apunta al de la Arena.
+ */
+function Clock({ className, label, children }: { className: string; label: string; children: ReactNode }) {
+  return (
+    <div className={className} role="timer" aria-label={label}>
+      <img src={`${UI_ASSETS_PATH}/duelo/temporizador.svg`} width={112} height={112} alt="" aria-hidden="true" />
+      <span>{children}</span>
     </div>
   );
 }

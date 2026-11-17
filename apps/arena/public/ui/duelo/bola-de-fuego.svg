@@ -1,0 +1,11 @@
+<svg preserveAspectRatio="none" overflow="visible" style="display: block;" width="17" height="17" viewBox="0 0 17 17" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g id="Bola de fuego" clip-path="url(#clip0_0_4)">
+<path id="Vector" d="M8.5 1.41667C8.5 1.41667 9.91667 4.95833 7.08333 7.08333C6.375 4.95833 4.95833 4.25 4.95833 4.25C4.95833 4.25 2.125 7.79167 2.125 10.625C2.125 12.3158 2.79665 13.9373 3.99219 15.1328C5.18774 16.3284 6.80924 17 8.5 17C10.1908 17 11.8123 16.3284 13.0078 15.1328C14.2033 13.9373 14.875 12.3158 14.875 10.625C14.875 7.08333 12.0417 4.25 12.0417 4.25C12.0417 4.25 12.0417 7.08333 10.625 7.79167C10.625 4.25 8.5 1.41667 8.5 1.41667Z" stroke-width="1.84167" stroke-linecap="round" stroke-linejoin="round" stroke="#FFA25B"/>
+<path id="Vector_2" d="M8.5 9.91667C8.5 9.91667 6.375 12.0417 6.375 13.4583C6.375 14.0219 6.59888 14.5624 6.9974 14.9609C7.39591 15.3595 7.93641 15.5833 8.5 15.5833C9.06358 15.5833 9.60409 15.3595 10.0026 14.9609C10.4011 14.5624 10.625 14.0219 10.625 13.4583C10.625 12.0417 8.5 9.91667 8.5 9.91667Z" stroke-width="1.84167" stroke-linecap="round" stroke-linejoin="round" stroke="#FFA25B"/>
+</g>
+<defs>
+<clipPath id="clip0_0_4">
+<rect width="17" height="17" fill="white"/>
+</clipPath>
+</defs>
+</svg>

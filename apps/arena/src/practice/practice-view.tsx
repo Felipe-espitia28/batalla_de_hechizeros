@@ -4,16 +4,20 @@
  * Usa el mismo módulo local que la partida (cámara + MediaPipe + voz, sección 4), pero los
  * hechizos no viajan al game-server: los resuelve practice-sim.ts en el navegador. Así se
  * practica sin rival, sin conexión y sin tocar el oro ni el rating.
+ *
+ * Diseño: Figma "Arena · Entrenamiento". Arriba "Tú" (cámara, barras y hechizos), los controles
+ * y el muñeco; abajo los últimos intentos y la guía de gestos.
  */
 import type { SpellId, UltimateId } from "@duelo/contracts";
 import { MATCH_RULES, SPELLS, ULTIMATES } from "@duelo/game-rules";
 import type { SpellEvent, SpellFailedEvent, UltimateEvent } from "@duelo/spell-engine";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { UI_ASSETS_PATH } from "../config";
 import { useSpellSource } from "../engine/use-spell-source";
 import { useVoice } from "../engine/use-voice";
 import { ACK_ERROR_MESSAGES, SPELL_LABELS } from "../match/messages";
-import { PlayerPanel } from "../ui/player-panel";
-import { UltimateRow } from "../ui/ultimate-row";
+import { SpellRows, StatBars, StatusEffects, UltimateLine } from "../ui/duel-parts";
+import { SpellGlyph } from "../ui/spell-glyph";
 import { useNow } from "../ui/use-now";
 import {
   advance,
@@ -45,6 +49,7 @@ interface LogEntry {
 /** Intentos visibles en el historial: los últimos bastan para corregir el gesto. */
 const LOG_SIZE = 6;
 const formatConfidence = (value: number) => value.toFixed(2).replace(".", ",");
+
 
 export function PracticeView({ grimoire, ultimateId, onExit }: Props) {
   // El simulador vive en una ref: lo mutan los eventos del reconocedor y el reloj lo dibuja.
@@ -138,48 +143,60 @@ export function PracticeView({ grimoire, ultimateId, onExit }: Props) {
   const ultimate = ULTIMATES[ultimateId];
 
   return (
-    <div className="ar-stage ar-stage--combat">
-      {!engine.keyboard && (
-        <div className="ar-camera">
-          <video ref={videoRef} playsInline muted />
-          <canvas ref={canvasRef} />
-          {engine.status === "loading" && <div className="ar-camera__msg">Cargando cámara y detector de manos…</div>}
-          {engine.status === "running" && !engine.handVisible && (
-            <div className="ar-camera__hint">✋ Pon la mano frente a la cámara</div>
+    <div className="ar-training">
+      <div className="ar-training__top">
+        {/* --- Tú: cámara, barras y hechizos --- */}
+        <section className="ar-training__card ar-training__you" aria-labelledby="ar-training-you">
+          {/* El <video> es siempre el mismo elemento: si se desmontara, la cámara quedaría en negro. */}
+          {!engine.keyboard && (
+            <div className={`ar-camera ar-training__camera${playerState.shieldUntil ? " ar-training__camera--shielded" : ""}`}>
+              <video ref={videoRef} playsInline muted />
+              <canvas ref={canvasRef} />
+              {engine.status === "loading" && (
+                <div className="ar-training__loading" role="status">
+                  <img src={`${UI_ASSETS_PATH}/entrenamiento/cargando.png`} width={16} height={16} alt="" aria-hidden="true" />
+                  <span>Cargando cámara y detector de manos…</span>
+                </div>
+              )}
+              {engine.status === "running" && !engine.handVisible && (
+                <div className="ar-camera__hint">✋ Pon la mano frente a la cámara</div>
+              )}
+            </div>
           )}
-        </div>
-      )}
 
-      {engine.status === "error" && engine.error && (
-        <div className="ar-panel ar-error">
-          <p>{engine.error.message}</p>
-          <button className="ar-btn" onClick={() => setEngineAttempt((n) => n + 1)}>
-            Reintentar
-          </button>
-        </div>
-      )}
+          {engine.status === "error" && engine.error && (
+            <div className="ar-training__error" role="alert">
+              <p>{engine.error.message}</p>
+              <button className="ar-training__btn" onClick={() => setEngineAttempt((n) => n + 1)}>
+                Reintentar
+              </button>
+            </div>
+          )}
 
-      <div className="ar-duel">
-        <PlayerPanel
-          side="you"
-          summary={null}
-          state={playerState}
-          now={now}
-          avatar={engine.keyboard}
-          grimoire={grimoire}
-          footer={
-            <UltimateRow
+          <h2 id="ar-training-you" className="ar-training__title">
+            Tú
+          </h2>
+          <StatBars hp={playerState.hp} mana={playerState.mana} />
+          <StatusEffects state={playerState} now={now} />
+
+          <ul className="ar-training__spells">
+            <SpellRows grimoire={grimoire} cooldownsUntil={playerState.cooldownsUntil} now={now} keyboard={engine.keyboard} />
+            <UltimateLine
               ultimateId={ultimateId}
               voice={voice}
               keyboard={engine.keyboard}
               manaFull={playerState.mana >= MATCH_RULES.maxMana}
               meter={meterRef}
             />
-          }
-        />
-        <div className="ar-duel__center ar-practice__center">
-          <h2>Entrenamiento</h2>
-          <dl className="ar-practice__stats">
+          </ul>
+        </section>
+
+        {/* --- Controles --- */}
+        <section className="ar-training__card ar-training__controls" aria-labelledby="ar-training-controls">
+          <h2 id="ar-training-controls" className="ar-training__title">
+            Entrenamiento
+          </h2>
+          <dl className="ar-training__stats">
             <div>
               <dt>Lanzados</dt>
               <dd>{stats.casts}</dd>
@@ -190,35 +207,55 @@ export function PracticeView({ grimoire, ultimateId, onExit }: Props) {
             </div>
             <div>
               <dt>KOs</dt>
-              <dd>{stats.kos}</dd>
+              <dd className="ar-training__kos">{stats.kos}</dd>
             </div>
           </dl>
-          <label className="ar-row ar-muted">
-            <input type="checkbox" checked={infiniteMana} onChange={(e) => toggleInfiniteMana(e.target.checked)} /> Maná
-            infinito
-          </label>
-          <label className="ar-row ar-muted">
-            <input type="checkbox" checked={debug} onChange={(e) => setDebug(e.target.checked)} /> Ver puntos de la mano
-          </label>
-          <button className="ar-btn" onClick={() => resetDummy(sim.current)}>
-            Reiniciar muñeco
-          </button>
-          <button className="ar-btn" onClick={onExit}>
-            Salir
-          </button>
-        </div>
-        <PlayerPanel side="rival" name="🎯 Muñeco de práctica" summary={null} state={dummyState} now={now} />
+          <div className="ar-training__options">
+            <label className="ar-training__check">
+              <input type="checkbox" checked={infiniteMana} onChange={(e) => toggleInfiniteMana(e.target.checked)} />
+              <span className="ar-training__box" aria-hidden="true" />
+              Maná infinito
+            </label>
+            <label className="ar-training__check">
+              <input type="checkbox" checked={debug} onChange={(e) => setDebug(e.target.checked)} />
+              <span className="ar-training__box" aria-hidden="true" />
+              Ver puntos de la mano
+            </label>
+          </div>
+          <div className="ar-training__actions">
+            <button className="ar-training__btn" onClick={() => resetDummy(sim.current)}>
+              Reiniciar muñeco
+            </button>
+            <button className="ar-training__btn ar-training__btn--ghost" onClick={onExit}>
+              Salir
+            </button>
+          </div>
+        </section>
+
+        {/* --- Muñeco --- */}
+        <section className="ar-training__card ar-training__dummy" aria-labelledby="ar-training-dummy">
+          <h2 id="ar-training-dummy" className="ar-training__title">
+            Muñeco de práctica
+          </h2>
+          <div className="ar-training__figure">
+            <img src={`${UI_ASSETS_PATH}/entrenamiento/mago.png`} width={144} height={142} alt="Muñeco de práctica" />
+          </div>
+          <StatBars hp={dummyState.hp} mana={dummyState.mana} />
+          <StatusEffects state={dummyState} now={now} />
+        </section>
       </div>
 
-      <div className="ar-practice__info">
-        <section className="ar-panel">
-          <h3>Últimos intentos</h3>
+      <div className="ar-training__bottom">
+        <section className="ar-training__card ar-training__log-card" aria-labelledby="ar-training-log">
+          <h2 id="ar-training-log" className="ar-training__title">
+            Últimos intentos
+          </h2>
           {log.length === 0 ? (
-            <p className="ar-muted">Haz la pinza y dibuja un gesto: aquí verás qué detectó y con qué confianza.</p>
+            <p className="ar-training__muted">Haz la pinza y dibuja un gesto: aquí verás qué detectó y con qué confianza.</p>
           ) : (
-            <ul className="ar-practice__log" aria-live="polite">
+            <ul className="ar-training__log" aria-live="polite">
               {log.map((entry) => (
-                <li key={entry.id} className={`ar-practice__entry ar-practice__entry--${entry.tone}`}>
+                <li key={entry.id} className={`ar-training__entry ar-training__entry--${entry.tone}`}>
                   {entry.text}
                 </li>
               ))}
@@ -226,33 +263,42 @@ export function PracticeView({ grimoire, ultimateId, onExit }: Props) {
           )}
         </section>
 
-        <section className="ar-panel">
-          <h3>Cómo se lanza cada hechizo</h3>
-          <ul className="ar-practice__guide">
+        <section className="ar-training__card" aria-labelledby="ar-training-guide">
+          <h2 id="ar-training-guide" className="ar-training__title">
+            Cómo se lanza cada hechizo
+          </h2>
+          <ul className="ar-training__guide">
             {grimoire.map((spellId) => {
               const def = SPELLS[spellId];
               const cooldown = def.cooldownMs === null ? "1 vez por partida" : `${def.cooldownMs / 1000} s`;
               return (
-                <li key={spellId}>
-                  <strong>{SPELL_LABELS[spellId]}</strong>
-                  <span>{def.gestureDescription}</span>
-                  <span className="ar-muted">
-                    {def.manaCost} de maná · {cooldown}
-                  </span>
-                </li>
+                <GuideItem key={spellId} id={spellId} name={def.name} cost={`${def.manaCost} de maná · ${cooldown}`}>
+                  {def.gestureDescription}
+                </GuideItem>
               );
             })}
-            <li>
-              <strong>{SPELL_LABELS[ultimateId]}</strong>
-              <span>{ultimate.gestureDescription}</span>
-              <span className="ar-muted">{ultimate.manaCost} de maná (lleno) · volumen alto + palabra</span>
-            </li>
+            <GuideItem id={ultimateId} name={ultimate.name} cost={`${ultimate.manaCost} de maná (lleno) · volumen alto + palabra`}>
+              {ultimate.gestureDescription}
+            </GuideItem>
           </ul>
-          <p className="ar-muted">
-            Solo se reconocen los hechizos de tu grimorio; cámbialo en la Tienda. Aquí no ganas oro ni puntos.
+          <p className="ar-training__note">
+            Sólo se reconocen los hechizos de tu grimorio; cámbialo en la Tienda. Aquí no ganas oro ni puntos.
           </p>
         </section>
       </div>
     </div>
+  );
+}
+
+function GuideItem({ id, name, cost, children }: { id: SpellId | UltimateId; name: string; cost: string; children: string }) {
+  return (
+    <li className="ar-training__guide-item">
+      <span className="ar-training__guide-head">
+        <SpellGlyph id={id} />
+        <strong>{name}</strong>
+        <span className="ar-training__guide-cost">{cost}</span>
+      </span>
+      <span className="ar-training__guide-text">{children}</span>
+    </li>
   );
 }

@@ -1,0 +1,11 @@
+<svg preserveAspectRatio="none" overflow="visible" style="display: block;" width="26" height="26" viewBox="0 0 26 26" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g id="Icono de Bola de fuego" clip-path="url(#clip0_0_7)">
+<path id="Vector" d="M13 2.16667C13 2.16667 15.1667 7.58333 10.8333 10.8333C9.75 7.58333 7.58333 6.5 7.58333 6.5C7.58333 6.5 3.25 11.9167 3.25 16.25C3.25 18.8359 4.27723 21.3158 6.10571 23.1443C7.93419 24.9728 10.4141 26 13 26C15.5859 26 18.0658 24.9728 19.8943 23.1443C21.7228 21.3158 22.75 18.8359 22.75 16.25C22.75 10.8333 18.4167 6.5 18.4167 6.5C18.4167 6.5 18.4167 10.8333 16.25 11.9167C16.25 6.5 13 2.16667 13 2.16667Z" stroke-width="1.84167" stroke-linecap="round" stroke-linejoin="round" stroke="#FFA25B"/>
+<path id="Vector_2" d="M13 15.1667C13 15.1667 9.75 18.4167 9.75 20.5833C9.75 21.4453 10.0924 22.2719 10.7019 22.8814C11.3114 23.4909 12.138 23.8333 13 23.8333C13.862 23.8333 14.6886 23.4909 15.2981 22.8814C15.9076 22.2719 16.25 21.4453 16.25 20.5833C16.25 18.4167 13 15.1667 13 15.1667Z" stroke-width="1.84167" stroke-linecap="round" stroke-linejoin="round" stroke="#FFA25B"/>
+</g>
+<defs>
+<clipPath id="clip0_0_7">
+<rect width="26" height="26" fill="white"/>
+</clipPath>
+</defs>
+</svg>
