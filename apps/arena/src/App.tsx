@@ -239,6 +239,7 @@ function ArenaView({ session, navigate, client }: RemoteAppProps & { client: Mat
                   summary={match.you}
                   state={you}
                   now={now}
+                  avatar={engine.keyboard}
                   grimoire={grimoire}
                   footer={
                     <UltimateRow
@@ -251,26 +252,27 @@ function ArenaView({ session, navigate, client }: RemoteAppProps & { client: Mat
                   }
                 />
                 <div className="ar-duel__center">
+                  <span className="ar-vs">VS</span>
                   {match.phase === "countdown" && match.startsAt && (
                     <div className="ar-countdown">{Math.max(1, Math.ceil((match.startsAt - now) / 1000))}</div>
                   )}
                   {match.phase === "active" && match.endsAt && (
-                    <div className="ar-timer">{Math.max(0, Math.ceil((match.endsAt - now) / 1000))} s</div>
+                    <Timer seconds={Math.max(0, Math.ceil((match.endsAt - now) / 1000))} />
+                  )}
+                  {/* Los banners van bajo el reloj, a la vista: debajo del duelo quedarían fuera de pantalla. */}
+                  {match.sealWarning && <div className="ar-banner ar-banner--bad">¡Te están sellando!</div>}
+                  {match.opponentGraceUntil !== null && (
+                    <div className="ar-banner">
+                      El rival se desconectó. Esperando{" "}
+                      {/* El reloj de pantalla se refresca cada 100 ms: se limita al graceMs real. */}
+                      {Math.min(match.opponentGraceMs / 1000, Math.max(0, Math.ceil((match.opponentGraceUntil - now) / 1000)))} s…
+                    </div>
                   )}
                   {/* En combate los avisos van bajo el reloj: así no tapan nombres ni barras. */}
                   <Notices notices={visibleNotices} />
                 </div>
                 <PlayerPanel side="rival" summary={match.rival} state={rival} now={now} />
               </div>
-
-              {match.sealWarning && <div className="ar-banner ar-banner--bad">¡Te están sellando!</div>}
-              {match.opponentGraceUntil !== null && (
-                <div className="ar-banner">
-                  El rival se desconectó. Esperando{" "}
-                  {/* El reloj de pantalla se refresca cada 100 ms: se limita al graceMs real. */}
-                  {Math.min(match.opponentGraceMs / 1000, Math.max(0, Math.ceil((match.opponentGraceUntil - now) / 1000)))} s…
-                </div>
-              )}
             </>
           )}
         </div>
@@ -281,6 +283,15 @@ function ArenaView({ session, navigate, client }: RemoteAppProps & { client: Mat
       )}
 
       {!(match.phase === "countdown" || match.phase === "active") && <Notices notices={visibleNotices} />}
+    </div>
+  );
+}
+
+/** Reloj de la partida: en los últimos 10 s se pone rojo y late para que nadie se distraiga. */
+function Timer({ seconds }: { seconds: number }) {
+  return (
+    <div className={`ar-timer${seconds <= 10 ? " ar-timer--low" : ""}`} role="timer" aria-label={`Quedan ${seconds} segundos`}>
+      {seconds} s
     </div>
   );
 }

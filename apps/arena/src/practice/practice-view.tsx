@@ -145,7 +145,7 @@ export function PracticeView({ grimoire, ultimateId, onExit }: Props) {
           <canvas ref={canvasRef} />
           {engine.status === "loading" && <div className="ar-camera__msg">Cargando cámara y detector de manos…</div>}
           {engine.status === "running" && !engine.handVisible && (
-            <div className="ar-camera__msg">✋ Pon la mano frente a la cámara</div>
+            <div className="ar-camera__hint">✋ Pon la mano frente a la cámara</div>
           )}
         </div>
       )}
@@ -165,6 +165,7 @@ export function PracticeView({ grimoire, ultimateId, onExit }: Props) {
           summary={null}
           state={playerState}
           now={now}
+          avatar={engine.keyboard}
           grimoire={grimoire}
           footer={
             <UltimateRow
