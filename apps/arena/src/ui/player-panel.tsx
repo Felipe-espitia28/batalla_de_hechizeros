@@ -14,6 +14,8 @@ interface Props {
   side: "you" | "rival";
   /** Nombre a mostrar sin `summary` (el muñeco de la arena de entrenamiento). */
   name?: string;
+  /** false cuando la cámara del jugador ocupa el lugar del avatar (sin cámara, en modo teclado, sí se ve). */
+  avatar?: boolean;
   /** Solo para el jugador propio: hechizos del grimorio con su cooldown. */
   grimoire?: readonly SpellId[];
   /** Contenido extra al final (el definitivo del jugador propio). */
@@ -22,7 +24,7 @@ interface Props {
 
 const EFFECT_LABELS = { burn: "🔥 Quemadura", poison: "🐍 Veneno", freeze: "❄️ ¡Congelado!", storm: "🌪️ Tormenta" } as const;
 
-export function PlayerPanel({ summary, state, now, side, name, grimoire, footer }: Props) {
+export function PlayerPanel({ summary, state, now, side, name, avatar = true, grimoire, footer }: Props) {
   const hp = state?.hp ?? 100;
   const mana = state?.mana ?? 0;
   const shielded = state?.shieldUntil != null && state.shieldUntil > now;
@@ -36,10 +38,12 @@ export function PlayerPanel({ summary, state, now, side, name, grimoire, footer 
         {summary && <span className="ar-player__rank">{summary.rank}</span>}
       </header>
 
-      <div className="ar-player__avatar" aria-hidden>
-        🧙
-        {shielded && <span className="ar-player__shield" />}
-      </div>
+      {avatar && (
+        <div className="ar-player__avatar" aria-hidden>
+          🧙
+          {shielded && <span className="ar-player__shield" />}
+        </div>
+      )}
 
       <Bar label="Vida" value={hp} max={100} kind="hp" />
       <Bar label="Maná" value={mana} max={100} kind="mana" />
