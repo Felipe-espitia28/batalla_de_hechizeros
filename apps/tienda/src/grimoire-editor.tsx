@@ -11,6 +11,7 @@ import { useState } from "react";
 import { ShopApiError, type ShopApi } from "./api";
 import { getDefinition, grimoireErrorsByField, sameGrimoire, slotOptions, ultimateOptions } from "./shop-logic";
 import { SpellIcon, UiIcon } from "./spell-icon";
+import { SpellPicker } from "./spell-picker";
 
 interface GrimoireEditorProps {
   api: ShopApi;
@@ -22,9 +23,6 @@ interface GrimoireEditorProps {
 }
 
 type SaveState = { status: "idle" } | { status: "saving" } | { status: "saved" } | { status: "error"; message: string };
-
-/** Solo el nombre: el icono del diseño ya lo pinta el envoltorio del selector (t-select). */
-const label = (id: SpellId | UltimateId) => getDefinition(id).name;
 
 export function GrimoireEditor({ api, owned, saved, onSaved, onGoToCatalog, onPlay }: GrimoireEditorProps) {
   const [draft, setDraft] = useState<Grimoire>(saved);
@@ -92,31 +90,19 @@ export function GrimoireEditor({ api, owned, saved, onSaved, onGoToCatalog, onPl
             return (
               <li key={index} className={`t-slot${error ? " t-slot--invalid" : ""}`}>
                 <span className="t-slot-num">{index + 1}</span>
-                <label className="t-sr-only" htmlFor={`t-slot-${index}`}>
+                <span className="t-sr-only" id={`t-slot-${index}-label`}>
                   Espacio {index + 1}
-                </label>
-                {/* <select> nativo (accesible); el envoltorio pinta el icono del hechizo y el chevron del diseño. */}
-                <span className={`t-select${current ? "" : " t-select--empty"}`}>
-                  {current && <SpellIcon id={current} className="t-select__icon" />}
-                  <select
-                    id={`t-slot-${index}`}
-                    value={current ?? ""}
-                    onChange={(event) => setSlot(index, event.target.value)}
-                    disabled={save.status === "saving"}
-                    aria-invalid={error ? true : undefined}
-                    aria-describedby={error ? `t-slot-${index}-error` : undefined}
-                  >
-                    <option value="">— Vacío —</option>
-                    {/* Si el guardado tiene algo que ya no está entre las opciones, se muestra igual para no ocultarlo. */}
-                    {current && !options.includes(current) && <option value={current}>{label(current)}</option>}
-                    {options.map((id) => (
-                      <option key={id} value={id}>
-                        {label(id)}
-                      </option>
-                    ))}
-                  </select>
-                  <UiIcon name="desplegar" size={16} className="t-select__chevron" />
                 </span>
+                {/* Selector propio: un <select> nativo no puede mostrar los iconos del diseño. */}
+                <SpellPicker
+                  id={`t-slot-${index}`}
+                  value={current}
+                  options={options}
+                  onChange={(value) => setSlot(index, value ?? "")}
+                  disabled={save.status === "saving"}
+                  labelId={`t-slot-${index}-label`}
+                  errorId={error ? `t-slot-${index}-error` : undefined}
+                />
                 {error && (
                   <span id={`t-slot-${index}-error`} className="t-field-error">
                     {error}

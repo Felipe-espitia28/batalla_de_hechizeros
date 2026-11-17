@@ -62,8 +62,6 @@
 
 /* Iconos del diseño (spell-icon.tsx): cada SVG a su tamaño; el emoji de respaldo en una caja de 22 px. */
 .tienda .t-icon { display: block; flex-shrink: 0; }
-.tienda .t-icon--emoji { width: 22px; height: 22px; display: grid; place-items: center; font-size: 17px; line-height: 1; }
-
 /* --- Encabezado y pestañas --- */
 .tienda .t-header { display: flex; justify-content: space-between; align-items: center; gap: 16px; flex-wrap: wrap; }
 .tienda .t-gold { display: flex; align-items: center; gap: 10px; padding: 13px 18px; border-radius: 12px; background: #241f20; border: 1px solid #443827; }
@@ -90,17 +88,31 @@
 .tienda .t-slot-name { flex: 1; min-width: 0; font-size: 15px; line-height: 22px; font-weight: 500; }
 .tienda .t-fixed { font-size: 11px; line-height: 16px; font-weight: 600; letter-spacing: 1.2px; text-transform: uppercase; color: var(--t-muted); }
 
-/* Selector: <select> nativo con el icono del hechizo a la izquierda y el chevron del diseño a la derecha. */
-.tienda .t-select { position: relative; flex: 1; min-width: 0; display: flex; align-items: center; }
-.tienda .t-select select {
-  width: 100%; appearance: none; -webkit-appearance: none; cursor: pointer;
+/* Selector propio (spell-picker.tsx): botón con icono, nombre y chevron; lista desplegable con iconos. */
+.tienda .t-select { position: relative; flex: 1; min-width: 0; }
+.tienda .t-select__button {
+  display: flex; align-items: center; gap: 12px; width: 100%; min-height: 48px; cursor: pointer; text-align: left;
   font: inherit; font-size: 15px; line-height: 22px; font-weight: 500; color: var(--t-fg);
-  padding: 12px 42px 12px 48px; border-radius: 8px; border: 1px solid var(--t-control-line); background: var(--t-surface-2);
+  padding: 12px 14px; border-radius: 8px; border: 1px solid var(--t-control-line); background: var(--t-surface-2);
 }
-.tienda .t-select--empty select { padding-left: 14px; color: var(--t-muted); }
-.tienda .t-select select option { background: var(--t-surface-2); color: var(--t-fg); }
-.tienda .t-select__icon { position: absolute; left: 14px; pointer-events: none; }
-.tienda .t-select__chevron { position: absolute; right: 14px; pointer-events: none; }
+.tienda .t-select__button:hover:not(:disabled) { border-color: #5b4b78; }
+.tienda .t-select__button:disabled { opacity: .6; cursor: not-allowed; }
+.tienda .t-select--empty .t-select__value { color: var(--t-muted); }
+.tienda .t-select__value { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.tienda .t-select__chevron { flex-shrink: 0; transition: transform .15s ease; }
+.tienda .t-select--open .t-select__chevron { transform: rotate(180deg); }
+.tienda .t-select__list {
+  position: absolute; top: calc(100% + 6px); left: 0; right: 0; z-index: 20;
+  list-style: none; margin: 0; padding: 6px; max-height: 280px; overflow-y: auto;
+  background: var(--t-surface-2); border: 1px solid var(--t-control-line); border-radius: 8px;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.45);
+}
+.tienda .t-select__list:focus { outline: none; }
+.tienda .t-select__option { display: flex; align-items: center; gap: 12px; min-height: 44px; padding: 0 14px; border-radius: 6px; cursor: pointer; font-size: 15px; line-height: 22px; font-weight: 500; }
+.tienda .t-select__option--active { background: #2a2340; }
+.tienda .t-select__option[aria-selected="true"] { background: #332647; font-weight: 600; }
+/* Hueco de 26 px (el icono más grande): nombres y "— Vacío —" quedan alineados. */
+.tienda .t-select__icon-slot { width: 26px; height: 26px; flex-shrink: 0; display: grid; place-items: center; }
 .tienda .t-field-error { width: 100%; color: var(--t-danger); font-size: 13px; padding-left: 48px; }
 .tienda .t-hint { font-size: 14px; color: var(--t-muted); }
 

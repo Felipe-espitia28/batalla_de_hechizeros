@@ -1,47 +1,12 @@
 /**
- * Icono de un hechizo o definitivo con los SVG del diseño de Figma ("Tienda · Grimorio").
- * Cada SVG trae su propio tamaño (22 px los hechizos, 24 px los definitivos) y se respeta.
- * Corte, Bola de fuego, Curación y Sello de silencio no tienen icono en el diseño: se usa su
- * emoji de game-rules en una caja del mismo tamaño.
+ * Iconos de los hechizos con los SVG del diseño de Figma. Cada SVG trae su propio tamaño y se respeta:
+ * - "Tienda · Grimorio": 22 px los hechizos y 24 px los definitivos (8 iconos);
+ * - "Tienda · Catálogo completo": 26 px, uno por hechizo (12 iconos).
  */
 import type { AnySpellId } from "@duelo/contracts";
 import { UI_ASSETS_PATH } from "./config";
-import { getDefinition } from "./shop-logic";
 
-const ICONS: Partial<Record<AnySpellId, { file: string; size: number }>> = {
-  lightning: { file: "rayo.svg", size: 22 },
-  shield: { file: "escudo.svg", size: 22 },
-  freeze: { file: "congelar.svg", size: 22 },
-  poison: { file: "veneno.svg", size: 22 },
-  meteor: { file: "meteoro.svg", size: 24 },
-  storm: { file: "tormenta.svg", size: 24 },
-  rebirth: { file: "renacer.svg", size: 24 },
-  "purple-void": { file: "vacio-purpura.svg", size: 24 },
-};
-
-export function SpellIcon({ id, className = "" }: { id: AnySpellId; className?: string }) {
-  const icon = ICONS[id];
-  if (icon) {
-    return (
-      <img
-        className={`t-icon ${className}`}
-        src={`${UI_ASSETS_PATH}/${icon.file}`}
-        width={icon.size}
-        height={icon.size}
-        alt=""
-        aria-hidden="true"
-      />
-    );
-  }
-  // Sin icono en el diseño: emoji del catálogo, en la caja de un hechizo (22 px).
-  return (
-    <span className={`t-icon t-icon--emoji ${className}`} aria-hidden="true">
-      {getDefinition(id).emoji}
-    </span>
-  );
-}
-
-/** Iconos del catálogo (Figma "Tienda · Catálogo completo"): uno por hechizo, todos de 26 px. */
+/** Iconos del catálogo: uno por hechizo, todos de 26 px. */
 const CATALOG_ICONS: Record<AnySpellId, string> = {
   lightning: "rayo.svg",
   shield: "escudo.svg",
@@ -57,9 +22,47 @@ const CATALOG_ICONS: Record<AnySpellId, string> = {
   "purple-void": "vacio-purpura.svg",
 };
 
-export function CatalogIcon({ id }: { id: AnySpellId }) {
+/** Iconos del grimorio. Corte, Bola de fuego, Curación y Sello no están en ese frame. */
+const GRIMOIRE_ICONS: Partial<Record<AnySpellId, { file: string; size: number }>> = {
+  lightning: { file: "rayo.svg", size: 22 },
+  shield: { file: "escudo.svg", size: 22 },
+  freeze: { file: "congelar.svg", size: 22 },
+  poison: { file: "veneno.svg", size: 22 },
+  meteor: { file: "meteoro.svg", size: 24 },
+  storm: { file: "tormenta.svg", size: 24 },
+  rebirth: { file: "renacer.svg", size: 24 },
+  "purple-void": { file: "vacio-purpura.svg", size: 24 },
+};
+
+/**
+ * Icono del grimorio. Si el frame del grimorio no lo dibujó, se usa el del catálogo (26 px):
+ * así ningún hechizo cae al emoji.
+ */
+export function SpellIcon({ id, className = "" }: { id: AnySpellId; className?: string }) {
+  const icon = GRIMOIRE_ICONS[id];
+  if (!icon) return <CatalogIcon id={id} className={className} />;
   return (
-    <img className="t-icon" src={`${UI_ASSETS_PATH}/catalogo/${CATALOG_ICONS[id]}`} width={26} height={26} alt="" aria-hidden="true" />
+    <img
+      className={`t-icon ${className}`}
+      src={`${UI_ASSETS_PATH}/${icon.file}`}
+      width={icon.size}
+      height={icon.size}
+      alt=""
+      aria-hidden="true"
+    />
+  );
+}
+
+export function CatalogIcon({ id, className = "" }: { id: AnySpellId; className?: string }) {
+  return (
+    <img
+      className={`t-icon ${className}`}
+      src={`${UI_ASSETS_PATH}/catalogo/${CATALOG_ICONS[id]}`}
+      width={26}
+      height={26}
+      alt=""
+      aria-hidden="true"
+    />
   );
 }
 
