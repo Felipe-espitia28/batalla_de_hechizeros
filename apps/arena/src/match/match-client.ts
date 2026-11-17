@@ -6,6 +6,7 @@
 import {
   SOCKET_UNAUTHORIZED,
   type AckErrorCode,
+  type AnySpellId,
   type CastId,
   type AckResponse,
   type ClientToServerEvents,
@@ -61,8 +62,15 @@ export interface MatchSnapshot {
   opponentGraceMs: number;
   /** El rival está cargando la X del Sello. */
   sealWarning: boolean;
+  /** Último hechizo del rival que te hizo daño directo (para "Te golpeó" en la derrota). */
+  lastHit: LastHit | null;
   notices: Notice[];
   error: string | null;
+}
+
+export interface LastHit {
+  spellId: AnySpellId;
+  damage: number;
 }
 
 export interface MatchClientOptions {
@@ -94,6 +102,7 @@ const INITIAL: MatchSnapshot = {
   opponentGraceUntil: null,
   opponentGraceMs: 0,
   sealWarning: false,
+  lastHit: null,
   notices: [],
   error: null,
 };
@@ -252,7 +261,7 @@ export class MatchClient {
     s.on("matchmaking:queued", ({ ratingRange }) => this.update({ phase: "queued", ratingRange }));
 
     s.on("match:found", (payload: MatchFoundPayload) =>
-      this.update({ phase: "found", matchId: payload.matchId, you: payload.you, rival: payload.rival, end: null, state: null }),
+      this.update({ phase: "found", matchId: payload.matchId, you: payload.you, rival: payload.rival, end: null, state: null, lastHit: null }),
     );
 
     s.on("match:start", ({ matchId, startsAt, endsAt, serverNow }) => {
@@ -273,6 +282,8 @@ export class MatchClient {
       if (outcome === "self") this.notify(mine ? `${label}` : `El rival usó ${label}`, mine ? "good" : "info");
       else if (outcome === "blocked") this.notify(mine ? `${label} bloqueado por su escudo` : `¡Tu escudo bloqueó ${label}!`, mine ? "bad" : "good");
       else this.notify(mine ? `${label} −${damage}` : `Te golpeó ${label} −${damage}`, mine ? "good" : "bad");
+      // Solo daño directo: los daños por segundo (quemadura, veneno, tormenta) llegan por match:state.
+      if (!mine && damage > 0) this.update({ lastHit: { spellId, damage } });
     });
 
     s.on("combat:spell-rejected", ({ castId, code }) => this.reject(castId, code));

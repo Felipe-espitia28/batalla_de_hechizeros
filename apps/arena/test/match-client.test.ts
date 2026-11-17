@@ -127,6 +127,20 @@ describe("MatchClient", () => {
     expect(client.getSnapshot().notices.map((n) => n.text)).toEqual(["No tienes maná suficiente"]);
   });
 
+  it("recuerda el último golpe directo del rival y lo olvida en la siguiente partida", () => {
+    const { client, server } = setup();
+    server("match:found", { matchId: "m1", you: { id: "u1" }, rival: { id: "u2" } });
+    server("match:state", state(Date.now()));
+    server("combat:spell-resolved", { castId: "c1", casterId: "u2", spellId: "fireball", outcome: "hit", damage: 15 });
+    // Ni los golpes propios ni los bloqueados (daño 0) cuentan.
+    server("combat:spell-resolved", { castId: "c2", casterId: "u1", spellId: "lightning", outcome: "hit", damage: 10 });
+    server("combat:spell-resolved", { castId: "c3", casterId: "u2", spellId: "lightning", outcome: "blocked", damage: 0 });
+    expect(client.getSnapshot().lastHit).toEqual({ spellId: "fireball", damage: 15 });
+
+    server("match:found", { matchId: "m2", you: { id: "u1" }, rival: { id: "u2" } });
+    expect(client.getSnapshot().lastHit).toBeNull();
+  });
+
   it("pide match:rejoin al reconectar en mitad de una partida", () => {
     const { client, sent, server } = setup();
     server("connect");
