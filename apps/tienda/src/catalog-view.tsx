@@ -7,6 +7,7 @@ import type { AnySpellId, SpellCatalogItem } from "@duelo/contracts";
 import { useState } from "react";
 import { ShopApiError, type ShopApi } from "./api";
 import { describeEffect, describeStats, getDefinition, getSpellStatus, type SpellStatus } from "./shop-logic";
+import { CatalogIcon, UiIcon } from "./spell-icon";
 
 interface CatalogViewProps {
   api: ShopApi;
@@ -70,17 +71,17 @@ export function CatalogView(props: CatalogViewProps) {
               const message = feedback?.spellId === item.id ? feedback : null;
               return (
                 <li key={item.id} className={`t-card t-card--${status}`}>
-                  <div className="t-card-top">
-                    <span className="t-emoji" aria-hidden="true">
-                      {def.emoji}
-                    </span>
-                    <div>
+                  <div className="t-card-body">
+                    <div className="t-card-top">
+                      <span className="t-emoji" aria-hidden="true">
+                        <CatalogIcon id={item.id} />
+                      </span>
                       <h4>{item.name}</h4>
-                      <p className="t-gesture">{item.gestureDescription}</p>
                     </div>
+                    <p className="t-gesture">{item.gestureDescription}</p>
+                    <p className="t-effect">{describeEffect(def)}</p>
+                    <p className="t-stats">{describeStats(def)}</p>
                   </div>
-                  <p>{describeEffect(def)}</p>
-                  <p className="t-stats">{describeStats(def)}</p>
                   <div className="t-card-foot">
                     <PriceTag item={item} status={status} />
                     <BuyButton
@@ -111,7 +112,7 @@ function PriceTag({ item, status }: { item: SpellCatalogItem; status: SpellStatu
   if (status === "owned") return <span className="t-badge t-badge--owned">Comprado</span>;
   return (
     <span className="t-price">
-      <span aria-hidden="true">🪙</span> <span className="t-num">{item.price}</span>
+      <UiIcon name="moneda" size={22} /> <span className="t-num">{item.price}</span>
     </span>
   );
 }

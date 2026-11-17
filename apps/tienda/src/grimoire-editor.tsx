@@ -10,6 +10,7 @@ import type { Grimoire, SpellId, UltimateId } from "@duelo/contracts";
 import { useState } from "react";
 import { ShopApiError, type ShopApi } from "./api";
 import { getDefinition, grimoireErrorsByField, sameGrimoire, slotOptions, ultimateOptions } from "./shop-logic";
+import { SpellIcon, UiIcon } from "./spell-icon";
 
 interface GrimoireEditorProps {
   api: ShopApi;
@@ -22,10 +23,8 @@ interface GrimoireEditorProps {
 
 type SaveState = { status: "idle" } | { status: "saving" } | { status: "saved" } | { status: "error"; message: string };
 
-const label = (id: SpellId | UltimateId) => {
-  const def = getDefinition(id);
-  return `${def.emoji} ${def.name}`;
-};
+/** Solo el nombre: el icono del diseño ya lo pinta el envoltorio del selector (t-select). */
+const label = (id: SpellId | UltimateId) => getDefinition(id).name;
 
 export function GrimoireEditor({ api, owned, saved, onSaved, onGoToCatalog, onPlay }: GrimoireEditorProps) {
   const [draft, setDraft] = useState<Grimoire>(saved);
@@ -73,13 +72,19 @@ export function GrimoireEditor({ api, owned, saved, onSaved, onGoToCatalog, onPl
           <p className="t-muted">En combate, el reconocedor solo compara tu trazo con estos cuatro gestos.</p>
         </div>
         <ol className="t-slots">
-          {([0, 1] as const).map((index) => (
-            <li key={index} className="t-slot t-slot--fixed">
-              <span className="t-slot-num">{index + 1}</span>
-              <span>{label(draft.slots[index])}</span>
-              <span className="t-badge">Fijo</span>
-            </li>
-          ))}
+          {([0, 1] as const).map((index) => {
+            const spellId = draft.slots[index];
+            return (
+              <li key={index} className="t-slot t-slot--fixed">
+                <span className="t-slot-num">{index + 1}</span>
+                <span className="t-slot-spell">
+                  {spellId && <SpellIcon id={spellId} />}
+                  <span className="t-slot-name">{spellId ? getDefinition(spellId).name : "—"}</span>
+                  <span className="t-fixed">Fijo</span>
+                </span>
+              </li>
+            );
+          })}
           {([2, 3] as const).map((index) => {
             const current = draft.slots[index];
             const options = slotOptions(owned, draft, index);
@@ -90,23 +95,28 @@ export function GrimoireEditor({ api, owned, saved, onSaved, onGoToCatalog, onPl
                 <label className="t-sr-only" htmlFor={`t-slot-${index}`}>
                   Espacio {index + 1}
                 </label>
-                <select
-                  id={`t-slot-${index}`}
-                  value={current ?? ""}
-                  onChange={(event) => setSlot(index, event.target.value)}
-                  disabled={save.status === "saving"}
-                  aria-invalid={error ? true : undefined}
-                  aria-describedby={error ? `t-slot-${index}-error` : undefined}
-                >
-                  <option value="">— Vacío —</option>
-                  {/* Si el guardado tiene algo que ya no está entre las opciones, se muestra igual para no ocultarlo. */}
-                  {current && !options.includes(current) && <option value={current}>{label(current)}</option>}
-                  {options.map((id) => (
-                    <option key={id} value={id}>
-                      {label(id)}
-                    </option>
-                  ))}
-                </select>
+                {/* <select> nativo (accesible); el envoltorio pinta el icono del hechizo y el chevron del diseño. */}
+                <span className={`t-select${current ? "" : " t-select--empty"}`}>
+                  {current && <SpellIcon id={current} className="t-select__icon" />}
+                  <select
+                    id={`t-slot-${index}`}
+                    value={current ?? ""}
+                    onChange={(event) => setSlot(index, event.target.value)}
+                    disabled={save.status === "saving"}
+                    aria-invalid={error ? true : undefined}
+                    aria-describedby={error ? `t-slot-${index}-error` : undefined}
+                  >
+                    <option value="">— Vacío —</option>
+                    {/* Si el guardado tiene algo que ya no está entre las opciones, se muestra igual para no ocultarlo. */}
+                    {current && !options.includes(current) && <option value={current}>{label(current)}</option>}
+                    {options.map((id) => (
+                      <option key={id} value={id}>
+                        {label(id)}
+                      </option>
+                    ))}
+                  </select>
+                  <UiIcon name="desplegar" size={16} className="t-select__chevron" />
+                </span>
                 {error && (
                   <span id={`t-slot-${index}-error`} className="t-field-error">
                     {error}
@@ -135,7 +145,9 @@ export function GrimoireEditor({ api, owned, saved, onSaved, onGoToCatalog, onPl
         <div className="t-ultimates" role="radiogroup" aria-labelledby="t-grimoire-ultimate">
           {ultimateOptions(owned).map((id) => (
             <label key={id} className={`t-ultimate${draft.ultimateId === id ? " t-ultimate--active" : ""}`}>
+              {/* Radio nativo oculto a la vista (sigue siendo accesible con teclado); se pinta el del diseño. */}
               <input
+                className="t-sr-only"
                 type="radio"
                 name="t-ultimate"
                 value={id}
@@ -143,7 +155,9 @@ export function GrimoireEditor({ api, owned, saved, onSaved, onGoToCatalog, onPl
                 onChange={() => setUltimate(id)}
                 disabled={save.status === "saving"}
               />
-              {label(id)}
+              <UiIcon name={draft.ultimateId === id ? "radio-on" : "radio-off"} size={18} />
+              <SpellIcon id={id} />
+              <span>{getDefinition(id).name}</span>
             </label>
           ))}
         </div>
