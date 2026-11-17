@@ -90,8 +90,9 @@ function LoadingState({ slow }: { slow: boolean }) {
   );
 }
 
-function RankBadge({ rank }: { rank: RankName }) {
-  const tone = rank === "Grado Especial" ? "special" : rank.replace("Grado ", "g");
+/** `hero`: la variante de "Tu posición" del diseño; en la tabla cada grado tiene su color. */
+function RankBadge({ rank, hero = false }: { rank: RankName; hero?: boolean }) {
+  const tone = hero ? "hero" : rank === "Grado Especial" ? "special" : rank.replace("Grado ", "g");
   return <span className={`rk-rank rk-rank--${tone}`}>{rank}</span>;
 }
 
@@ -100,18 +101,33 @@ function MyCard({ me, username, onPlay }: { me: RankingMeResponse; username: str
   return (
     <section className="rk-panel rk-me" aria-labelledby="rk-me-title">
       <h2 id="rk-me-title">Tu posición</h2>
-      <p className="rk-me__name">{username}</p>
-      <p className="rk-me__position">
-        <span className="rk-num">#{me.position}</span>
-        <span className="rk-muted"> de {me.totalPlayers}</span>
-      </p>
-      <p>
-        <RankBadge rank={me.rank} /> <span className="rk-num">{me.rating}</span> puntos
-      </p>
-      <p className="rk-muted">
-        {progress ? `Te faltan ${progress.missing} puntos para ${progress.next}.` : "Estás en el rango más alto."}
-      </p>
-      <button type="button" className="rk-button rk-button--primary" onClick={onPlay}>
+      <div className="rk-me__summary">
+        <p className="rk-me__name">{username}</p>
+        <p className="rk-me__position">
+          <span className="rk-me__number rk-num">#{me.position}</span>
+          <span className="rk-me__total">de {me.totalPlayers}</span>
+        </p>
+        <p className="rk-me__rating">
+          <RankBadge rank={me.rank} hero />
+          <span className="rk-num">{me.rating} puntos</span>
+        </p>
+      </div>
+      <div className="rk-me__progress">
+        <p className="rk-muted">
+          {progress ? `Te faltan ${progress.missing} puntos para ${progress.next}.` : "Estás en el rango más alto."}
+        </p>
+        <div
+          className="rk-progress"
+          role="progressbar"
+          aria-label={progress ? `Avance hacia ${progress.next}` : "Rango máximo alcanzado"}
+          aria-valuemin={0}
+          aria-valuemax={100}
+          aria-valuenow={Math.round((progress?.percent ?? 1) * 100)}
+        >
+          <div className="rk-progress__fill" style={{ width: `${(progress?.percent ?? 1) * 100}%` }} />
+        </div>
+      </div>
+      <button type="button" className="rk-button rk-button--primary rk-button--block" onClick={onPlay}>
         Ir a la Arena
       </button>
     </section>
@@ -137,19 +153,23 @@ function TopTable({ entries, myId }: { entries: RankingEntry[]; myId: string }) 
             </tr>
           </thead>
           <tbody>
-            {entries.map((entry) => (
-              <tr key={entry.userId} className={entry.userId === myId ? "rk-row--me" : undefined}>
-                <td className="rk-num">{entry.position}</td>
-                <td>
+            {entries.map((entry) => {
+              const isMe = entry.userId === myId;
+              const rowClass = [isMe && "rk-row--me", entry.position === 1 && "rk-row--first"].filter(Boolean).join(" ");
+              return (
+              <tr key={entry.userId} className={rowClass || undefined}>
+                <td className="rk-num rk-pos-cell">{entry.position}</td>
+                <td className="rk-name-cell">
                   {entry.username}
-                  {entry.userId === myId && <span className="rk-you"> (tú)</span>}
+                  {isMe && <span className="rk-you">(tú)</span>}
                 </td>
                 <td>
                   <RankBadge rank={entry.rank} />
                 </td>
-                <td className="rk-num rk-right">{entry.rating}</td>
+                <td className="rk-num rk-right rk-points-cell">{entry.rating}</td>
               </tr>
-            ))}
+              );
+            })}
           </tbody>
         </table>
       )}
@@ -173,11 +193,10 @@ function History({ matches, onPlay }: { matches: MatchHistoryItem[]; onPlay: () 
           {matches.map((match) => (
             <li key={match.matchId} className={`rk-match rk-match--${match.result}`}>
               <span className="rk-match__result">{RESULT_LABELS[match.result]}</span>
-              <span className="rk-match__rival">
-                vs <strong>{match.rival.username}</strong>
-                <span className="rk-muted">
-                  {" "}
-                  · {END_REASON_LABELS[match.endReason]} · {formatDuration(match.durationMs)} · {formatDate(match.endedAt)}
+              <span className="rk-match__info">
+                <span className="rk-match__rival">vs {match.rival.username}</span>
+                <span className="rk-match__meta">
+                  {END_REASON_LABELS[match.endReason]} · {formatDuration(match.durationMs)} · {formatDate(match.endedAt)}
                 </span>
               </span>
               <span className="rk-match__deltas">

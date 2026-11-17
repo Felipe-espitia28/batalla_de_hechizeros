@@ -42,7 +42,7 @@ export function AuthPage({ api, onAuthenticated, notice }: { api: ApiClient; onA
   return (
     <main className="auth">
       <section className="auth-card" aria-labelledby="auth-title">
-        <p className="eyebrow">Duelo de hechiceros</p>
+        <img className="auth-logo" src="/logo-duelo.png" alt="Duelo de hechiceros" />
         <h1 id="auth-title">{mode === "login" ? "Entra a la arena" : "Crea tu hechicero"}</h1>
         <p className="muted">
           {mode === "login"

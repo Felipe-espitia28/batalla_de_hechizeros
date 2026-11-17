@@ -1,6 +1,7 @@
-/* Shell: noche de duelo. Mismo fondo que la Arena (#0f0d1a) para que el remote encaje sin costuras. */
+/* Shell: noche de duelo. Colores del diseño de Figma (Arena · Duelo de hechiceros).
+   Mismo fondo que la Arena (#0e0c19) para que el remote encaje sin costuras. */
 :root {
-  --bg: #0f0d1a;
+  --bg: #0e0c19;
   --surface: #191628;
   --surface-2: #221e36;
   --line: #2f2a49;
@@ -13,8 +14,9 @@
   --danger-bg: #3a1822;
   --info-bg: #1f2547;
   --radius: 10px;
-  --font-display: "Segoe UI Semibold", "Segoe UI", system-ui, sans-serif;
-  --font-body: "Segoe UI", system-ui, -apple-system, sans-serif;
+  /* Inter es la fuente del diseño; si el equipo no la tiene, se usa la del sistema. */
+  --font-display: "Inter", "Segoe UI Semibold", "Segoe UI", system-ui, sans-serif;
+  --font-body: "Inter", "Segoe UI", system-ui, -apple-system, sans-serif;
   color-scheme: dark;
 }
 
@@ -40,6 +42,7 @@ code { background: var(--surface-2); padding: 1px 6px; border-radius: 4px; font-
 .auth { min-height: 100%; display: grid; place-items: center; padding: 32px 16px; }
 .auth-card { width: min(420px, 100%); background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 28px; display: flex; flex-direction: column; gap: 14px; }
 .auth-card h1 { font-size: 1.6rem; }
+.auth-logo { display: block; width: auto; height: 120px; margin: 0 auto 4px; }
 .segmented { display: grid; grid-template-columns: 1fr 1fr; background: var(--bg); border: 1px solid var(--line); border-radius: 8px; padding: 3px; }
 .segmented button { font: inherit; font-weight: 600; border: 0; background: transparent; color: var(--muted); padding: 7px; border-radius: 6px; cursor: pointer; }
 .segmented button[aria-selected="true"] { background: var(--surface-2); color: var(--fg); }
@@ -53,17 +56,22 @@ code { background: var(--surface-2); padding: 1px 6px; border-radius: 4px; font-
 
 /* Layout con barra superior */
 .layout { min-height: 100%; display: flex; flex-direction: column; }
-.topbar { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 24px; padding: 10px 20px; background: var(--surface); border-bottom: 1px solid var(--line); }
-.brand { font-family: var(--font-display); font-weight: 700; color: var(--fg); text-decoration: none; }
-.topbar nav { display: flex; gap: 4px; }
-.navlink { color: var(--muted); text-decoration: none; font-weight: 600; padding: 6px 12px; border-radius: 8px; }
-.navlink:hover { color: var(--fg); }
-.navlink.active { color: var(--fg); background: var(--surface-2); }
-.player { margin-left: auto; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
-.player-name { font-weight: 600; }
-.chip { font-size: .8rem; font-weight: 600; padding: 3px 10px; border-radius: 999px; border: 1px solid var(--line); }
-.chip-rank { color: var(--accent); }
-.chip-gold { color: var(--gold); }
+/* Barra superior (Figma "Navegación"). El logo va a 88 px y no a los 148 del diseño, para que la
+   partida quepa sin scroll en un portátil; colores, espaciados y estilos son los del diseño. */
+.topbar { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 54px; padding: 8px 56px; background: #181526; border-bottom: 1px solid #302840; }
+.brand { display: flex; align-items: center; text-decoration: none; }
+.brand-logo { display: block; width: auto; height: 88px; }
+.topbar nav { display: flex; gap: 8px; }
+.navlink { color: #aca5c2; text-decoration: none; font-size: 14px; font-weight: 500; line-height: normal; padding: 13px 20px; border-radius: 10px; }
+.navlink:hover { color: #f5f1ff; }
+.navlink.active { color: #f5f1ff; background: #2a2340; font-weight: 600; }
+.player { margin-left: auto; display: flex; align-items: center; gap: 20px; flex-wrap: wrap; }
+.player-name { font-size: 14px; font-weight: 500; color: #f5f1ff; }
+.player .chip + .chip { margin-left: -12px; } /* chips a 8 px entre sí, como en el diseño */
+.chip { font-size: 12px; font-weight: 600; line-height: normal; padding: 8px 12px; border-radius: 8px; }
+.chip-rank { color: #b8a1ff; background: #241d39; }
+.chip-gold { color: #f7c753; background: #2b251e; }
+.topbar .button-ghost { font-size: 13px; font-weight: 500; color: #e6dff5; padding: 11px 17px; border: 1px solid #413653; border-radius: 8px; }
 .content { flex: 1; display: flex; flex-direction: column; min-width: 0; }
 
 /* Estados de carga y error de los remotes */
@@ -74,7 +82,13 @@ code { background: var(--surface-2); padding: 1px 6px; border-radius: 4px; font-
 @keyframes spin { to { transform: rotate(360deg); } }
 @media (prefers-reduced-motion: reduce) { .spinner { animation-duration: 3s; } }
 
+@media (max-width: 900px) {
+  .topbar { gap: 12px 24px; padding: 8px 24px; }
+}
 @media (max-width: 640px) {
-  .topbar { padding: 10px 16px; }
-  .player { margin-left: 0; width: 100%; }
+  .topbar { padding: 8px 16px; }
+  .brand-logo { height: 56px; }
+  .navlink { padding: 10px 14px; }
+  .player { margin-left: 0; width: 100%; gap: 12px; }
+  .player .chip + .chip { margin-left: -4px; }
 }

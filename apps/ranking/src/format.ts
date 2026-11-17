@@ -41,11 +41,16 @@ export function formatDate(iso: string): string {
 
 /**
  * Cuánto falta para el siguiente rango, con la misma tabla que usa el api (game-rules).
+ * `percent` (0 a 1) es el avance desde el mínimo del rango actual: llena la barra de "Tu posición".
  * `null` en el rango más alto.
  */
-export function nextRankProgress(rating: number): { next: RankName; missing: number } | null {
+export function nextRankProgress(rating: number): { next: RankName; missing: number; percent: number } | null {
   // RANK_TIERS va de mayor a menor: el siguiente es el de umbral más bajo que aún no se alcanza.
   const above = RANK_TIERS.filter((tier) => tier.minRating > rating);
   const next = above[above.length - 1];
-  return next ? { next: next.name, missing: next.minRating - rating } : null;
+  if (!next) return null;
+  const current = RANK_TIERS.find((tier) => tier.minRating <= rating);
+  const floor = current?.minRating ?? 0;
+  const percent = Math.min(1, Math.max(0, (rating - floor) / (next.minRating - floor)));
+  return { next: next.name, missing: next.minRating - rating, percent };
 }

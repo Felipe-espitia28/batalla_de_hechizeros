@@ -94,8 +94,8 @@ function Layout({
   return (
     <div className="layout">
       <header className="topbar">
-        <NavLink to="/arena" className="brand">
-          Duelo de hechiceros
+        <NavLink to="/arena" className="brand" aria-label="Duelo de hechiceros: ir a la Arena">
+          <img className="brand-logo" src="/logo-duelo.png" alt="Duelo de hechiceros" />
         </NavLink>
         <nav aria-label="Secciones">
           {SECTIONS.map((section) => (

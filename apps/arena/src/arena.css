@@ -1,6 +1,6 @@
 /* Estilos de la Arena. Todo bajo .arena para no chocar con el shell (Module Federation). */
 .arena {
-  --a-bg: #0f0d1a;
+  --a-bg: #0e0c19;
   --a-panel: #1a1729;
   --a-border: #2e2945;
   --a-text: #ece9f7;
@@ -17,7 +17,7 @@
   padding: 16px;
   background: var(--a-bg);
   color: var(--a-text);
-  font: 15px/1.4 system-ui, sans-serif;
+  font: 15px/1.4 "Inter", "Segoe UI", system-ui, sans-serif;
   display: flex;
   flex-direction: column;
   gap: 16px;
@@ -171,3 +171,54 @@
 .arena .ar-practice__entry--bad { color: var(--a-bad); }
 .arena .ar-practice__entry--info { color: var(--a-muted); }
 .arena .ar-practice__guide li { display: flex; flex-direction: column; gap: 2px; }
+
+/* --- Lobby (Figma "Arena y guía de gestos") --- */
+.arena .ar-lobby {
+  display: flex; align-items: center; gap: 128px;
+  width: 100%; max-width: 1280px; min-height: 552px; margin: clamp(16px, 5vh, 58px) auto 32px; padding: 64px;
+  border: 1px solid #342b47; border-radius: 24px;
+  background: linear-gradient(90deg, #1b172b, #161322);
+}
+.arena .ar-lobby__actions { display: flex; flex-direction: column; align-items: flex-start; gap: 32px; width: 480px; max-width: 100%; flex-shrink: 0; }
+.arena .ar-lobby__title { margin: 0; font-size: 80px; font-weight: 600; line-height: 1.1; letter-spacing: -4px; color: #f5f1ff; }
+.arena .ar-lobby__buttons { display: flex; flex-wrap: wrap; gap: 12px; }
+.arena .ar-lobby__btn {
+  height: 56px; width: 164px; border-radius: 10px; cursor: pointer;
+  font: inherit; font-size: 15px; font-weight: 600; line-height: 1.5; color: #f9f6ff;
+  background: #2a2340; border: 1px solid #45395c;
+}
+.arena .ar-lobby__btn--primary { width: 204px; background: #7952ff; border-color: #7952ff; box-shadow: 0 6px 24px rgba(110, 68, 239, 0.22); }
+.arena .ar-lobby__btn:hover:not(:disabled) { filter: brightness(1.12); }
+.arena .ar-lobby__btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.arena .ar-lobby__btn:focus-visible { outline: 2px solid #b69cff; outline-offset: 2px; }
+.arena .ar-lobby__hint { margin: 0; width: 400px; max-width: 100%; font-size: 14px; line-height: 24px; color: #aca5c2; }
+
+.arena .ar-lobby__guide { display: flex; flex-direction: column; gap: 20px; flex: 1 1 544px; min-width: 0; }
+.arena .ar-lobby__guide-title { margin: 0; font-size: 16px; font-weight: 500; line-height: 1.5; color: #c6bed9; }
+/* Sin salto de línea: el diseño suma 2 px más que el espacio interior, así que las tarjetas encogen. */
+.arena .ar-lobby__gestures { display: flex; gap: 16px; }
+
+.arena .ar-gesture {
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 20px;
+  flex: 0 1 264px; min-width: 0; height: 268px; margin: 0; padding: 24px;
+  background: #211b32; border: 1px solid #352b49; border-radius: 16px;
+}
+/* Área del dibujo: posiciones absolutas del diseño (los estilos inline de gesture-card.tsx). */
+.arena .ar-gesture__art { position: relative; width: 168px; height: 160px; flex-shrink: 0; overflow: hidden; }
+.arena .ar-gesture__art img { position: absolute; display: block; max-width: none; }
+.arena .ar-gesture__guide { left: 12px; top: 8px; }
+.arena .ar-gesture__label { font-size: 15px; font-weight: 500; line-height: 24px; white-space: nowrap; }
+.arena .ar-gesture__label--gold { color: #f7c753; }
+.arena .ar-gesture__label--violet { color: #b69cff; }
+
+@media (max-width: 1100px) {
+  .arena .ar-lobby { flex-direction: column; align-items: flex-start; gap: 40px; min-height: 0; padding: 32px; margin-top: 24px; }
+  .arena .ar-lobby__guide { flex: none; width: 100%; }
+  .arena .ar-lobby__title { font-size: 56px; letter-spacing: -2px; }
+}
+@media (max-width: 640px) {
+  .arena .ar-lobby { padding: 24px 16px; }
+  .arena .ar-lobby__gestures { flex-direction: column; width: 100%; }
+  .arena .ar-gesture { flex-basis: auto; }
+  .arena .ar-gesture { width: 100%; }
+}
