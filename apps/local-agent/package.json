@@ -1,0 +1,35 @@
+{
+  "name": "@duelo/local-agent",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Agente local (R2): corre en el PC del jugador, abre el detector de gestos y voz y pasa solo eventos a la Arena por 127.0.0.1. No se despliega. Base: Felipe; servidor: Johan; detector: Juan; UI: Angel.",
+  "engines": {
+    "node": ">=22.12"
+  },
+  "scripts": {
+    "build:deps": "pnpm --filter @duelo/contracts --filter @duelo/game-rules build",
+    "assets": "node ../../packages/spell-engine/scripts/copy-assets.mjs detector/public/mediapipe",
+    "build:detector": "vite build --config detector/vite.config.ts",
+    "build": "pnpm run build:deps && pnpm run assets && pnpm run typecheck:only && pnpm run build:detector",
+    "start": "pnpm run build && node --env-file-if-exists=.env --import tsx src/index.ts",
+    "dev": "pnpm run build && node --env-file-if-exists=.env --import tsx --watch src/index.ts",
+    "typecheck:only": "tsc -p tsconfig.json && tsc -p detector/tsconfig.json",
+    "typecheck": "pnpm run build:deps && pnpm run typecheck:only",
+    "test": "pnpm run build:deps && vitest run"
+  },
+  "dependencies": {
+    "@duelo/contracts": "workspace:*",
+    "@duelo/game-rules": "workspace:*",
+    "@duelo/spell-engine": "workspace:*",
+    "tsx": "4.23.15",
+    "ws": "8.23.0"
+  },
+  "devDependencies": {
+    "@types/node": "^24.19.2",
+    "@types/ws": "8.18.2",
+    "typescript": "6.0.3",
+    "vite": "8.3.6",
+    "vitest": "5.0.5"
+  }
+}
