@@ -3,3 +3,4 @@ export * from "./common.js";
 export * from "./socket.js";
 export * from "./rest.js";
 export * from "./mfe.js";
+export * from "./local-agent.js";

@@ -1,0 +1,12 @@
+{
+  // Parte Node del agente (servidor local y lanzador). El detector tiene su propio tsconfig (DOM).
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "module": "nodenext",
+    "moduleResolution": "nodenext",
+    "lib": ["ES2023"],
+    "types": ["node"],
+    "noEmit": true
+  },
+  "include": ["src", "test", "vitest.config.ts"]
+}

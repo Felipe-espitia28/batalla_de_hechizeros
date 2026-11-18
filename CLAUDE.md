@@ -19,7 +19,7 @@ Ninguna decisión puede dejar uno sin cumplir. Si un cambio pone en riesgo algun
 | Req. | Requisito | Qué lo cumple | Cómo se demuestra |
 |---|---|---|---|
 | R1 | Desplegado en la nube | Vercel (4 frontends), Render (2 servicios), Neon, Upstash | URLs públicas en vivo |
-| R2 | Módulo local | `packages/spell-engine`: MediaPipe + reconocedor en el PC del jugador | DevTools → Network: solo viajan eventos pequeños; sin internet la detección sigue |
+| R2 | Módulo local | `apps/local-agent`: agente que el jugador ejecuta en su PC (servidor en 127.0.0.1 + ventana del detector con `packages/spell-engine`: MediaPipe, $1 y voz). Pasa solo eventos a la Arena por WebSocket local | Proceso del agente en el Administrador de tareas; DevTools → solo eventos pequeños por `ws://127.0.0.1`; sin internet la detección sigue. Plan: `docs/plan-agente-local.md` |
 | R3 | Sockets | `services/game-server` con Socket.IO | Dos PCs: un gesto en uno baja la vida en el otro |
 | R4 | Cámara y micrófono | Gestos (cámara) y grito del definitivo (micrófono) | Partida en vivo |
 | R5 | Mínimo 2 bases de datos | PostgreSQL (permanente) + Redis (en vivo) | Tablas en Neon; claves en Upstash durante una partida |
@@ -95,11 +95,13 @@ Verifica en la documentación oficial las versiones actuales antes de instalar.
 
 ```mermaid
 flowchart LR
-  subgraph DISP["PC del jugador - navegador"]
-    subgraph LOCAL["MÓDULO LOCAL: spell-engine"]
+  subgraph DISP["PC del jugador"]
+    subgraph LOCAL["MÓDULO LOCAL: agente local (apps/local-agent, 127.0.0.1)"]
       CAM["Cámara"] --> MP["MediaPipe HandLandmarker (WASM local)"]
       MP --> REC["Reconocedor: X dos manos / línea recta / $1"]
       MIC["Micrófono"] --> VOZ["Web Audio (volumen) + Web Speech (palabra)"]
+      REC --> AG["Servidor local: WebSocket /events"]
+      VOZ --> AG
     end
     subgraph MFE["MICRO FRONTENDS"]
       SHELL["Shell: login, sesión, navegación"]
@@ -107,8 +109,7 @@ flowchart LR
       TIENDA["Remote Tienda / Libro"]
       RANK["Remote Ranking"]
     end
-    REC -- "evento: spellId + confidence" --> ARENA
-    VOZ -- "evento: grito validado" --> ARENA
+    AG -- "ws://127.0.0.1: spellId + confidence, grito validado" --> ARENA
     SHELL -. "Module Federation" .-> ARENA
     SHELL -. "Module Federation" .-> TIENDA
     SHELL -. "Module Federation" .-> RANK
@@ -148,7 +149,8 @@ duelo-de-hechiceros/
 │   ├── shell/                  # Felipe
 │   ├── arena/                  # Juan
 │   ├── tienda/                 # Angel
-│   └── ranking/                # Daniel
+│   ├── ranking/                # Daniel
+│   └── local-agent/            # Agente local (R2). No se despliega: corre en el PC del jugador
 ├── services/                   # Backends (un servicio de Render por carpeta)
 │   ├── api/                    # Felipe (auth) + Angel (tienda) + Daniel (ranking)
 │   │   └── prisma/schema.prisma
@@ -460,8 +462,10 @@ Cada remote debe poder correr solo con una sesión de prueba (`pnpm --filter tie
 | `JWT_SECRET` | api, game-server |
 | `INTERNAL_API_KEY` | api, game-server |
 | `API_INTERNAL_URL` | game-server |
-| `ALLOWED_ORIGINS` | api, game-server |
+| `ALLOWED_ORIGINS` | api, game-server, local-agent (orígenes de la Arena) |
+| `AGENT_PORT`, `AGENT_OPEN_BROWSER` | local-agent (en el PC del jugador; no son secretos) |
 | `VITE_API_URL`, `VITE_GAME_SERVER_URL` | shell, arena, tienda, ranking (según usen) |
+| `VITE_LOCAL_AGENT_URL` | arena (`ws://127.0.0.1:<AGENT_PORT>/events`) |
 | `VITE_REMOTE_ARENA_URL`, `VITE_REMOTE_TIENDA_URL`, `VITE_REMOTE_RANKING_URL` | shell |
 
 Cada app y servicio tiene un `.env.example` con los nombres y sin valores.

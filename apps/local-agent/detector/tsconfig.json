@@ -1,0 +1,13 @@
+{
+  // Página del detector: corre en el navegador y la empaqueta Vite.
+  "extends": "../../../tsconfig.base.json",
+  "compilerOptions": {
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "types": ["vite/client"],
+    "noEmit": true
+  },
+  "include": ["."],
+  "exclude": ["public"]
+}
