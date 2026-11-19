@@ -103,9 +103,11 @@ export function UltimateLine(props: {
   keyboard: boolean;
   manaFull: boolean;
   meter: RefObject<HTMLDivElement | null>;
+  /** Modo agente: la voz la escucha el agente local; aquí no hay medidor. */
+  agent?: { micReady: boolean } | null;
 }) {
   const word = ULTIMATES[props.ultimateId].acceptedWords[0] ?? "";
-  const how = props.keyboard ? "tecla 9" : `grita «¡${word}!»`;
+  const how = props.keyboard ? "tecla 9" : props.agent ? `grita «¡${word}!» frente al agente` : `grita «¡${word}!»`;
   return (
     <li className={`ar-training__spell ar-training__spell--ultimate${props.manaFull ? " ar-training__spell--ready" : ""}`}>
       <span className="ar-training__spell-head">
@@ -113,8 +115,13 @@ export function UltimateLine(props: {
         <span className="ar-training__spell-name">{ULTIMATES[props.ultimateId].name}</span>
         <span className="ar-training__spell-hint">{props.manaFull ? `¡Maná lleno! ${how}` : `${how} con el maná lleno`}</span>
       </span>
-      {!props.keyboard && props.voice.status === "disabled" && <p className="ar-training__voice-off">{props.voice.message}</p>}
-      {!props.keyboard && props.voice.status !== "disabled" && (
+      {props.agent && !props.agent.micReady && (
+        <p className="ar-training__voice-off">El micrófono del agente no está listo: los definitivos están desactivados.</p>
+      )}
+      {!props.keyboard && !props.agent && props.voice.status === "disabled" && (
+        <p className="ar-training__voice-off">{props.voice.message}</p>
+      )}
+      {!props.keyboard && !props.agent && props.voice.status !== "disabled" && (
         <div className="ar-meter ar-training__meter" ref={props.meter} aria-hidden>
           <div className="ar-meter__fill" />
         </div>

@@ -5,6 +5,8 @@
 const clean = (value: string | undefined) => (value ?? "").trim().replace(/\/+$/, "");
 export const GAME_SERVER_URL = clean(import.meta.env.VITE_GAME_SERVER_URL);
 export const API_URL = clean(import.meta.env.VITE_API_URL);
+/** WebSocket del agente local en el PC del jugador (ws://127.0.0.1:<AGENT_PORT>/events). */
+export const LOCAL_AGENT_URL = clean(import.meta.env.VITE_LOCAL_AGENT_URL);
 
 /**
  * Archivos de MediaPipe servidos por la propia Arena (copiados a public/mediapipe en dev y build).
@@ -27,4 +29,38 @@ export const DEFAULT_GRIMOIRE = ["lightning", "shield"] as const;
  */
 export function keyboardModeEnabled(): boolean {
   return import.meta.env.DEV && new URLSearchParams(window.location.search).has("teclado");
+}
+
+/**
+ * De dónde salen los hechizos:
+ *   - "agent": el agente local (por defecto): la cámara y la voz corren en otro programa del PC;
+ *   - "browser": la cámara del navegador, como respaldo si el agente no está;
+ *   - "keyboard": solo en desarrollo, con ?teclado.
+ */
+export type SpellSourceMode = "agent" | "browser" | "keyboard";
+
+const BROWSER_CAMERA_KEY = "arena:usar-camara-del-navegador";
+
+/** El jugador eligió "Usar la cámara del navegador" en esta pestaña. */
+export function browserCameraChosen(): boolean {
+  try {
+    return sessionStorage.getItem(BROWSER_CAMERA_KEY) === "1";
+  } catch {
+    return false;
+  }
+}
+
+export function chooseBrowserCamera(): void {
+  try {
+    sessionStorage.setItem(BROWSER_CAMERA_KEY, "1");
+  } catch {
+    // Sin almacenamiento la elección dura hasta recargar (la guarda el estado de React).
+  }
+}
+
+export function spellSourceMode(browserChosen: boolean): SpellSourceMode {
+  if (keyboardModeEnabled()) return "keyboard";
+  // Sin VITE_LOCAL_AGENT_URL (p. ej. un despliegue sin agente) se usa la cámara del navegador.
+  if (browserChosen || !LOCAL_AGENT_URL) return "browser";
+  return "agent";
 }
