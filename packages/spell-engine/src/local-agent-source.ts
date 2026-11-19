@@ -197,14 +197,20 @@ export class LocalAgentSource implements SpellSource {
 
   private handle(message: LocalAgentMessage): void {
     switch (message.type) {
-      case "agent:peer":
+      case "agent:peer": {
+        // El agente descarta la config si el detector no estaba conectado (por ejemplo, la ventana se
+        // abrió después que la Arena, o se cerró y se reabrió): sin reenviarla, el detector se queda
+        // con el grimorio por defecto y no reconoce los hechizos comprados. agent:config es idempotente.
+        const detectorJoined = message.detector && !this.status.detector;
         // Si se cerró la ventana del detector, lo último que dijo de la cámara ya no vale.
         this.setStatus(
           message.detector
             ? { ...this.status, detector: true }
             : { ...this.status, detector: false, camera: null, handVisible: false, micReady: false },
         );
+        if (detectorJoined) this.sendConfig();
         break;
+      }
       case "agent:status":
         this.setStatus({ ...this.status, camera: message.camera, handVisible: message.handVisible, micReady: message.micReady });
         break;
