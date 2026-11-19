@@ -139,6 +139,7 @@ Rama `docs/agente-local`.
    3. cerrar el agente: la Arena pide abrirlo;
    4. desconectar internet: la ventana del detector sigue reconociendo gestos (sin internet solo fallan la partida y los definitivos por voz).
 3. Una lista de pruebas manuales para los dos PCs, que se marcan en el ensayo.
+4. **Rediseño de la ventana del detector** (rama `feat/agente-local-detector-ui`): que se vea como parte del juego, con logo, chips de estado, cámara 4:3 con brillo cuando se ve la mano, marca del umbral del grito, grimorio con iconos y eventos con barra de confianza. No se tocan los 7 IDs, el protocolo ni el servidor. Prompt en `docs/prompts-agente-local.md` (Daniel · tarea 4). Al fusionarlo se publica un ZIP nuevo (`agente-v0.2.0`).
 
 ## Orden y tiempos
 

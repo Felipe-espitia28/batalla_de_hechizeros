@@ -298,6 +298,82 @@ commit ni push: dame los comandos de git para mi rama docs/agente-local.
 
 El PR va a `main` con reviewers Felipe y Johan. Cuando Juan termine, Daniel repasa el guion contra la app real.
 
+### Daniel · tarea 4: rediseño de la ventana del detector
+
+Va en una rama aparte, para que cada PR sea pequeño. Se puede hacer antes o después de la documentación.
+
+```bash
+git checkout main && git pull
+git checkout -b feat/agente-local-detector-ui
+pnpm install
+```
+
+Prompt para Claude Code:
+
+```text
+Soy Daniel Tapiero, del proyecto "Duelo de hechiceros". Lee CLAUDE.md y docs/plan-agente-local.md.
+Tarea: rediseñar la ventana del detector del agente local (apps/local-agent/detector/), que hoy
+parece una página de configuración. Debe verse como parte del juego (mismos colores, iconos y
+logo que la Arena), con la cámara como protagonista y que se entienda de un vistazo: Arena
+conectada, micrófono listo, qué hechizos tengo y qué se detectó. Cubro áreas de Angel (HTML/CSS)
+y de Juan (main.ts): lo diré en el PR. No toques packages/contracts, apps/local-agent/src (el
+servidor), la Arena ni el protocolo agent:*. Antes de escribir, lee detector/index.html,
+detector/styles.css, detector/main.ts, apps/arena/src/arena.css y apps/arena/src/ui/spell-glyph.tsx.
+
+Diseño (ventana de 520×760, sin scroll de página; solo la lista de eventos se desplaza):
+  [logo] Agente local / Duelo de hechiceros         ← encabezado
+  ● Arena conectada   ● Micrófono listo             ← dos chips de estado
+  ┌ cámara 4:3 a todo el ancho (≈480×360) ────────┐  insignia "EN VIVO · solo en este PC";
+  │ video + estela                                │  borde violeta con brillo si se ve la mano;
+  │        ( ✅ Mano detectada: haz la pinza )     │  estado como píldora flotante abajo
+  └───────────────────────────────────────────────┘
+  Volumen ▓▓▓▓▓▓░░░░│░░░                           ← barra con marca del umbral del grito
+  Tu grimorio: [⚡ Rayo · zigzag] [🛡 Escudo · círculo] … + "☄ Meteoro: grita «¡Meteoro!»"
+  Últimos eventos: fila = icono · nombre · barra de confianza · % · hora · "→ Arena"
+  🔒 Nada de video sale de tu PC · cierra esta ventana para apagar la cámara   ← pie
+
+Reglas:
+- Los 7 IDs NO cambian (main.ts los usa): #camera-video, #camera-canvas, #status, #arena-status,
+  #mic-status, #mic-meter, #event-log. Agrega #grimoire (vacío, lo llena main.ts).
+- Colores: las variables que ya tiene styles.css (las mismas de arena.css). Sin librerías nuevas
+  ni fuentes de internet: la ventana debe funcionar sin conexión.
+- Recursos: copia apps/shell/public/logo-duelo.png a detector/public/logo-duelo.png y los 12 SVG de
+  apps/arena/public/ui/entrenamiento/ que usa spell-glyph.tsx a detector/public/hechizos/.
+- Estados: cargando (spinner sobre la cámara), error (tarjeta rosa con el mensaje), Arena
+  esperando (punto ámbar con pulso) o conectada (verde), micrófono no disponible (chip gris con el
+  motivo completo en title). Respeta prefers-reduced-motion y deja foco visible.
+- Accesibilidad: conserva los role="status" y el aria-live de la lista.
+
+Cambios en main.ts (solo las funciones que pintan la pantalla; nada del WebSocket ni del motor):
+- renderCameraStatus: además pone data-hand="true|false" en el contenedor .camera (para el brillo).
+- Micrófono: chip con texto corto ("Micrófono listo", "Pidiendo micrófono…", "Sin micrófono") y
+  data-state; el mensaje largo va en title.
+- Marca del grito: calcula --shout-at con DEFAULT_SHOUT_THRESHOLD de @duelo/spell-engine y la
+  misma escala que ya usa la barra (sqrt(nivel / 0.2)), para que la marca coincida con el grito real.
+- log(): filas con <img> del icono (./hechizos/<archivo>.svg, mismo mapa que spell-glyph.tsx),
+  nombre, barra de confianza, %, hora y "→ Arena" / "(Arena no conectada)". Usa textContent, nunca
+  innerHTML.
+- renderGrimoire() nueva: al arrancar y en cada agent:config; un chip por hechizo (icono,
+  SPELLS[id].name y versión corta de gestureDescription) y una línea para el definitivo con
+  ULTIMATES[id].acceptedWords[0].
+- Deja --window-size=520,760 en src/launcher.ts.
+
+Verificación (obligatoria antes de terminar):
+1. pnpm --filter @duelo/local-agent typecheck, test y build.
+2. Arranca el agente en otro puerto (AGENT_PORT=47805 AGENT_OPEN_BROWSER=false) y abre
+   http://127.0.0.1:47805: revisa los estados cargando y error de cámara; con un cliente ws de
+   prueba con un origen de ALLOWED_ORIGINS manda agent:hello (role "arena") y un agent:config con
+   fireball y storm: el chip debe ponerse verde y el grimorio mostrar 4 hechizos y «¡Tormenta!».
+   Comprueba que todo cabe en 520×760 sin scroll de página.
+3. pnpm --filter @duelo/local-agent package: el logo y los iconos deben quedar dentro de
+   release/agente-local/detector/.
+4. Pídeme probarlo con cámara y micrófono reales (brillo con la mano, estela alineada, barra que
+   pasa la marca al gritar).
+No hagas commit ni push: dame los comandos de git para la rama feat/agente-local-detector-ui.
+```
+
+El PR va a `main` con reviewers Angel y Juan (son sus archivos) y Felipe. Al fusionarlo, Felipe publica un ZIP nuevo con un tag `agente-v0.2.0` para que los jugadores reciban la ventana nueva.
+
 ## Felipe (tú)
 
 - Agregar `VITE_LOCAL_AGENT_URL=ws://127.0.0.1:47800/events` en Vercel, en el proyecto de la Arena, y redesplegar solo la Arena.
