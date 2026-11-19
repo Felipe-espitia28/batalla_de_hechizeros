@@ -42,7 +42,7 @@ flowchart LR
 | Req. | Requisito | Qué lo cumple |
 |---|---|---|
 | R1 | Desplegado en la nube | Vercel (4 frontends), Render (api y game-server), Neon, Upstash |
-| R2 | Módulo local | `packages/spell-engine`: MediaPipe y reconocedor en el PC del jugador |
+| R2 | Módulo local | Agente local (`apps/local-agent`): programa aparte en el PC del jugador que abre la cámara y el micrófono, reconoce gestos y voz con `packages/spell-engine` y pasa solo eventos a la Arena por `127.0.0.1` (ver [Agente local](#agente-local-r2)) |
 | R3 | Sockets | `services/game-server` con Socket.IO |
 | R4 | Cámara y micrófono | Gestos con la cámara; definitivos gritando al micrófono |
 | R5 | Mínimo 2 bases de datos | PostgreSQL (Neon) + Redis (Upstash) |
@@ -159,6 +159,76 @@ services:
     ports: !override
       - "5433:5432"
 ```
+
+## Agente local (R2)
+
+El agente local es un programa que el jugador ejecuta en su propio PC. Abre la cámara y el micrófono, reconoce los gestos y la voz en una ventana aparte (el detector) y le pasa a la Arena solo eventos pequeños (`{ spellId, confidence }`) por `127.0.0.1`.
+
+Existe porque el profesor señaló que no se veía el módulo local: antes el reconocimiento iba empaquetado dentro de la Arena. Ahora es un proceso propio que se ve en el Administrador de tareas. El diseño completo está en [docs/plan-agente-local.md](docs/plan-agente-local.md).
+
+### Jugadores: descargar y abrir
+
+**Requisitos:** Node.js 22 o superior ([nodejs.org](https://nodejs.org)) y Chrome o Edge.
+
+1. Descarga `agente-local-windows.zip` desde la página de [Releases](https://github.com/Felipe-espitia28/batalla_de_hechizeros/releases) del repositorio, o con el botón **"Descargar el agente"** de la Arena.
+2. Descomprímelo y haz doble clic en **`Iniciar agente.bat`**. El archivo comprueba Node, arranca el agente y abre la ventana del detector.
+3. Permite la cámara y el micrófono en esa ventana, y **déjala abierta**.
+4. Abre el juego y entra a la Arena.
+
+### Desarrolladores: correrlo desde el repositorio
+
+**Requisitos:**
+
+- Node.js 22.12 o superior.
+- Chrome o Edge.
+- El comando `pnpm`: actívalo con `corepack enable`. Hace falta aunque arranques el agente con `pnpm --filter`, porque sus scripts vuelven a llamar a `pnpm` por dentro.
+
+Pasos:
+
+1. Copia `apps/local-agent/.env.example` a `apps/local-agent/.env` y rellena:
+
+   | Variable | Qué poner | Ejemplo en local |
+   |---|---|---|
+   | `AGENT_PORT` | Puerto del agente (entre 1024 y 65535). Debe coincidir con `VITE_LOCAL_AGENT_URL` de la Arena (`ws://127.0.0.1:<AGENT_PORT>/events`) | `47800` |
+   | `ALLOWED_ORIGINS` | Orígenes de las páginas que cargan la Arena, separados por coma: **el shell y la Arena sola** (dentro del shell, el navegador manda el Origin del shell) | `http://localhost:5173,http://localhost:5174` |
+
+   `AGENT_OPEN_BROWSER` y `AGENT_DETECTOR_DIR` se dejan vacíos en el repositorio.
+
+2. Arranca el agente desde la raíz del repositorio:
+
+   ```bash
+   pnpm --filter @duelo/local-agent start
+   ```
+
+   La primera vez tarda un poco más, porque compila el detector y copia los archivos de MediaPipe.
+
+### Qué debe verse
+
+- **Ventana "Agente local":** muestra la cámara, la leyenda "Todo se procesa en este PC: a la Arena solo viajan eventos." y la lista de los últimos eventos enviados.
+- **Mensajes en la consola:**
+
+  ```text
+  [agente] Agente local escuchando en http://127.0.0.1:47800 (solo este PC)
+  [agente] Orígenes permitidos (shell y Arena): http://localhost:5173, http://localhost:5174
+  [agente] Todo el reconocimiento ocurre aquí: a la Arena solo viajan eventos.
+  [agente] detector conectado
+  ```
+
+- **Al abrir la Arena:** la consola agrega `[agente] arena conectada desde …` y, con cada hechizo, una línea como `[agente] lightning 0.91 → arena`.
+- **Para cerrarlo:** `Ctrl+C` en la consola.
+
+### Problemas comunes
+
+| Síntoma | Causa y solución |
+|---|---|
+| `pnpm` no se reconoce como un comando | Falta activar Corepack: ejecuta `corepack enable`. Si falla por permisos en Windows, abre la terminal como administrador |
+| `[agente] El puerto 47800 ya está en uso. ¿Hay otro agente abierto?…` | Ya hay un agente abierto (o se quedó una ventana vieja). Ciérralo, o cambia `AGENT_PORT` y también `VITE_LOCAL_AGENT_URL` de la Arena |
+| `[agente] Faltan variables de entorno: AGENT_PORT, ALLOWED_ORIGINS…` | Falta el `.env`: copia `apps/local-agent/.env.example` a `.env` y rellénalo |
+| Chrome pregunta si la página puede acceder a la red local o a dispositivos locales | Hay que **permitirlo**: así la Arena se conecta al agente en `127.0.0.1`. Se pregunta una sola vez |
+| El detector dice que la cámara está ocupada por otra aplicación | Cierra Zoom, Meet, Teams u otra pestaña que use la cámara y vuelve a abrir el agente. En Windows, dos aplicaciones no pueden usar la misma webcam |
+| `[agente] No encontré Chrome ni Edge. Abre http://127.0.0.1:… en Chrome…` | Abre a mano en Chrome la URL que imprime la consola |
+| La Arena dice "No encontramos el agente local" | El agente no está abierto o se cerró: ábrelo, deja la ventana del detector abierta y pulsa **Reintentar**. Como respaldo, la Arena ofrece "Usar la cámara del navegador" |
+| `[agente] conexión rechazada desde http://localhost:5173: no está en ALLOWED_ORIGINS` | Falta el shell en `ALLOWED_ORIGINS` (dentro del shell, el Origin es el del shell, no el de la Arena). Agrégalo al `.env` y reinicia el agente |
 
 ## API (services/api)
 
