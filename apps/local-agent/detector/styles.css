@@ -1,0 +1,164 @@
+/* Ventana del detector del agente local (unos 520×760 px). Sin React: la llena main.ts.
+   Misma paleta que la Arena (arena.css) para que el jugador sienta que es el mismo juego. */
+:root {
+  --bg: #0e0c19;
+  --surface: #161322;
+  --surface-2: #1b172b;
+  --line: #342b47;
+  --fg: #f5f1ff;
+  --muted: #aca5c2;
+  --accent: #7952ff;
+  --good: #6ce3a1;
+  --bad: #ff839c;
+  --warn: #f5c46b;
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+html, body { margin: 0; min-height: 100%; background: var(--bg); color: var(--fg); }
+body { font: 14px/1.45 "Inter", "Segoe UI", system-ui, -apple-system, sans-serif; }
+p, h1, h2, ol { margin: 0; }
+
+.detector {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  max-width: 520px;
+  /* Alto fijo de la ventana: la lista de eventos se desplaza por dentro y la cámara nunca se sale. */
+  height: 100vh;
+  min-height: 600px;
+  margin: 0 auto;
+  padding: 18px 20px 20px;
+}
+
+/* --- Encabezado --- */
+.detector__head { display: flex; flex-direction: column; gap: 4px; }
+.detector__eyebrow { font-size: 11px; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; color: var(--accent); }
+.detector__title { font-size: 24px; line-height: 1.2; font-weight: 600; letter-spacing: -0.5px; }
+.detector__legend {
+  align-self: flex-start;
+  margin-top: 4px;
+  padding: 6px 10px;
+  border: 1px solid #2c4a3d;
+  border-radius: 8px;
+  background: #13241d;
+  color: var(--good);
+  font-size: 12.5px;
+  font-weight: 500;
+}
+
+/* --- Cámara: video y canvas del mismo tamaño, uno encima del otro --- */
+.camera {
+  position: relative;
+  flex: none;
+  /* Alto según la ventana (en 760 px ≈ 320) para que quepan varios eventos debajo. Video y canvas
+     usan el mismo object-fit: cover, así que recortan igual y la estela sigue alineada con la mano. */
+  height: clamp(240px, 42vh, 360px);
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: #000;
+}
+.camera video, .camera canvas { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+/* El jugador se ve en espejo. El canvas NO: el motor (spell-engine) ya entrega los puntos en espejo,
+   y voltearlo otra vez dejaría la estela al lado contrario de la mano. Igual que en la Arena. */
+.camera video { transform: scaleX(-1); }
+
+/* Estado de la cámara: franja abajo para no tapar la mano. */
+.camera__status {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  padding: 9px 12px;
+  background: rgba(14, 12, 25, 0.78);
+  font-size: 13px;
+  text-align: center;
+}
+/* Cargando o con error, el mensaje ocupa toda la cámara: no hay imagen que mostrar. */
+.camera__status[data-state="loading"], .camera__status[data-state="error"] {
+  top: 0;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  font-size: 14px;
+  color: var(--muted);
+}
+.camera__status[data-state="error"] { color: var(--bad); background: rgba(42, 29, 45, 0.92); }
+
+/* --- Paneles de conexión y de eventos --- */
+.panel {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 14px 16px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: linear-gradient(90deg, var(--surface-2), var(--surface));
+}
+.panel__title { font-size: 13px; font-weight: 600; color: var(--muted); }
+
+.row { display: grid; grid-template-columns: 84px 1fr; align-items: center; gap: 10px; }
+.row--mic { align-items: start; }
+.row__label { font-size: 12px; font-weight: 500; color: var(--muted); }
+
+/* Arena conectada o esperando (data-state lo pone main.ts). */
+.pill {
+  justify-self: start;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background: #221d33;
+  font-size: 13px;
+  font-weight: 500;
+}
+.pill::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--warn); flex: none; }
+.pill[data-state="connected"] { color: var(--good); border-color: #2c4a3d; background: #13241d; }
+.pill[data-state="connected"]::before { background: var(--good); }
+
+.mic { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.mic__status { font-size: 13px; }
+.meter { height: 8px; border-radius: 999px; background: #241f36; overflow: hidden; }
+.meter__fill {
+  width: 0;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--accent);
+  transition: width 80ms linear;
+}
+/* Volumen de grito (sobre el umbral): la barra cambia de color para que se note. */
+.meter__fill[data-shout="true"] { background: var(--good); }
+
+/* --- Lista de eventos: main.ts inserta <li class="ok|failed|info"> arriba y deja 10 --- */
+.panel--log { flex: 1; min-height: 120px; }
+.log {
+  flex: 1;
+  min-height: 0;
+  list-style: none;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  overflow-y: auto;
+}
+.log:empty::before { content: "Aún no hay eventos. Haz la pinza frente a la cámara y dibuja un gesto."; color: var(--muted); font-size: 13px; }
+.log li {
+  padding: 7px 10px 7px 12px;
+  border: 1px solid var(--line);
+  border-left: 3px solid var(--line);
+  border-radius: 8px;
+  background: #1f1a30;
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
+}
+.log li.ok { border-left-color: var(--good); }
+.log li.failed { border-left-color: var(--bad); color: #ffd2db; background: #2a1d2d; }
+.log li.info { color: var(--muted); }
+
+@media (prefers-reduced-motion: reduce) {
+  .meter__fill { transition: none; }
+}
