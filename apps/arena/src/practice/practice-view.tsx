@@ -16,6 +16,7 @@ import { UI_ASSETS_PATH } from "../config";
 import { useSpellSource } from "../engine/use-spell-source";
 import { useVoice } from "../engine/use-voice";
 import { AgentPanel } from "../ui/agent-panel";
+import { SourceSwitch } from "../ui/source-switch";
 import { ACK_ERROR_MESSAGES, SPELL_LABELS } from "../match/messages";
 import { SpellRows, StatBars, StatusEffects, UltimateLine } from "../ui/duel-parts";
 import { SpellGlyph } from "../ui/spell-glyph";
@@ -176,6 +177,10 @@ export function PracticeView({ grimoire, ultimateId, onExit }: Props) {
                 <div className="ar-camera__hint">✋ Pon la mano frente a la cámara</div>
               )}
             </div>
+          )}
+
+          {engine.canSwitchSource && (
+            <SourceSwitch mode={engine.mode} onUseAgent={engine.switchToAgent} onUseBrowserCamera={engine.switchToBrowserCamera} />
           )}
 
           {engine.status === "error" && engine.error && (

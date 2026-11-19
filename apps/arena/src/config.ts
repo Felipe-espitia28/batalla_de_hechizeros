@@ -63,6 +63,15 @@ export function chooseBrowserCamera(): void {
   }
 }
 
+/** Volver al agente local (deshace "Usar la cámara del navegador" en esta pestaña). */
+export function chooseAgent(): void {
+  try {
+    sessionStorage.removeItem(BROWSER_CAMERA_KEY);
+  } catch {
+    // Igual que arriba: el estado de React manda hasta recargar.
+  }
+}
+
 export function spellSourceMode(browserChosen: boolean): SpellSourceMode {
   if (keyboardModeEnabled()) return "keyboard";
   // Sin VITE_LOCAL_AGENT_URL (p. ej. un despliegue sin agente) se usa la cámara del navegador.
