@@ -462,7 +462,7 @@ Cada remote debe poder correr solo con una sesión de prueba (`pnpm --filter tie
 | `JWT_SECRET` | api, game-server |
 | `INTERNAL_API_KEY` | api, game-server |
 | `API_INTERNAL_URL` | game-server |
-| `ALLOWED_ORIGINS` | api, game-server, local-agent (orígenes de la Arena) |
+| `ALLOWED_ORIGINS` | api, game-server, local-agent (shell y Arena: el Origin es el de la página, y dentro del shell es el del shell) |
 | `AGENT_PORT`, `AGENT_OPEN_BROWSER` | local-agent (en el PC del jugador; no son secretos) |
 | `VITE_API_URL`, `VITE_GAME_SERVER_URL` | shell, arena, tienda, ranking (según usen) |
 | `VITE_LOCAL_AGENT_URL` | arena (`ws://127.0.0.1:<AGENT_PORT>/events`) |

@@ -23,7 +23,7 @@ async function main(): Promise<void> {
 
   const url = detectorUrl({ port: server.port });
   console.log(`[agente] Agente local escuchando en ${url} (solo este PC)`);
-  console.log(`[agente] Arenas permitidas: ${config.allowedOrigins.join(", ")}`);
+  console.log(`[agente] Orígenes permitidos (shell y Arena): ${config.allowedOrigins.join(", ")}`);
   console.log("[agente] Todo el reconocimiento ocurre aquí: a la Arena solo viajan eventos.");
 
   if (config.openBrowser) {
