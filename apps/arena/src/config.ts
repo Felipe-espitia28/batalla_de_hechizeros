@@ -7,6 +7,11 @@ export const GAME_SERVER_URL = clean(import.meta.env.VITE_GAME_SERVER_URL);
 export const API_URL = clean(import.meta.env.VITE_API_URL);
 /** WebSocket del agente local en el PC del jugador (ws://127.0.0.1:<AGENT_PORT>/events). */
 export const LOCAL_AGENT_URL = clean(import.meta.env.VITE_LOCAL_AGENT_URL);
+/**
+ * Descarga del agente para jugadores (ZIP de GitHub Releases). Vacío = no se muestra el botón
+ * "Descargar el agente" (lo usa AgentPanel en el estado "no encontrado").
+ */
+export const LOCAL_AGENT_DOWNLOAD_URL = (import.meta.env.VITE_LOCAL_AGENT_DOWNLOAD_URL ?? "").trim();
 
 /**
  * Archivos de MediaPipe servidos por la propia Arena (copiados a public/mediapipe en dev y build).

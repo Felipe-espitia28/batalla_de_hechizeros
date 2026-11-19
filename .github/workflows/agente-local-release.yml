@@ -1,0 +1,76 @@
+# Publica el agente local para jugadores (R2) como ZIP en GitHub Releases. Dueño: Felipe.
+#
+# Se dispara con un tag "agente-v*" (por ejemplo agente-v0.1.0) o a mano desde Actions.
+# El ZIP trae agente.mjs (todo en un archivo), la ventana del detector con MediaPipe y
+# "Iniciar agente.bat": el jugador solo necesita Node 22+. Ver apps/local-agent/scripts/package.mjs.
+#
+# Requiere la variable del repositorio AGENT_ALLOWED_ORIGINS (Settings → Secrets and variables →
+# Actions → Variables): URLs de Vercel del shell y la Arena, separadas por coma. No es un secreto.
+#
+# Link estable para la Arena (VITE_LOCAL_AGENT_DOWNLOAD_URL):
+#   https://github.com/<dueño>/<repo>/releases/latest/download/agente-local-windows.zip
+name: Agente local · release
+
+on:
+  push:
+    tags: ["agente-v*"]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Tag del release (por ejemplo agente-v0.1.1)"
+        required: true
+
+permissions:
+  contents: write
+
+concurrency:
+  group: agente-local-release
+  cancel-in-progress: false
+
+jobs:
+  publicar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+
+      # Sin "version": toma la de "packageManager" en package.json, la misma que usa el equipo.
+      - uses: pnpm/action-setup@v6
+        with:
+          cache: true
+
+      - name: Instalar dependencias
+        run: pnpm install --frozen-lockfile
+
+      - name: Armar el paquete del agente
+        env:
+          RELEASE_ALLOWED_ORIGINS: ${{ vars.AGENT_ALLOWED_ORIGINS }}
+        run: |
+          if [ -z "$RELEASE_ALLOWED_ORIGINS" ]; then
+            echo "::error::Falta la variable del repositorio AGENT_ALLOWED_ORIGINS (URLs del shell y la Arena)."
+            exit 1
+          fi
+          pnpm --filter @duelo/local-agent package
+
+      - name: Comprimir
+        working-directory: apps/local-agent/release
+        run: zip -r agente-local-windows.zip agente-local
+
+      - name: Publicar en Releases
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.event_name == 'workflow_dispatch' && inputs.tag || github.ref_name }}
+        run: |
+          # Con un tag nuevo se crea el release; si ya existe, se reemplaza el ZIP.
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            gh release upload "$TAG" apps/local-agent/release/agente-local-windows.zip --clobber
+          else
+            gh release create "$TAG" apps/local-agent/release/agente-local-windows.zip \
+              --target "$GITHUB_SHA" --latest \
+              --title "Agente local $TAG" \
+              --notes "Descarga agente-local-windows.zip, descomprímelo y haz doble clic en \"Iniciar agente.bat\". Requisito: Node.js 22 o superior y Chrome o Edge."
+          fi

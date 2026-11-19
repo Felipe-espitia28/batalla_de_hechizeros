@@ -241,26 +241,32 @@ código antes de terminar. No hagas commit ni push: dame los comandos. El PR va 
 reviewers Juan y Felipe.
 ```
 
-## Daniel Tapiero (sin Claude Pro): README, guion de la demo y pruebas
+## Daniel Tapiero (Claude Pro, desde el 19 nov): README, guion de la demo y pruebas
 
-Prompt para el chat de Claude. Adjunta:
-- `README.md`;
-- `docs/plan-agente-local.md`;
-- `apps/local-agent/.env.example`;
-- `apps/local-agent/package.json`.
+Prompt para Claude Code:
 
 ```text
-Soy Daniel Tapiero, del proyecto "Duelo de hechiceros". Te adjunto el README, el plan del
-"agente local" y su configuración. El profesor dijo que no se veía el módulo local (R2), y
-por eso el reconocimiento de gestos y voz ahora corre en un programa aparte en el PC del
-jugador. Escribe en español claro, sin inventar comandos que no estén en los archivos.
+Soy Daniel Tapiero, del proyecto "Duelo de hechiceros". Lee CLAUDE.md (fuente de verdad),
+docs/plan-agente-local.md, README.md, apps/local-agent/.env.example y
+apps/local-agent/package.json. Esta vez trabajo solo en README.md y en docs/: no toques
+código. El profesor dijo que no se veía el módulo local (R2), y por eso el reconocimiento de
+gestos y voz ahora corre en un programa aparte en el PC del jugador (el agente local).
+Escribe en español claro y no inventes comandos: cada comando que cites debe existir en un
+package.json o en el README (compruébalo leyendo los archivos).
 
-1. Una sección "## Agente local (R2)" en README.md, después de "## Levantar en local":
-   qué es y por qué existe (2–3 líneas), requisitos (Node 22.12 o superior, Chrome o Edge,
-   pnpm vía corepack), cómo abrirlo (copiar .env.example a .env, rellenar AGENT_PORT y
-   ALLOWED_ORIGINS, `corepack pnpm --filter @duelo/local-agent start`), qué debe
-   verse (la ventana del detector y los mensajes "[agente]" en la consola) y una tabla de
-   problemas comunes:
+1. Una sección "## Agente local (R2)" en README.md, después de "## Levantar en local",
+   qué es y por qué existe (2–3 líneas), con DOS caminos:
+   a) Jugadores: descargar agente-local-windows.zip de la página de Releases del repo (o del
+      botón "Descargar el agente" de la Arena), descomprimir, doble clic en
+      "Iniciar agente.bat", permitir cámara y micrófono y abrir el juego. Requisito: Node 22
+      o superior y Chrome o Edge.
+   b) Desarrolladores: requisitos (Node 22.12 o superior, Chrome o Edge, `corepack enable`
+      para que exista el comando pnpm: los scripts lo llaman por dentro), copiar
+      .env.example a .env, rellenar AGENT_PORT y ALLOWED_ORIGINS y
+      `pnpm --filter @duelo/local-agent start`.
+   Qué debe verse (la ventana del detector y los mensajes "[agente]" en la consola) y una
+   tabla de problemas comunes:
+   - "pnpm no se reconoce" (falta `corepack enable`, como administrador si hace falta);
    - puerto ocupado ("El puerto ... ya está en uso");
    - falta el .env;
    - Chrome pregunta si la página puede acceder a la red local o a dispositivos locales:
@@ -286,7 +292,8 @@ jugador. Escribe en español claro, sin inventar comandos que no estén en los a
    PCs (instalar, abrir, calibrar, cada hechizo del grimorio, definitivo por voz, cerrar el
    agente a mitad de partida, origen no permitido, sin internet), con columnas PC 1 y PC 2.
 
-Entrega los archivos completos y los comandos de git para mi rama docs/agente-local.
+Antes de terminar, comprueba que cada ruta y comando citado exista en el repo. No hagas
+commit ni push: dame los comandos de git para mi rama docs/agente-local.
 ```
 
 El PR va a `main` con reviewers Felipe y Johan. Cuando Juan termine, Daniel repasa el guion contra la app real.

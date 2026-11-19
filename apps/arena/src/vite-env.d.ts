@@ -5,6 +5,8 @@ interface ImportMetaEnv {
   readonly VITE_GAME_SERVER_URL?: string;
   /** WebSocket del agente local (R2); lo usa LocalAgentSource. */
   readonly VITE_LOCAL_AGENT_URL?: string;
+  /** ZIP del agente para jugadores (GitHub Releases); lo muestra el panel del agente. */
+  readonly VITE_LOCAL_AGENT_DOWNLOAD_URL?: string;
 }
 
 interface ImportMeta {

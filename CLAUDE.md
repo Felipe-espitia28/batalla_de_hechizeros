@@ -45,7 +45,7 @@ Cada integrante es dueño de su área y **sube su propio código**: la participa
 | Juan Arias | Sí | Módulo local + Arena: MediaPipe, reconocedor $1, línea recta, X de dos manos, voz | `packages/spell-engine`, `apps/arena` |
 | Johan Soriano | Sí | Tiempo real: matchmaking, partida en memoria, reglas de combate, reconexión, abandono | `services/game-server` |
 | Angel Arenales | Sí (desde el 18 nov) | Tienda: catálogo, compra, grimorio, semillas, componentes visuales | `apps/tienda`, `services/api` (tienda), `packages/ui` |
-| Daniel Tapiero | No | Ranking: ranking, historial, puntos al cerrar partida, README y guion | `apps/ranking`, `services/api` (ranking) |
+| Daniel Tapiero | Sí (desde el 19 nov) | Ranking: ranking, historial, puntos al cerrar partida, README y guion | `apps/ranking`, `services/api` (ranking) |
 
 `packages/contracts` y `packages/game-rules` son compartidos: cualquier cambio requiere aviso al equipo, porque rompe a todos.
 
@@ -466,6 +466,9 @@ Cada remote debe poder correr solo con una sesión de prueba (`pnpm --filter tie
 | `AGENT_PORT`, `AGENT_OPEN_BROWSER` | local-agent (en el PC del jugador; no son secretos) |
 | `VITE_API_URL`, `VITE_GAME_SERVER_URL` | shell, arena, tienda, ranking (según usen) |
 | `VITE_LOCAL_AGENT_URL` | arena (`ws://127.0.0.1:<AGENT_PORT>/events`) |
+| `VITE_LOCAL_AGENT_DOWNLOAD_URL` | arena (ZIP del agente en GitHub Releases: `…/releases/latest/download/agente-local-windows.zip`) |
+| `AGENT_DETECTOR_DIR` | local-agent, solo en el ZIP para jugadores (`detector`) |
+| `AGENT_ALLOWED_ORIGINS` | Variable del repositorio en GitHub (no secreto): orígenes que van en el `.env` del ZIP |
 | `VITE_REMOTE_ARENA_URL`, `VITE_REMOTE_TIENDA_URL`, `VITE_REMOTE_RANKING_URL` | shell |
 
 Cada app y servicio tiene un `.env.example` con los nombres y sin valores.

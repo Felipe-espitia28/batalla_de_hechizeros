@@ -67,7 +67,8 @@ corepack enable
 ```
 
   Si falla por permisos en Windows: terminal como administrador, o `npm install -g pnpm@12.18.0`.
-  Si después `pnpm` no se reconoce, usa siempre `corepack pnpm …`.
+  **Es obligatorio que `pnpm -v` responda**: varios scripts (el agente local, la Arena…) llaman a
+  `pnpm` por dentro, y con solo `corepack pnpm …` fallan con "pnpm no se reconoce".
 - **Chrome o Edge** instalado (el agente local los necesita para la cámara y la voz).
 - Docker es **opcional** (solo para Postgres y Redis locales; ver paso 6).
 
@@ -281,7 +282,7 @@ docs/                      Planes, prompts, guion, despliegue
 | Juan Arias | Sí | Módulo local (`spell-engine`) y Arena |
 | Johan Soriano | Sí | Tiempo real: `game-server` |
 | Angel Arenales | Sí (desde el 18 nov) | Tienda, `packages/ui` |
-| Daniel Tapiero | No | Ranking, README y guion |
+| Daniel Tapiero | Sí (desde el 19 nov) | Ranking, README y guion |
 
 Desde el 11 nov Felipe puede cubrir huecos de otras áreas, avisándolo en el PR.
 
