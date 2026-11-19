@@ -381,17 +381,8 @@
   .arena .ar-training__guide-head { flex-wrap: wrap; }
 }
 
-/* --- Panel PROVISIONAL del agente local (agent-panel-provisional.tsx); el final es de Angel --- */
+/* --- Contenedor de la cámara en modo agente: el panel (ui/agent-panel.tsx) ocupa su lugar. --- */
 .arena .ar-camera--agent { display: grid; place-items: center; background: var(--a-panel); border: 1px solid var(--a-border); }
-.arena .ar-agentp { display: flex; flex-direction: column; gap: 8px; align-items: center; justify-content: center; padding: 18px; text-align: center; font-size: 14px; color: var(--a-text); }
-.arena .ar-agentp p { margin: 0; }
-.arena .ar-agentp__title { font-weight: 700; font-size: 16px; }
-.arena .ar-agentp__last { display: inline-flex; gap: 6px; align-items: center; font-weight: 700; }
-.arena .ar-agentp__note, .arena .ar-agentp__steps { color: var(--a-muted); font-size: 13px; }
-.arena .ar-agentp__steps { margin: 0; padding-left: 18px; text-align: left; display: grid; gap: 4px; }
-.arena .ar-agentp__steps code { color: var(--a-text); word-break: break-word; }
-.arena .ar-agentp__actions { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; }
-.arena .ar-agentp--not-found .ar-agentp__title, .arena .ar-agentp--camera-error .ar-agentp__title { color: var(--a-warn); }
 
 /* --- Panel del agente local (ui/agent-panel.tsx, Angel). Ocupa el lugar de la cámara (≈442×332). --- */
 .arena .ar-agent {
@@ -403,7 +394,8 @@
 }
 .arena .ar-agent__body { display: flex; flex-direction: column; align-items: center; gap: 10px; text-align: center; }
 /* Con pasos para seguir, se lee mejor alineado a la izquierda. */
-.arena .ar-agent__body--start { align-items: stretch; text-align: left; }
+/* Gap menor: con descarga, pasos y la nota para desarrolladores debe caber sin barra de desplazamiento. */
+.arena .ar-agent__body--start { align-items: stretch; text-align: left; gap: 7px; }
 .arena .ar-agent p { margin: 0; }
 .arena .ar-agent__title { font-size: 17px; line-height: 24px; font-weight: 600; color: #f5f1ff; }
 .arena .ar-agent__text, .arena .ar-agent__note { color: #aca5c2; max-width: 360px; }
@@ -447,8 +439,9 @@
 }
 .arena .ar-agent__btn--primary { background: #7952ff; border-color: #7952ff; }
 .arena .ar-agent__btn:hover { filter: brightness(1.12); }
-.arena .ar-agent__btn:focus-visible, .arena .ar-agent__link:focus-visible { outline: 2px solid #b69cff; outline-offset: 2px; }
-.arena .ar-agent__link { align-self: flex-start; color: #b69cff; font-size: 12px; font-weight: 600; }
+.arena .ar-agent__btn:focus-visible { outline: 2px solid #b69cff; outline-offset: 2px; }
+/* La descarga es un enlace con aspecto de botón (abre el ZIP de GitHub Releases). */
+.arena a.ar-agent__btn { display: inline-flex; align-items: center; text-decoration: none; }
 
 @media (prefers-reduced-motion: reduce) {
   .arena .ar-agent__spinner { animation-duration: 3s; }

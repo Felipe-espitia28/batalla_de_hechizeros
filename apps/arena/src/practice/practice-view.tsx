@@ -15,7 +15,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { UI_ASSETS_PATH } from "../config";
 import { useSpellSource } from "../engine/use-spell-source";
 import { useVoice } from "../engine/use-voice";
-import { AgentPanel } from "../ui/agent-panel-provisional";
+import { AgentPanel } from "../ui/agent-panel";
 import { ACK_ERROR_MESSAGES, SPELL_LABELS } from "../match/messages";
 import { SpellRows, StatBars, StatusEffects, UltimateLine } from "../ui/duel-parts";
 import { SpellGlyph } from "../ui/spell-glyph";

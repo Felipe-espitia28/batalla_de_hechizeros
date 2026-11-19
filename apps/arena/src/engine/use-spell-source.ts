@@ -30,7 +30,7 @@ import {
   spellSourceMode,
   type SpellSourceMode,
 } from "../config";
-import type { AgentPanelState } from "../ui/agent-panel-provisional";
+import type { AgentPanelState } from "../ui/agent-panel";
 
 export type EngineStatus = "off" | "loading" | "running" | "error";
 
