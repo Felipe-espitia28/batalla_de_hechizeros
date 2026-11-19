@@ -44,7 +44,7 @@ Cada integrante es dueño de su área y **sube su propio código**: la participa
 | Felipe Espitia | Sí | Plataforma e integración: shell, Module Federation, auth (REST y socket), GitHub Actions, despliegues | `apps/shell`, `services/api` (auth), `.github/`, raíz del repo |
 | Juan Arias | Sí | Módulo local + Arena: MediaPipe, reconocedor $1, línea recta, X de dos manos, voz | `packages/spell-engine`, `apps/arena` |
 | Johan Soriano | Sí | Tiempo real: matchmaking, partida en memoria, reglas de combate, reconexión, abandono | `services/game-server` |
-| Angel Arenales | No | Tienda: catálogo, compra, grimorio, semillas, componentes visuales | `apps/tienda`, `services/api` (tienda), `packages/ui` |
+| Angel Arenales | Sí (desde el 18 nov) | Tienda: catálogo, compra, grimorio, semillas, componentes visuales | `apps/tienda`, `services/api` (tienda), `packages/ui` |
 | Daniel Tapiero | No | Ranking: ranking, historial, puntos al cerrar partida, README y guion | `apps/ranking`, `services/api` (ranking) |
 
 `packages/contracts` y `packages/game-rules` son compartidos: cualquier cambio requiere aviso al equipo, porque rompe a todos.

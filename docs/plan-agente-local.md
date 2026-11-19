@@ -149,7 +149,7 @@ Rama `docs/agente-local`.
 | 3 (≈2 h) | Juan y Felipe | Integrar en la Arena, `AgentPanel` y pruebas locales | Fase 2 |
 | 4 (≈1 h) | Todos | Partida en dos PCs con el agente y ensayo del guion | Fase 3 |
 
-Cada uno sube su propio código y abre su propio PR, como pide CLAUDE.md. Los prompts para quienes no tienen Claude Pro (Angel y Daniel) los preparo aparte, como en `docs/prompts-juan-angel-11nov.md`.
+Cada uno sube su propio código y abre su propio PR, como pide CLAUDE.md. Los prompts de cada uno están en `docs/prompts-agente-local.md` (Claude Code para Juan, Johan y Angel; chat de Claude para Daniel).
 
 ## Riesgos
 
