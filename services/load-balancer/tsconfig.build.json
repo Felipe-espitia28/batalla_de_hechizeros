@@ -1,0 +1,11 @@
+{
+  // Solo lo que se despliega en Render: src → dist.
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "noEmit": false,
+    "rootDir": "src",
+    "outDir": "dist",
+    "declaration": false
+  },
+  "include": ["src"]
+}
