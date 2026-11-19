@@ -380,3 +380,15 @@
   .arena .ar-training__card { padding: 18px; }
   .arena .ar-training__guide-head { flex-wrap: wrap; }
 }
+
+/* --- Panel PROVISIONAL del agente local (agent-panel-provisional.tsx); el final es de Angel --- */
+.arena .ar-camera--agent { display: grid; place-items: center; background: var(--a-panel); border: 1px solid var(--a-border); }
+.arena .ar-agentp { display: flex; flex-direction: column; gap: 8px; align-items: center; justify-content: center; padding: 18px; text-align: center; font-size: 14px; color: var(--a-text); }
+.arena .ar-agentp p { margin: 0; }
+.arena .ar-agentp__title { font-weight: 700; font-size: 16px; }
+.arena .ar-agentp__last { display: inline-flex; gap: 6px; align-items: center; font-weight: 700; }
+.arena .ar-agentp__note, .arena .ar-agentp__steps { color: var(--a-muted); font-size: 13px; }
+.arena .ar-agentp__steps { margin: 0; padding-left: 18px; text-align: left; display: grid; gap: 4px; }
+.arena .ar-agentp__steps code { color: var(--a-text); word-break: break-word; }
+.arena .ar-agentp__actions { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; }
+.arena .ar-agentp--not-found .ar-agentp__title, .arena .ar-agentp--camera-error .ar-agentp__title { color: var(--a-warn); }

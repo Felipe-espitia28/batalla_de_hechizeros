@@ -10,6 +10,7 @@ import { DEFAULT_LOADOUT, fetchGold, fetchLoadout, type Loadout } from "./api";
 import { GAME_SERVER_URL, UI_ASSETS_PATH } from "./config";
 import { useSpellSource } from "./engine/use-spell-source";
 import { useVoice } from "./engine/use-voice";
+import { AgentPanel } from "./ui/agent-panel-provisional";
 import { MatchClient, type Notice } from "./match/match-client";
 import { PracticeView } from "./practice/practice-view";
 import { EndScreen } from "./ui/end-screen";
@@ -104,7 +105,7 @@ function ArenaView({ session, navigate, client }: RemoteAppProps & { client: Mat
         lockedUntil.current = Date.now() + MATCH_RULES.failedCastPenaltyMs;
         client.notify("¡Hechizo fallido!", "bad");
       },
-      // Solo en modo teclado (tecla 9); con micrófono lo emite useVoice.
+      // Modo agente (agent:ultimate) y modo teclado (tecla 9); con la cámara del navegador lo emite useVoice.
       onUltimate: ({ ultimateId: id, transcript }) => client.castUltimate(id, transcript),
       onSealCharging() {
         if (match.phase !== "active") return;
@@ -122,7 +123,8 @@ function ArenaView({ session, navigate, client }: RemoteAppProps & { client: Mat
   // --- Voz: definitivos (grito + palabra) ---------------------------------------
   const meterRef = useRef<HTMLDivElement>(null);
   const voice = useVoice({
-    enabled: inMatch && !engine.keyboard,
+    // En modo agente el micrófono lo usa el agente: la Arena no lo abre.
+    enabled: inMatch && engine.mode === "browser",
     ultimateId,
     meter: meterRef,
     onUltimate: ({ ultimateId: id, transcript }) => client.castUltimate(id, transcript),
@@ -203,7 +205,19 @@ function ArenaView({ session, navigate, client }: RemoteAppProps & { client: Mat
 
       {inMatch && (
         <div className={`ar-stage ar-stage--${match.phase === "active" || match.phase === "countdown" ? "combat" : "calibration"}`}>
-          {!engine.keyboard && (
+          {engine.agent && (
+            <div className="ar-camera ar-camera--agent">
+              <AgentPanel
+                state={engine.agent.state}
+                handVisible={engine.agent.handVisible}
+                lastSpell={engine.agent.lastSpell}
+                errorMessage={engine.agent.errorMessage}
+                onRetry={() => setEngineAttempt((n) => n + 1)}
+                onUseBrowserCamera={engine.switchToBrowserCamera}
+              />
+            </div>
+          )}
+          {engine.mode === "browser" && (
             <div className="ar-camera">
               <video ref={videoRef} playsInline muted />
               <canvas ref={canvasRef} />
@@ -226,8 +240,19 @@ function ArenaView({ session, navigate, client }: RemoteAppProps & { client: Mat
               <p className="ar-muted">
                 Rival: <strong>{match.rival?.username}</strong> ({match.rival?.rank})
               </p>
-              <p>{engine.handVisible ? "✅ Mano detectada. Prueba hacer la pinza." : "✋ Pon la mano frente a la cámara."}</p>
-              {!engine.keyboard && (
+              <p>
+                {engine.handVisible
+                  ? "✅ Mano detectada. Prueba hacer la pinza."
+                  : engine.agent
+                    ? "✋ Pon la mano frente a la cámara del agente."
+                    : "✋ Pon la mano frente a la cámara."}
+              </p>
+              {engine.agent && (
+                <p className="ar-muted">
+                  {engine.agent.micReady ? "🎤 Micrófono del agente listo." : "🎤 Micrófono del agente no disponible: solo se pierden los definitivos."}
+                </p>
+              )}
+              {engine.mode === "browser" && (
                 <p className="ar-muted">
                   {voice.status === "ready" && "🎤 Micrófono listo: prueba gritar y mira el medidor."}
                   {voice.status === "loading" && "🎤 Pidiendo el micrófono…"}
@@ -241,9 +266,11 @@ function ArenaView({ session, navigate, client }: RemoteAppProps & { client: Mat
               ) : (
                 <p className="ar-muted">Esperando a que el rival esté listo…</p>
               )}
-              <label className="ar-muted ar-row">
-                <input type="checkbox" checked={debug} onChange={(e) => setDebug(e.target.checked)} /> Ver puntos de la mano
-              </label>
+              {engine.mode === "browser" && (
+                <label className="ar-muted ar-row">
+                  <input type="checkbox" checked={debug} onChange={(e) => setDebug(e.target.checked)} /> Ver puntos de la mano
+                </label>
+              )}
             </div>
           )}
 
@@ -265,6 +292,7 @@ function ArenaView({ session, navigate, client }: RemoteAppProps & { client: Mat
                       keyboard={engine.keyboard}
                       manaFull={(you?.mana ?? 0) >= MATCH_RULES.maxMana}
                       meter={meterRef}
+                      agent={engine.agent}
                     />
                   }
                 />

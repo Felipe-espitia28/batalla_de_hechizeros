@@ -49,7 +49,7 @@ const MIN_POINT_GAP = 2;
 
 export class GestureProcessor {
   private grimoire: readonly SpellId[];
-  private readonly minConfidence: number | undefined;
+  private minConfidence: number | undefined;
   private readonly lostHandTimeoutMs: number;
   private readonly pinch: PinchDetector;
   private stroke: Point[] = [];
@@ -64,6 +64,11 @@ export class GestureProcessor {
     this.lostHandTimeoutMs = options.lostHandTimeoutMs ?? 250;
     this.pinch = new PinchDetector(options.pinch);
     this.seal = new SealDetector(options.seal);
+  }
+
+  /** La Arena manda la confianza mínima en agent:config; cambia sin reiniciar la cámara. */
+  setMinConfidence(minConfidence: number): void {
+    this.minConfidence = minConfidence;
   }
 
   setGrimoire(grimoire: readonly SpellId[]): void {

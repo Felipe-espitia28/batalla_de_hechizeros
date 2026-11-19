@@ -1,6 +1,12 @@
 // API pública del módulo local. La Arena solo debería importar desde aquí.
 export { SpellEngine, type SpellEngineOptions } from "./spell-engine";
 export { KeyboardSpellSource } from "./keyboard-source";
+export {
+  LocalAgentSource,
+  type LocalAgentSourceOptions,
+  type LocalAgentStatus,
+  type WebSocketLike,
+} from "./local-agent-source";
 export type { SpellSource } from "./spell-source";
 export { VoiceListener, getSpeechRecognition, type VoiceListenerOptions } from "./voice-listener";
 export { ShoutDetector, DEFAULT_SHOUT_THRESHOLD } from "./shout-detector";

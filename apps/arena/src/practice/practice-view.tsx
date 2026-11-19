@@ -15,6 +15,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { UI_ASSETS_PATH } from "../config";
 import { useSpellSource } from "../engine/use-spell-source";
 import { useVoice } from "../engine/use-voice";
+import { AgentPanel } from "../ui/agent-panel-provisional";
 import { ACK_ERROR_MESSAGES, SPELL_LABELS } from "../match/messages";
 import { SpellRows, StatBars, StatusEffects, UltimateLine } from "../ui/duel-parts";
 import { SpellGlyph } from "../ui/spell-glyph";
@@ -114,7 +115,7 @@ export function PracticeView({ grimoire, ultimateId, onExit }: Props) {
         const guess = bestGuess ? ` Parecía ${SPELL_LABELS[bestGuess]} (${formatConfidence(confidence)}).` : "";
         push(`¡Hechizo fallido!${guess} Hace falta ${formatConfidence(MATCH_RULES.minConfidence)}.`, "bad");
       },
-      // Solo en modo teclado (tecla 9); con micrófono lo emite useVoice.
+      // Modo agente (agent:ultimate) y modo teclado (tecla 9); con la cámara del navegador lo emite useVoice.
       onUltimate,
       onSealCharging() {
         sealCharging(sim.current, Date.now());
@@ -128,7 +129,8 @@ export function PracticeView({ grimoire, ultimateId, onExit }: Props) {
   });
 
   const meterRef = useRef<HTMLDivElement>(null);
-  const voice = useVoice({ enabled: !engine.keyboard, ultimateId, meter: meterRef, onUltimate });
+  // En modo agente el micrófono lo usa el agente: el entrenamiento no lo abre.
+  const voice = useVoice({ enabled: engine.mode === "browser", ultimateId, meter: meterRef, onUltimate });
 
   // --- Controles -------------------------------------------------------------------
   const [infiniteMana, setInfinite] = useState(false);
@@ -148,7 +150,19 @@ export function PracticeView({ grimoire, ultimateId, onExit }: Props) {
         {/* --- Tú: cámara, barras y hechizos --- */}
         <section className="ar-training__card ar-training__you" aria-labelledby="ar-training-you">
           {/* El <video> es siempre el mismo elemento: si se desmontara, la cámara quedaría en negro. */}
-          {!engine.keyboard && (
+          {engine.agent && (
+            <div className="ar-camera ar-camera--agent ar-training__camera">
+              <AgentPanel
+                state={engine.agent.state}
+                handVisible={engine.agent.handVisible}
+                lastSpell={engine.agent.lastSpell}
+                errorMessage={engine.agent.errorMessage}
+                onRetry={() => setEngineAttempt((n) => n + 1)}
+                onUseBrowserCamera={engine.switchToBrowserCamera}
+              />
+            </div>
+          )}
+          {engine.mode === "browser" && (
             <div className={`ar-camera ar-training__camera${playerState.shieldUntil ? " ar-training__camera--shielded" : ""}`}>
               <video ref={videoRef} playsInline muted />
               <canvas ref={canvasRef} />
@@ -187,6 +201,7 @@ export function PracticeView({ grimoire, ultimateId, onExit }: Props) {
               keyboard={engine.keyboard}
               manaFull={playerState.mana >= MATCH_RULES.maxMana}
               meter={meterRef}
+              agent={engine.agent}
             />
           </ul>
         </section>
@@ -216,11 +231,14 @@ export function PracticeView({ grimoire, ultimateId, onExit }: Props) {
               <span className="ar-training__box" aria-hidden="true" />
               Maná infinito
             </label>
-            <label className="ar-training__check">
-              <input type="checkbox" checked={debug} onChange={(e) => setDebug(e.target.checked)} />
-              <span className="ar-training__box" aria-hidden="true" />
-              Ver puntos de la mano
-            </label>
+            {/* Los puntos de la mano solo existen con la cámara del navegador; en modo agente se ven en su ventana. */}
+            {engine.mode === "browser" && (
+              <label className="ar-training__check">
+                <input type="checkbox" checked={debug} onChange={(e) => setDebug(e.target.checked)} />
+                <span className="ar-training__box" aria-hidden="true" />
+                Ver puntos de la mano
+              </label>
+            )}
           </div>
           <div className="ar-training__actions">
             <button className="ar-training__btn" onClick={() => resetDummy(sim.current)}>
