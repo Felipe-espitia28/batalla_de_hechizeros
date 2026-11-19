@@ -392,3 +392,64 @@
 .arena .ar-agentp__steps code { color: var(--a-text); word-break: break-word; }
 .arena .ar-agentp__actions { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; }
 .arena .ar-agentp--not-found .ar-agentp__title, .arena .ar-agentp--camera-error .ar-agentp__title { color: var(--a-warn); }
+
+/* --- Panel del agente local (ui/agent-panel.tsx, Angel). Ocupa el lugar de la cámara (≈442×332). --- */
+.arena .ar-agent {
+  position: absolute; inset: 0; overflow-y: auto;
+  display: flex; flex-direction: column; justify-content: center;
+  padding: 20px 22px;
+  background: linear-gradient(90deg, #1b172b, #161322); color: #f5f1ff;
+  font-size: 13px; line-height: 19px;
+}
+.arena .ar-agent__body { display: flex; flex-direction: column; align-items: center; gap: 10px; text-align: center; }
+/* Con pasos para seguir, se lee mejor alineado a la izquierda. */
+.arena .ar-agent__body--start { align-items: stretch; text-align: left; }
+.arena .ar-agent p { margin: 0; }
+.arena .ar-agent__title { font-size: 17px; line-height: 24px; font-weight: 600; color: #f5f1ff; }
+.arena .ar-agent__text, .arena .ar-agent__note { color: #aca5c2; max-width: 360px; }
+.arena .ar-agent__note { font-size: 12px; line-height: 17px; }
+
+.arena .ar-agent__spinner { width: 28px; height: 28px; border-radius: 50%; border: 3px solid #342b47; border-top-color: #7952ff; animation: ar-agent-spin 0.9s linear infinite; }
+@keyframes ar-agent-spin { to { transform: rotate(360deg); } }
+
+.arena .ar-agent__badge {
+  display: inline-flex; align-items: center; gap: 6px; padding: 3px 10px; border-radius: 999px;
+  border: 1px solid #2c4a3d; background: #13241d; color: #6ce3a1; font-size: 12px; font-weight: 600;
+}
+.arena .ar-agent__dot { width: 7px; height: 7px; border-radius: 50%; background: #6ce3a1; }
+.arena .ar-agent__hand { font-weight: 500; }
+.arena .ar-agent__hand--on { color: #6ce3a1; }
+.arena .ar-agent__hand--off { color: #aca5c2; }
+
+.arena .ar-agent__last {
+  display: flex; flex-direction: column; align-items: center; gap: 4px;
+  padding: 10px 16px; border: 1px solid #342b47; border-radius: 12px; background: #221d33;
+}
+.arena .ar-agent__last-label { font-size: 11px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: #aca5c2; }
+.arena .ar-agent__spell { display: inline-flex; align-items: center; gap: 8px; font-size: 15px; font-weight: 600; }
+.arena .ar-agent__confidence { padding: 2px 8px; border-radius: 7px; background: #332647; color: #c6aeff; font-size: 12px; font-variant-numeric: tabular-nums; }
+
+/* Estados que piden acción: el título en rosa, igual que los avisos de la Arena. */
+.arena .ar-agent--not-found .ar-agent__title, .arena .ar-agent--camera-error .ar-agent__title, .arena .ar-agent--detector-closed .ar-agent__title { color: #ff839c; }
+
+.arena .ar-agent__steps { margin: 0; padding-left: 20px; display: grid; gap: 4px; color: #aca5c2; }
+.arena .ar-agent__steps code {
+  display: inline-block; margin-top: 2px; padding: 1px 6px; border-radius: 5px; background: #0e0c19;
+  color: #f5f1ff; font-size: 12px; word-break: break-word;
+}
+
+.arena .ar-agent__actions { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
+.arena .ar-agent__body--start .ar-agent__actions { justify-content: flex-start; }
+.arena .ar-agent__btn {
+  height: 40px; padding: 0 16px; border-radius: 10px; cursor: pointer;
+  font: inherit; font-size: 13px; font-weight: 600; color: #f9f6ff;
+  background: #2a2340; border: 1px solid #45395c;
+}
+.arena .ar-agent__btn--primary { background: #7952ff; border-color: #7952ff; }
+.arena .ar-agent__btn:hover { filter: brightness(1.12); }
+.arena .ar-agent__btn:focus-visible, .arena .ar-agent__link:focus-visible { outline: 2px solid #b69cff; outline-offset: 2px; }
+.arena .ar-agent__link { align-self: flex-start; color: #b69cff; font-size: 12px; font-weight: 600; }
+
+@media (prefers-reduced-motion: reduce) {
+  .arena .ar-agent__spinner { animation-duration: 3s; }
+}

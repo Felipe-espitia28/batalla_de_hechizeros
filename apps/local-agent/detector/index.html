@@ -3,14 +3,50 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="color-scheme" content="dark" />
     <title>Agente local · Duelo de hechiceros</title>
-    <!-- Diseño final: Angel (feat/agente-local-ui). Lógica de cámara y voz: Juan (feat/agente-local-detector). -->
+    <!-- Diseño: Angel (feat/agente-local-ui). Lógica de cámara y voz: Juan (main.ts).
+         main.ts busca los elementos por id: no cambiar ningún id de esta página. -->
+    <link rel="stylesheet" href="./styles.css" />
   </head>
   <body>
-    <main id="detector">
-      <h1>Agente local</h1>
-      <p>Todo se procesa en este PC: a la Arena solo viajan eventos.</p>
-      <p id="status" role="status">Cargando…</p>
+    <main id="detector" class="detector">
+      <header class="detector__head">
+        <p class="detector__eyebrow">Duelo de hechiceros</p>
+        <h1 class="detector__title">Agente local</h1>
+        <p class="detector__legend">
+          <span aria-hidden="true">🔒</span> Todo se procesa en este PC: a la Arena solo viajan eventos.
+        </p>
+      </header>
+
+      <section class="camera" aria-label="Cámara y estela del trazo">
+        <video id="camera-video" playsinline muted></video>
+        <!-- Sin espejo a propósito: el motor ya entrega los puntos de la mano en espejo. -->
+        <canvas id="camera-canvas" aria-hidden="true"></canvas>
+        <p id="status" class="camera__status" role="status" data-state="loading">Cargando…</p>
+      </section>
+
+      <section class="panel" aria-label="Conexiones">
+        <div class="row">
+          <span class="row__label">Arena</span>
+          <p id="arena-status" class="pill" role="status" data-state="waiting">Esperando a la Arena…</p>
+        </div>
+        <div class="row row--mic">
+          <span class="row__label">Micrófono</span>
+          <div class="mic">
+            <p id="mic-status" class="mic__status" role="status">🎤 Pidiendo el micrófono…</p>
+            <!-- Barra solo visual: main.ts cambia el ancho de #mic-meter según el volumen. -->
+            <div class="meter" aria-hidden="true">
+              <div id="mic-meter" class="meter__fill" data-shout="false"></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel panel--log" aria-labelledby="log-title">
+        <h2 id="log-title" class="panel__title">Últimos eventos</h2>
+        <ol id="event-log" class="log" aria-live="polite"></ol>
+      </section>
     </main>
     <script type="module" src="./main.ts"></script>
   </body>
