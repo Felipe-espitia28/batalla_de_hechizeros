@@ -14,6 +14,7 @@
     "build": "pnpm run build:deps && pnpm run assets && pnpm run typecheck:only && pnpm run build:detector",
     "start": "pnpm run build && node --env-file-if-exists=.env --import tsx src/index.ts",
     "dev": "pnpm run build && node --env-file-if-exists=.env --import tsx --watch src/index.ts",
+    "package": "pnpm run build && node scripts/package.mjs",
     "typecheck:only": "tsc -p tsconfig.json && tsc -p detector/tsconfig.json",
     "typecheck": "pnpm run build:deps && pnpm run typecheck:only",
     "test": "pnpm run build:deps && vitest run"
@@ -28,6 +29,7 @@
   "devDependencies": {
     "@types/node": "^24.19.2",
     "@types/ws": "8.18.2",
+    "esbuild": "0.28.2",
     "typescript": "6.0.3",
     "vite": "8.3.6",
     "vitest": "5.0.5"

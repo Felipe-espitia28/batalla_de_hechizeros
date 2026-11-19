@@ -149,7 +149,7 @@ Rama `docs/agente-local`.
 | 3 (≈2 h) | Juan y Felipe | Integrar en la Arena, `AgentPanel` y pruebas locales | Fase 2 |
 | 4 (≈1 h) | Todos | Partida en dos PCs con el agente y ensayo del guion | Fase 3 |
 
-Cada uno sube su propio código y abre su propio PR, como pide CLAUDE.md. Los prompts de cada uno están en `docs/prompts-agente-local.md` (Claude Code para Juan, Johan y Angel; chat de Claude para Daniel).
+Cada uno sube su propio código y abre su propio PR, como pide CLAUDE.md. Los prompts de cada uno están en `docs/prompts-agente-local.md` (todos con Claude Code).
 
 ## Riesgos
 
@@ -168,3 +168,22 @@ Cada uno sube su propio código y abre su propio PR, como pide CLAUDE.md. Los pr
 3. Cerrar el agente con la Arena abierta: aparece "Agente no encontrado" y, al reabrirlo, se reconecta sola.
 4. Desde un origen que no está en `ALLOWED_ORIGINS`, la conexión se rechaza.
 5. Una partida real en dos PCs con la Arena desplegada, siguiendo el guion de Daniel.
+
+## Instalar el agente sin el repo (jugadores)
+
+Para jugar no hace falta clonar el repo ni pnpm: solo **Node 22 o superior** y Chrome o Edge.
+
+1. Descargar `agente-local-windows.zip` de la página de Releases del repositorio (o del botón
+   "Descargar el agente" de la Arena, que usa `VITE_LOCAL_AGENT_DOWNLOAD_URL`).
+2. Descomprimir y hacer doble clic en `Iniciar agente.bat`: comprueba Node, arranca el agente y abre
+   la ventana del detector.
+3. Permitir cámara y micrófono y entrar al juego.
+
+Cómo se publica (Felipe):
+
+- `pnpm --filter @duelo/local-agent package` arma `apps/local-agent/release/agente-local/`:
+  `agente.mjs` (agente y dependencias en un solo archivo, con esbuild), `detector/` (con MediaPipe),
+  `.env` (puerto, `ALLOWED_ORIGINS` de `RELEASE_ALLOWED_ORIGINS`, `AGENT_DETECTOR_DIR=detector`),
+  `Iniciar agente.bat` y `LEEME.txt`.
+- `.github/workflows/agente-local-release.yml` lo comprime y lo publica en Releases con cada tag
+  `agente-v*` (o a mano). Necesita la variable del repositorio `AGENT_ALLOWED_ORIGINS`.

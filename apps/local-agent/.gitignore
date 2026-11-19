@@ -1,2 +1,5 @@
 # Copiados por packages/spell-engine/scripts/copy-assets.mjs (wasm y modelo de MediaPipe).
 detector/public/mediapipe/
+
+# ZIP para jugadores generado por scripts/package.mjs.
+release/

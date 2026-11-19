@@ -6,11 +6,15 @@ const ARENA = "https://arena.example.test";
 describe("loadConfig", () => {
   it("lee el puerto y los orígenes, y abre el navegador por defecto", () => {
     const config = loadConfig({ AGENT_PORT: "47800", ALLOWED_ORIGINS: ` ${ARENA}/ , http://localhost:5174` });
-    expect(config).toEqual({ port: 47800, allowedOrigins: [ARENA, "http://localhost:5174"], openBrowser: true });
+    expect(config).toEqual({ port: 47800, allowedOrigins: [ARENA, "http://localhost:5174"], openBrowser: true, detectorDir: null });
   });
 
   it("no abre el navegador con AGENT_OPEN_BROWSER=false", () => {
     expect(loadConfig({ AGENT_PORT: "47800", ALLOWED_ORIGINS: ARENA, AGENT_OPEN_BROWSER: "FALSE" }).openBrowser).toBe(false);
+  });
+
+  it("lee la carpeta del detector del ZIP (AGENT_DETECTOR_DIR)", () => {
+    expect(loadConfig({ AGENT_PORT: "47800", ALLOWED_ORIGINS: ARENA, AGENT_DETECTOR_DIR: " detector " }).detectorDir).toBe("detector");
   });
 
   it("nombra todas las variables que faltan", () => {

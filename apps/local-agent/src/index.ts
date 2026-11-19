@@ -2,6 +2,7 @@
  * Punto de entrada del agente local: pnpm --filter @duelo/local-agent start
  * Lee la configuración, levanta el servidor en 127.0.0.1 y abre la ventana del detector.
  */
+import { resolve } from "node:path";
 import { ConfigError, detectorUrl, loadConfig } from "./config.js";
 import { launchDetector } from "./launcher.js";
 import { startServer } from "./server.js";
@@ -11,7 +12,8 @@ async function main(): Promise<void> {
 
   let server;
   try {
-    server = await startServer(config);
+    // En el ZIP, AGENT_DETECTOR_DIR apunta a la carpeta detector/ junto a agente.mjs.
+    server = await startServer(config, config.detectorDir ? { staticDir: resolve(config.detectorDir) } : {});
   } catch (error) {
     if ((error as NodeJS.ErrnoException).code === "EADDRINUSE") {
       throw new ConfigError(

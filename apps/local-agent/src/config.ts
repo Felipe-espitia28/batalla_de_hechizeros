@@ -19,6 +19,11 @@ export interface AgentConfig {
   allowedOrigins: string[];
   /** Abrir la ventana del detector al arrancar. */
   openBrowser: boolean;
+  /**
+   * Carpeta con el build del detector, relativa a donde se arranca el agente. Solo la usa el ZIP para
+   * jugadores (agente.mjs y detector/ juntos); en el repo es null y se usa dist/detector.
+   */
+  detectorDir: string | null;
 }
 
 export class ConfigError extends Error {}
@@ -67,6 +72,7 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): AgentConfig {
     port,
     allowedOrigins,
     openBrowser: read(env, "AGENT_OPEN_BROWSER")?.toLowerCase() !== "false",
+    detectorDir: read(env, "AGENT_DETECTOR_DIR"),
   };
 }
 
