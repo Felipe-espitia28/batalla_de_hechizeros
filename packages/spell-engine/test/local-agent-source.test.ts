@@ -179,4 +179,31 @@ describe("LocalAgentSource", () => {
     expect(FakeSocket.all).toHaveLength(1);
     expect(socket().readyState).toBe(3);
   });
+
+  it("reenvía el grimorio cuando el detector se conecta después que la Arena (o se reabre)", async () => {
+    const { source, socket } = setup();
+    const started = source.start();
+    socket().open();
+    await started;
+    source.setGrimoire(["lightning", "shield", "fireball"]);
+    const configs = () => socket().sent.filter((m) => (m as { type: string }).type === "agent:config");
+    const before = configs().length;
+
+    // La ventana del detector se abre: el agente avisa con agent:peer y la config anterior se perdió.
+    socket().receive({ type: "agent:peer", detector: true, arena: true });
+    expect(configs()).toHaveLength(before + 1);
+    expect(configs().at(-1)).toEqual({
+      type: "agent:config",
+      grimoire: ["lightning", "shield", "fireball"],
+      ultimateId: "meteor",
+      minConfidence: 0.8,
+    });
+
+    // Otro peer sin cambios no reenvía; cerrar y reabrir la ventana sí.
+    socket().receive({ type: "agent:peer", detector: true, arena: true });
+    expect(configs()).toHaveLength(before + 1);
+    socket().receive({ type: "agent:peer", detector: false, arena: true });
+    socket().receive({ type: "agent:peer", detector: true, arena: true });
+    expect(configs()).toHaveLength(before + 2);
+  });
 });
