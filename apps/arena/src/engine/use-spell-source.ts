@@ -26,6 +26,7 @@ import {
   MEDIAPIPE_MODEL_PATH,
   MEDIAPIPE_WASM_PATH,
   browserCameraChosen,
+  chooseAgent,
   chooseBrowserCamera,
   spellSourceMode,
   type SpellSourceMode,
@@ -57,6 +58,10 @@ export interface SpellSourceState {
   agent: AgentView | null;
   /** "Usar la cámara del navegador": cambia de modo en esta pestaña. */
   switchToBrowserCamera: () => void;
+  /** Volver al agente local desde la cámara del navegador. */
+  switchToAgent: () => void;
+  /** Se puede elegir entre agente y navegador (no en modo teclado ni sin VITE_LOCAL_AGENT_URL). */
+  canSwitchSource: boolean;
 }
 
 interface Options {
@@ -225,6 +230,15 @@ export function useSpellSource({
     setBrowserChosen(true);
   }, []);
 
+  // Al cambiar de modo, el efecto de arriba se reinicia: la fuente anterior se detiene (libera la
+  // cámara del navegador o cierra el WebSocket del agente) antes de crear la nueva.
+  const switchToAgent = useCallback(() => {
+    chooseAgent();
+    setBrowserChosen(false);
+  }, []);
+
+  const canSwitchSource = !keyboard && LOCAL_AGENT_URL !== "";
+
   if (mode === "agent") {
     const agentReady = agentStatus.connected && agentStatus.detector && agentStatus.camera === "ready";
     return {
@@ -241,10 +255,22 @@ export function useSpellSource({
         micReady: agentStatus.micReady,
       },
       switchToBrowserCamera,
+      switchToAgent,
+      canSwitchSource,
     };
   }
 
-  return { mode, status, error, keyboard, handVisible: keyboard || handVisible, agent: null, switchToBrowserCamera };
+  return {
+    mode,
+    status,
+    error,
+    keyboard,
+    handVisible: keyboard || handVisible,
+    agent: null,
+    switchToBrowserCamera,
+    switchToAgent,
+    canSwitchSource,
+  };
 }
 
 function agentPanelState(s: LocalAgentStatus, error: SpellEngineError | null): AgentPanelState {

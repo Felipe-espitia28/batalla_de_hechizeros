@@ -11,6 +11,7 @@ import { GAME_SERVER_URL, UI_ASSETS_PATH } from "./config";
 import { useSpellSource } from "./engine/use-spell-source";
 import { useVoice } from "./engine/use-voice";
 import { AgentPanel } from "./ui/agent-panel";
+import { SourceSwitch } from "./ui/source-switch";
 import { MatchClient, type Notice } from "./match/match-client";
 import { PracticeView } from "./practice/practice-view";
 import { EndScreen } from "./ui/end-screen";
@@ -265,6 +266,10 @@ function ArenaView({ session, navigate, client }: RemoteAppProps & { client: Mat
                 </button>
               ) : (
                 <p className="ar-muted">Esperando a que el rival esté listo…</p>
+              )}
+              {/* Solo en la calibración: cambiar de fuente reinicia la cámara, no se hace en pleno combate. */}
+              {engine.canSwitchSource && (
+                <SourceSwitch mode={engine.mode} onUseAgent={engine.switchToAgent} onUseBrowserCamera={engine.switchToBrowserCamera} />
               )}
               {engine.mode === "browser" && (
                 <label className="ar-muted ar-row">
