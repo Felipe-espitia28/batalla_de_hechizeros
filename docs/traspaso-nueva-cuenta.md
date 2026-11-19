@@ -144,7 +144,7 @@ Valores locales que **no son secretos** (puedes escribirlos tú):
 | `apps/shell/.env.local` | `VITE_API_URL=http://localhost:4000`, `VITE_REMOTE_ARENA_URL=http://localhost:5174`, `VITE_REMOTE_TIENDA_URL=http://localhost:5175`, `VITE_REMOTE_RANKING_URL=http://localhost:5176` |
 | `apps/arena/.env.local` | `VITE_API_URL=http://localhost:4000`, `VITE_GAME_SERVER_URL=http://localhost:3001`, `VITE_LOCAL_AGENT_URL=ws://127.0.0.1:47800/events` |
 | `apps/tienda/.env.local`, `apps/ranking/.env.local` | `VITE_API_URL=http://localhost:4000` |
-| `apps/local-agent/.env` | `AGENT_PORT=47800`, `ALLOWED_ORIGINS=http://localhost:5174`, `AGENT_OPEN_BROWSER=` (vacío = abre Chrome) |
+| `apps/local-agent/.env` | `AGENT_PORT=47800`, `ALLOWED_ORIGINS=http://localhost:5173,http://localhost:5174` (el shell es obligatorio: dentro de él, el Origin es el del shell), `AGENT_OPEN_BROWSER=` (vacío = abre Chrome) |
 | `services/api/.env` | `PORT=4000`, `ALLOWED_ORIGINS=http://localhost:5173,http://localhost:5174,http://localhost:5175,http://localhost:5176` |
 | `services/game-server/.env` | `PORT=3001`, `ALLOWED_ORIGINS=` igual que el api |
 
@@ -390,6 +390,7 @@ desarrollo) permite lanzar hechizos con las teclas 1–4 y 9 sin cámara.
 | "La cámara está ocupada" | Cerrar Zoom/Meet/Teams u otra pestaña que la use; en modo agente solo el agente abre la cámara |
 | "El puerto 47800 ya está en uso" | Hay otro agente abierto: cerrarlo o cambiar `AGENT_PORT` y `VITE_LOCAL_AGENT_URL` |
 | Chrome pregunta si la página puede acceder a la red local | Permitirlo: la Arena se conecta al agente en 127.0.0.1 |
+| El agente rechaza la Arena: "conexión rechazada desde http://localhost:5173" (403) | Falta el shell en `ALLOWED_ORIGINS` de `apps/local-agent/.env`: dentro del shell el Origin es el del shell. Agregar `http://localhost:5173` (y la URL de Vercel del shell) y reiniciar el agente |
 | Faltan variables de entorno al arrancar | El mensaje dice cuáles; copiar el `.env.example` correspondiente y rellenarlo |
 
 ---

@@ -30,7 +30,7 @@ Arena (https, Vercel) → LocalAgentSource → game-server
 - **Se conserva el motor dentro del navegador** como respaldo ("Usar la cámara del navegador") y el `?teclado` de desarrollo.
 - **Sin URLs en el código:**
   - la Arena lee `VITE_LOCAL_AGENT_URL`;
-  - el agente lee `AGENT_PORT` y `ALLOWED_ORIGINS` (los orígenes de la Arena);
+  - el agente lee `AGENT_PORT` y `ALLOWED_ORIGINS` (los orígenes del shell y de la Arena sola: dentro del shell el navegador manda el Origin del shell);
   - se agregan a los `.env.example` solo con los nombres.
 - **Seguridad:**
   - el servidor escucha solo en `127.0.0.1`, lo que además evita el aviso del firewall de Windows;
@@ -69,7 +69,7 @@ Rama `feat/agente-local-base`.
    - el script `assets`, que reutiliza `packages/spell-engine/scripts/copy-assets.mjs` para servir el `.wasm` y el modelo desde el propio agente, así funciona sin internet.
 3. `src/launcher.ts`: cuando el servidor está listo, abre Chrome en modo app con la URL del detector. Si no encuentra Chrome, imprime la URL para abrirla a mano.
 4. CI: agregar el typecheck y los tests de `@duelo/local-agent` a `.github/workflows/ci.yml`.
-5. Agregar `VITE_LOCAL_AGENT_URL` a `apps/arena/.env.example` y a Vercel (proyecto arena), y el origen de la Arena desplegada a la documentación de `ALLOWED_ORIGINS`.
+5. Agregar `VITE_LOCAL_AGENT_URL` a `apps/arena/.env.example` y a Vercel (proyecto arena), y los orígenes del shell y de la Arena desplegados a la documentación de `ALLOWED_ORIGINS`.
 6. Actualizar el diagrama y la fila de R2 en CLAUDE.md.
 7. Revisar e integrar los PRs de los demás.
 

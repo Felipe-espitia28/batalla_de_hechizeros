@@ -44,7 +44,7 @@ Nadie toca `packages/contracts`; si algo falta, se le avisa a Felipe. El lockfil
 - **Estado:** la fase 1 está en `main`. Se prueba con `corepack pnpm --filter @duelo/local-agent start`.
 - **El `.env` de `apps/local-agent`:**
   - `AGENT_PORT=47800`;
-  - `ALLOWED_ORIGINS=http://localhost:5174,<URL de la Arena en Vercel>`;
+  - `ALLOWED_ORIGINS=http://localhost:5173,http://localhost:5174,<URL del shell en Vercel>,<URL de la Arena en Vercel>`. **Debe incluir el shell:** dentro de él, el navegador manda el Origin del shell; sin él, el agente rechaza la Arena con 403;
   - `AGENT_OPEN_BROWSER=` (vacío abre Chrome).
 - **La Arena:** `VITE_LOCAL_AGENT_URL=ws://127.0.0.1:47800/events`.
 - **Orden:**
@@ -267,7 +267,9 @@ jugador. Escribe en español claro, sin inventar comandos que no estén en los a
      hay que permitirlo;
    - cámara en uso por otra app;
    - no se encuentra Chrome (abrir a mano la URL que imprime);
-   - la Arena dice "No encontramos el agente local".
+   - la Arena dice "No encontramos el agente local";
+   - la consola del agente dice "conexión rechazada desde http://localhost:5173": falta el shell en
+     ALLOWED_ORIGINS (dentro del shell, el Origin es el del shell). Se agrega y se reinicia el agente.
    Actualiza también la fila de R2 en "### Cómo se cumple cada requisito".
 
 2. docs/guion-agente-local.md: el guion de 3–4 minutos para demostrar R2 ante el profesor,

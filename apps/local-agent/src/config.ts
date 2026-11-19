@@ -1,6 +1,6 @@
 /**
  * Configuración del agente local desde variables de entorno (.env junto a este paquete).
- * Ninguna URL va en el código: los orígenes de la Arena salen de ALLOWED_ORIGINS y el puerto de
+ * Ninguna URL va en el código: los orígenes permitidos salen de ALLOWED_ORIGINS y el puerto de
  * AGENT_PORT, que debe coincidir con VITE_LOCAL_AGENT_URL de la Arena.
  */
 
@@ -12,7 +12,10 @@ export const AGENT_HOST = "127.0.0.1";
 
 export interface AgentConfig {
   port: number;
-  /** Orígenes de la Arena que pueden abrir el WebSocket (sin barra final). */
+  /**
+   * Orígenes de las páginas que cargan la Arena y pueden abrir el WebSocket (sin barra final):
+   * el shell (dentro de él, el Origin es el del shell) y la Arena abierta sola.
+   */
   allowedOrigins: string[];
   /** Abrir la ventana del detector al arrancar. */
   openBrowser: boolean;
