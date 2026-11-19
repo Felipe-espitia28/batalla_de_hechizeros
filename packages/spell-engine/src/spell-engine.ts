@@ -89,6 +89,10 @@ export class SpellEngine implements SpellSource {
     this.processor.setGrimoire(grimoire);
   }
 
+  setMinConfidence(minConfidence: number): void {
+    this.processor.setMinConfidence(minConfidence);
+  }
+
   private loop = (): void => {
     if (!this.running) return;
     this.rafId = requestAnimationFrame(this.loop);

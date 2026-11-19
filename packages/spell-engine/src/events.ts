@@ -35,7 +35,11 @@ export type SpellEngineErrorCode =
   | "MIC_DENIED"
   | "MIC_NOT_FOUND"
   | "SPEECH_UNSUPPORTED"
-  | "SPEECH_NETWORK";
+  | "SPEECH_NETWORK"
+  // Agente local: la cámara está en otro programa del PC del jugador.
+  | "AGENT_NOT_RUNNING"
+  | "AGENT_IN_OTHER_TAB"
+  | "AGENT_OUTDATED";
 
 export interface SpellEngineError {
   code: SpellEngineErrorCode;
@@ -71,6 +75,12 @@ export const ERROR_MESSAGES: Record<SpellEngineErrorCode, string> = {
   SPEECH_UNSUPPORTED:
     "Tu navegador no reconoce voz: los definitivos están desactivados. Usa Chrome o Edge para gritar los definitivos.",
   SPEECH_NETWORK: "El reconocimiento de voz necesita internet. Revisa tu conexión para usar los definitivos.",
+  AGENT_NOT_RUNNING:
+    "No encontramos el agente local. Ábrelo con «corepack pnpm --filter @duelo/local-agent start» (deja abierta su ventana) y pulsa Reintentar, o usa la cámara del navegador.",
+  AGENT_IN_OTHER_TAB:
+    "El agente local está conectado a otra pestaña de la Arena. Cierra la otra pestaña y pulsa Reintentar.",
+  AGENT_OUTDATED:
+    "El agente local y la Arena usan versiones distintas. Actualiza el repositorio (git pull) y vuelve a abrir el agente.",
 };
 
 export function engineError(code: SpellEngineErrorCode, cause?: unknown): SpellEngineError {
