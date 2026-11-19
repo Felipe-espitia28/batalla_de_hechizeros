@@ -25,6 +25,8 @@ Ninguna decisión puede dejar uno sin cumplir. Si un cambio pone en riesgo algun
 | R5 | Mínimo 2 bases de datos | PostgreSQL (permanente) + Redis (en vivo) | Tablas en Neon; claves en Upstash durante una partida |
 | R6 | 100 % del código en GitHub | Monorepo de la organización | PRs, revisiones, Actions en verde |
 | R7 | Micro frontends | Shell + 3 remotes con despliegue independiente | 4 URLs distintas; redesplegar uno sin tocar el resto |
+| R8 | Balanceador de cargas (pedido del profesor, 19 nov) | `services/load-balancer` (`duelo-lb` en Render): reparte por turnos entre 2 copias del `api` (`duelo-api`, `duelo-api-2`) y revisa su salud | DevTools: la cabecera `x-duelo-backend` alterna `api-1`/`api-2`; `/lb/status`; apagar una copia y el juego sigue |
+| R9 | Algo desplegado en un hosting (pedido del profesor) | **Pendiente** | — |
 
 ### Restricciones
 
@@ -116,15 +118,17 @@ flowchart LR
   end
   subgraph NUBE["NUBE"]
     GS["game-server - Socket.IO (autoritativo)"]
-    API["api - Express REST"]
+    LB["load-balancer (round-robin + salud)"]
+    API["api - Express REST (2 copias)"]
+    LB --> API
     PG[("PostgreSQL - Neon")]
     RD[("Redis - Upstash")]
   end
   ARENA -- "WSS + JWT" --> GS
   GS -- "match:state" --> ARENA
-  SHELL -- "HTTPS + JWT" --> API
-  TIENDA -- "HTTPS + JWT" --> API
-  RANK -- "HTTPS" --> API
+  SHELL -- "HTTPS + JWT" --> LB
+  TIENDA -- "HTTPS + JWT" --> LB
+  RANK -- "HTTPS" --> LB
   GS -- "/internal: loadout y resultado" --> API
   GS --> RD
   API --> RD
@@ -135,7 +139,7 @@ flowchart LR
 
 - **Servidor autoritativo:** el cliente solo dice "lancé X". El `game-server` valida (inventario, maná, cooldown, silencio, partida activa) y decide el resultado. El cliente nunca calcula daño.
 - **Estado de la partida en memoria del `game-server`** (tick de 100 ms). Redis solo guarda instantáneas en momentos clave (inicio, cada hechizo, fin), la cola de matchmaking y el ranking. Escribir cada tick en Redis agotaría los 500 000 comandos/mes de Upstash.
-- **Una sola instancia del `game-server`:** el emparejamiento corre en un ciclo dentro del proceso (cada 1 s). Sin bloqueos distribuidos ni Lua.
+- **Una sola instancia del `game-server`:** el emparejamiento corre en un ciclo dentro del proceso (cada 1 s). Sin bloqueos distribuidos ni Lua. Por eso el balanceador (R8) reparte solo el `api`: el `api` no guarda estado en memoria (JWT, Neon y Redis), mientras que la partida vive en la memoria del `game-server` y repartirla exigiría sesiones fijas y el adaptador de Redis de Socket.IO. El `game-server` llama al `api` directo (`API_INTERNAL_URL`), sin pasar por el balanceador.
 - **Los números de balance viven en `packages/game-rules`**, no en la base de datos. PostgreSQL solo guarda lo comercial y lo histórico.
 - **Ninguna URL se escribe en el código:** todas salen de variables de entorno.
 
@@ -154,7 +158,8 @@ duelo-de-hechiceros/
 ├── services/                   # Backends (un servicio de Render por carpeta)
 │   ├── api/                    # Felipe (auth) + Angel (tienda) + Daniel (ranking)
 │   │   └── prisma/schema.prisma
-│   └── game-server/            # Johan
+│   ├── game-server/            # Johan
+│   └── load-balancer/          # Felipe: balanceador del api (R8), solo módulos de Node
 ├── packages/                   # Compartido; no se despliega solo
 │   ├── contracts/              # Tipos de eventos del socket, REST y CustomEvents
 │   ├── game-rules/             # Catálogo, balance, rangos, economía
@@ -440,7 +445,8 @@ Cada remote debe poder correr solo con una sesión de prueba (`pnpm --filter tie
 | Arena | Vercel | `*.vercel.app` | `arena.duelohechiceros.qd.je` |
 | Tienda | Vercel | `*.vercel.app` | `tienda.duelohechiceros.qd.je` |
 | Ranking | Vercel | `*.vercel.app` | `ranking.duelohechiceros.qd.je` |
-| api | Render (free) | `*.onrender.com` | `api.duelohechiceros.qd.je` |
+| api (2 copias) | Render (free): `duelo-api`, `duelo-api-2` | `*.onrender.com` | `api.duelohechiceros.qd.je` |
+| load-balancer | Render (free): `duelo-lb` | `*.onrender.com` | |
 | game-server | Render (free) | `*.onrender.com` | `game.duelohechiceros.qd.je` |
 | PostgreSQL | Neon (free) | | |
 | Redis | Upstash (free: 500 000 comandos/mes, 256 MB) | | |
@@ -462,9 +468,10 @@ Cada remote debe poder correr solo con una sesión de prueba (`pnpm --filter tie
 | `JWT_SECRET` | api, game-server |
 | `INTERNAL_API_KEY` | api, game-server |
 | `API_INTERNAL_URL` | game-server |
+| `LB_BACKENDS`, `LB_HEALTH_INTERVAL_MS` | load-balancer (URLs de las copias del api, separadas por coma) |
 | `ALLOWED_ORIGINS` | api, game-server, local-agent (shell y Arena: el Origin es el de la página, y dentro del shell es el del shell) |
 | `AGENT_PORT`, `AGENT_OPEN_BROWSER` | local-agent (en el PC del jugador; no son secretos) |
-| `VITE_API_URL`, `VITE_GAME_SERVER_URL` | shell, arena, tienda, ranking (según usen) |
+| `VITE_API_URL`, `VITE_GAME_SERVER_URL` | shell, arena, tienda, ranking (según usen). `VITE_API_URL` apunta al balanceador (`duelo-lb`), no a una copia del api |
 | `VITE_LOCAL_AGENT_URL` | arena (`ws://127.0.0.1:<AGENT_PORT>/events`) |
 | `VITE_LOCAL_AGENT_DOWNLOAD_URL` | arena (ZIP del agente en GitHub Releases: `…/releases/latest/download/agente-local-windows.zip`) |
 | `AGENT_DETECTOR_DIR` | local-agent, solo en el ZIP para jugadores (`detector`) |

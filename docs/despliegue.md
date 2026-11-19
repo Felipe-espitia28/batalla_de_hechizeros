@@ -61,6 +61,50 @@ Es igual que el api, con estos cambios (más detalle en `services/game-server/RE
 | `API_INTERNAL_URL` | URL pública del api |
 | `ALLOWED_ORIGINS` | URL del shell y de la Arena |
 
+## 4b. Balanceador de cargas del api (R8)
+
+El `api` corre en **dos copias** y `duelo-lb` (`services/load-balancer`) reparte las peticiones por turnos,
+revisa `/health` de cada copia cada 10 s y saca de la rotación la que falla. Un GET a una copia caída se
+reintenta en la otra; un POST no (podría repetir una compra). El `game-server` sigue en una sola copia
+(la partida vive en su memoria) y llama al `api` directo.
+
+**`duelo-api-2`** (segunda copia): Web Service nuevo, mismo repo y región, plan Free, **mismas variables
+que el api**. Diferencia importante: el Build Command **no** corre migraciones ni el seed (solo los hace
+`duelo-api`; si los corrieran las dos a la vez podrían chocar):
+
+| Campo | Valor |
+|---|---|
+| Build Command | `corepack enable && pnpm install --frozen-lockfile && pnpm --filter @duelo/api build` |
+| Start Command | `pnpm --filter @duelo/api start` |
+| Health Check Path | `/health` |
+
+**`duelo-lb`** (balanceador): Web Service nuevo, mismo repo y región, plan Free.
+
+| Campo | Valor |
+|---|---|
+| Build Command | `corepack enable && pnpm install --frozen-lockfile && pnpm --filter @duelo/load-balancer build` |
+| Start Command | `pnpm --filter @duelo/load-balancer start` |
+| Health Check Path | `/lb/status` |
+
+| Variable | Valor |
+|---|---|
+| `NODE_VERSION`, `COREPACK_ENABLE_DOWNLOAD_PROMPT` | Igual que el api |
+| `LB_BACKENDS` | URL pública de `duelo-api` y de `duelo-api-2`, separadas por coma, sin `/` final |
+
+Después, en Vercel (shell, arena, tienda y ranking): `VITE_API_URL` = URL de `duelo-lb` y **Redeploy** de cada uno.
+`ALLOWED_ORIGINS` no cambia: el `Origin` sigue siendo el de la página y lo valida cada copia del api.
+
+**Cómo demostrarlo:**
+
+1. DevTools → Network en el shell: la cabecera de respuesta `x-duelo-backend` alterna `api-1` / `api-2`.
+2. `https://<duelo-lb>/lb/status`: salud de cada copia y cuántas peticiones atendió.
+3. En Render, **Suspend** de `duelo-api-2`: el juego sigue (todo va a `api-1`) y `/lb/status` la marca caída;
+   al reanudarla vuelve sola a la rotación.
+
+En Render free, mientras `duelo-lb` está despierto sus revisiones de salud mantienen despiertas las dos
+copias del api (consumen horas de las 750 al mes). Antes de presentar, despertar `duelo-lb`, las dos copias
+y el `game-server`.
+
 ## 5. Vercel: un proyecto por app
 
 Primero van los 3 remotes y al final el shell, porque el shell necesita las URLs de los remotes. En cada proyecto:
