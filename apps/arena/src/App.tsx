@@ -10,7 +10,7 @@ import { DEFAULT_LOADOUT, fetchGold, fetchLoadout, type Loadout } from "./api";
 import { GAME_SERVER_URL, UI_ASSETS_PATH } from "./config";
 import { useSpellSource } from "./engine/use-spell-source";
 import { useVoice } from "./engine/use-voice";
-import { AgentPanel } from "./ui/agent-panel-provisional";
+import { AgentPanel } from "./ui/agent-panel";
 import { MatchClient, type Notice } from "./match/match-client";
 import { PracticeView } from "./practice/practice-view";
 import { EndScreen } from "./ui/end-screen";

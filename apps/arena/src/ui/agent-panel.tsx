@@ -22,7 +22,8 @@ export interface AgentPanelProps {
   onUseBrowserCamera: () => void;
 }
 
-const START_COMMAND = "corepack pnpm --filter @duelo/local-agent start";
+// Sin "corepack" delante: los scripts del agente llaman a pnpm por dentro, así que pnpm debe existir.
+const START_COMMAND = "pnpm --filter @duelo/local-agent start";
 
 export function AgentPanel({ state, handVisible, lastSpell, errorMessage, onRetry, onUseBrowserCamera }: AgentPanelProps) {
   // Id único: el panel puede aparecer en la Arena y en el entrenamiento.
@@ -84,26 +85,46 @@ export function AgentPanel({ state, handVisible, lastSpell, errorMessage, onRetr
           <p id={titleId} className="ar-agent__title" role="status">
             No encontramos el agente local
           </p>
-          <ol className="ar-agent__steps">
-            <li>
-              En una terminal, en la carpeta del proyecto: <code>{START_COMMAND}</code>
-            </li>
-            <li>Deja abierta la ventana del detector que se abre.</li>
-            <li>Vuelve aquí y pulsa «Reintentar».</li>
-          </ol>
+          {/* Jugadores: el ZIP de GitHub Releases (si la Arena lo tiene configurado). Sin él, los pasos
+              del repositorio, que es lo que tiene quien desarrolla. */}
+          {LOCAL_AGENT_DOWNLOAD_URL ? (
+            <ol className="ar-agent__steps">
+              <li>Descarga el agente y descomprímelo (necesitas Node.js 22 o superior).</li>
+              <li>
+                Haz doble clic en <code>Iniciar agente.bat</code> y deja abierta la ventana del detector.
+              </li>
+              <li>Vuelve aquí y pulsa «Reintentar».</li>
+            </ol>
+          ) : (
+            <ol className="ar-agent__steps">
+              <li>
+                En una terminal, en la carpeta del proyecto: <code>{START_COMMAND}</code>
+              </li>
+              <li>Deja abierta la ventana del detector que se abre.</li>
+              <li>Vuelve aquí y pulsa «Reintentar».</li>
+            </ol>
+          )}
           <div className="ar-agent__actions">
-            <button type="button" className="ar-agent__btn ar-agent__btn--primary" onClick={onRetry}>
+            {LOCAL_AGENT_DOWNLOAD_URL && (
+              <a className="ar-agent__btn ar-agent__btn--primary" href={LOCAL_AGENT_DOWNLOAD_URL} target="_blank" rel="noreferrer">
+                Descargar el agente
+              </a>
+            )}
+            <button
+              type="button"
+              className={`ar-agent__btn${LOCAL_AGENT_DOWNLOAD_URL ? "" : " ar-agent__btn--primary"}`}
+              onClick={onRetry}
+            >
               Reintentar
             </button>
             <button type="button" className="ar-agent__btn" onClick={onUseBrowserCamera}>
               Usar la cámara del navegador
             </button>
           </div>
-          {/* Para quien no tiene el repositorio: el ZIP de GitHub Releases, si la Arena lo tiene configurado. */}
           {LOCAL_AGENT_DOWNLOAD_URL && (
-            <a className="ar-agent__link" href={LOCAL_AGENT_DOWNLOAD_URL} target="_blank" rel="noreferrer">
-              Descargar el agente
-            </a>
+            <p className="ar-agent__note">
+              ¿Tienes el repositorio? También puedes abrirlo con <code>{START_COMMAND}</code>.
+            </p>
           )}
         </div>
       )}
